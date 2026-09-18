@@ -21,9 +21,11 @@ import (
 	"github.com/hivemind/backend/internal/moderation"
 	"github.com/hivemind/backend/internal/notifications"
 	"github.com/hivemind/backend/internal/payments"
+	"github.com/hivemind/backend/pkg/email"
 	"github.com/hivemind/backend/pkg/eventbus"
 	"github.com/hivemind/backend/pkg/idempotency"
 	"github.com/hivemind/backend/pkg/observability"
+	"github.com/hivemind/backend/pkg/push"
 )
 
 const outboxPollInterval = 2 * time.Second
@@ -51,12 +53,28 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Declared as the interface type — see cmd/api/main.go's identical note
+	// on why a nil *email.Client/*push.Client must not be assigned directly.
+	var emailSender notifications.EmailSender
+	if cfg.ResendAPIKey != "" {
+		emailSender = email.NewClient(cfg.ResendAPIKey, cfg.EmailFromAddress)
+	}
+	var pushSender notifications.PushSender
+	if cfg.FirebaseCredentialsPath != "" {
+		p, err := push.NewClient(ctx, cfg.FirebaseCredentialsPath)
+		if err != nil {
+			logger.Error("firebase push client setup failed, push notifications disabled", "error", err)
+		} else {
+			pushSender = p
+		}
+	}
+
 	// moderationSvc is needed transitively by chat.Service's ReportSubmitter
 	// interface, even though the worker never calls chat.ReportMessage
 	// itself — see internal/chat/service.go.
 	d := &deps{
 		chatSvc:          chat.NewService(chat.NewRepository(pool), moderation.NewService(moderation.NewRepository(pool))),
-		notificationsSvc: notifications.NewService(notifications.NewRepository(pool)),
+		notificationsSvc: notifications.NewService(notifications.NewRepository(pool), emailSender, pushSender, logger),
 		paymentsSvc:      payments.NewService(payments.NewRepository(pool)),
 		bookingsSvc:      bookings.NewService(bookings.NewRepository(pool), idempotency.NewGuard(rdb)),
 		logger:           logger,

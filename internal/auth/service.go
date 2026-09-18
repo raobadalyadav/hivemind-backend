@@ -3,6 +3,8 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/hivemind/backend/pkg/oauth"
@@ -32,15 +34,30 @@ type Tokens struct {
 	ExpiresAt    time.Time
 }
 
+// EmailSender is satisfied by *email.Client (wired in cmd/api/main.go) —
+// declared here, not imported from pkg/email, so this package doesn't
+// depend on the Resend client concretely. Nil is valid (RESEND_API_KEY not
+// configured): recovery codes are still generated and stored, just not
+// transmitted — same graceful-degradation pattern as the OAuth verifiers.
+type EmailSender interface {
+	Send(ctx context.Context, to, subject, htmlBody string) error
+}
+
 type Service struct {
 	repo           *Repository
 	issuer         *security.TokenIssuer
 	googleVerifier *oauth.Verifier
 	appleVerifier  *oauth.Verifier
+	emailSender    EmailSender
+	logger         *slog.Logger
 }
 
-func NewService(repo *Repository, issuer *security.TokenIssuer, googleVerifier, appleVerifier *oauth.Verifier) *Service {
-	return &Service{repo: repo, issuer: issuer, googleVerifier: googleVerifier, appleVerifier: appleVerifier}
+func NewService(repo *Repository, issuer *security.TokenIssuer, googleVerifier, appleVerifier *oauth.Verifier, emailSender EmailSender, logger *slog.Logger) *Service {
+	return &Service{
+		repo: repo, issuer: issuer,
+		googleVerifier: googleVerifier, appleVerifier: appleVerifier,
+		emailSender: emailSender, logger: logger,
+	}
 }
 
 func (s *Service) SignInWithGoogle(ctx context.Context, idToken, deviceID, platform string, dob time.Time) (*Tokens, error) {
@@ -126,9 +143,7 @@ func (s *Service) SignOut(ctx context.Context, userID, deviceID string) error {
 }
 
 // AddRecoveryEmail claims the email as this account's (unverified) recovery
-// contact and generates a verification code. TODO(phase1+): wire a real
-// email sender — the code is only persisted here, not transmitted, same
-// non-goal carried over from earlier passes.
+// contact and emails a verification code to it.
 func (s *Service) AddRecoveryEmail(ctx context.Context, userID, email string) error {
 	if userID == "" || email == "" {
 		return ErrInvalidInput
@@ -136,7 +151,7 @@ func (s *Service) AddRecoveryEmail(ctx context.Context, userID, email string) er
 	if err := s.repo.SetPendingRecoveryEmail(ctx, userID, email); err != nil {
 		return err
 	}
-	return s.sendRecoveryCode(ctx, userID, purposeVerifyEmail)
+	return s.sendRecoveryCode(ctx, userID, email, purposeVerifyEmail)
 }
 
 func (s *Service) VerifyRecoveryEmail(ctx context.Context, userID, code string) error {
@@ -167,7 +182,10 @@ func (s *Service) RequestAccountRecovery(ctx context.Context, recoveryEmail stri
 		}
 		return err
 	}
-	return s.sendRecoveryCode(ctx, u.ID, purposeAccountRecover)
+	// recoveryEmail is already the address that owns this account (that's
+	// how FindByVerifiedRecoveryEmail found it) — pass it through instead
+	// of re-querying.
+	return s.sendRecoveryCode(ctx, u.ID, recoveryEmail, purposeAccountRecover)
 }
 
 // RecoverAccount is the actual "I lost my Google/Apple account" path: the
@@ -212,12 +230,34 @@ func (s *Service) RecoverAccount(ctx context.Context, code, providerName, idToke
 	return s.issueSession(ctx, u.ID, u.Role, deviceID, platform)
 }
 
-func (s *Service) sendRecoveryCode(ctx context.Context, userID, purpose string) error {
+// sendRecoveryCode generates and stores the code, then emails it to
+// toEmail. A missing email sender (RESEND_API_KEY not configured) or a
+// delivery failure is logged, not returned as an error — the code still
+// exists and the caller-facing RPCs (AddRecoveryEmail/RequestAccountRecovery)
+// intentionally look like they succeeded either way (see
+// RequestAccountRecovery's doc comment on not leaking account existence).
+func (s *Service) sendRecoveryCode(ctx context.Context, userID, toEmail, purpose string) error {
 	code, err := security.GenerateOpaqueToken()
 	if err != nil {
 		return err
 	}
-	return s.repo.CreateRecoveryCode(ctx, userID, security.HashToken(code), purpose, time.Now().Add(recoveryCodeTTL))
+	if err := s.repo.CreateRecoveryCode(ctx, userID, security.HashToken(code), purpose, time.Now().Add(recoveryCodeTTL)); err != nil {
+		return err
+	}
+
+	if s.emailSender == nil {
+		s.logger.Warn("email sender not configured, recovery code not sent", "user_id", userID, "purpose", purpose)
+		return nil
+	}
+	subject := "Verify your HiveMind recovery email"
+	if purpose == purposeAccountRecover {
+		subject = "Your HiveMind account recovery code"
+	}
+	body := fmt.Sprintf("<p>Your code is: <strong>%s</strong></p><p>This code expires in %d minutes.</p>", code, int(recoveryCodeTTL.Minutes()))
+	if err := s.emailSender.Send(ctx, toEmail, subject, body); err != nil {
+		s.logger.Error("send recovery code email", "error", err, "user_id", userID)
+	}
+	return nil
 }
 
 func (s *Service) issueSession(ctx context.Context, userID, role, deviceID, platform string) (*Tokens, error) {

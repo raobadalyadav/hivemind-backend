@@ -1,14 +1,14 @@
 // Package notifications implements PRD §13.15 Notifications — every RPC is
 // fully implemented. SendNotification is called internally by cmd/worker
 // event handlers (see PRD §19), not exposed to mobile clients directly.
-//
-// This scaffold persists notifications to Postgres only — actual push/email
-// delivery (FCM/APNs/SMTP) is a TODO(phase1+): wire a sender interface here.
+// Delivery is real: email via Resend (pkg/email), push via Firebase Cloud
+// Messaging (pkg/push) — see service.go.
 package notifications
 
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -34,7 +34,7 @@ func (r *Repository) Create(ctx context.Context, n *Notification) (*Notification
 	out := *n
 	err := r.pool.QueryRow(ctx, `
 		INSERT INTO notifications (user_id, channel, title, body, deep_link, read)
-		VALUES ($1, $2, $3, $4, $5, false)
+		VALUES ($1, $2::notification_channel, $3, $4, $5, false)
 		RETURNING id`,
 		n.UserID, n.Channel, n.Title, n.Body, n.DeepLink,
 	).Scan(&out.ID)
@@ -64,6 +64,58 @@ func (r *Repository) ListForUser(ctx context.Context, userID string, limit int) 
 		out = append(out, &n)
 	}
 	return out, rows.Err()
+}
+
+func (r *Repository) GetUserEmail(ctx context.Context, userID string) (string, error) {
+	var email string
+	err := r.pool.QueryRow(ctx, `SELECT email FROM users WHERE id = $1`, userID).Scan(&email)
+	return email, err
+}
+
+// ListDevicePushTokens returns every registered device's push token for a
+// user — a user can have multiple devices, so push is sent best-effort to
+// each (see service.go).
+func (r *Repository) ListDevicePushTokens(ctx context.Context, userID string) ([]string, error) {
+	rows, err := r.pool.Query(ctx,
+		`SELECT push_token FROM devices WHERE user_id = $1 AND push_token IS NOT NULL`, userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tokens []string
+	for rows.Next() {
+		var t string
+		if err := rows.Scan(&t); err != nil {
+			return nil, err
+		}
+		tokens = append(tokens, t)
+	}
+	return tokens, rows.Err()
+}
+
+// GetPreferences defaults to (true, true) when the user has never called
+// UpdatePreferences — matches notification_preferences' column defaults.
+func (r *Repository) GetPreferences(ctx context.Context, userID string) (pushEnabled, emailEnabled bool, err error) {
+	pushEnabled, emailEnabled = true, true
+	row := r.pool.QueryRow(ctx,
+		`SELECT push_enabled, email_enabled FROM notification_preferences WHERE user_id = $1`, userID,
+	)
+	scanErr := row.Scan(&pushEnabled, &emailEnabled)
+	if scanErr != nil && scanErr != pgx.ErrNoRows {
+		return false, false, scanErr
+	}
+	return pushEnabled, emailEnabled, nil
+}
+
+func (r *Repository) MarkDelivery(ctx context.Context, notificationID, status, deliveryErr string) error {
+	_, err := r.pool.Exec(ctx, `
+		UPDATE notifications SET delivery_status = $2::delivery_status, sent_at = now(), delivery_error = NULLIF($3, '')
+		WHERE id = $1`,
+		notificationID, status, deliveryErr,
+	)
+	return err
 }
 
 func (r *Repository) UpsertPreferences(ctx context.Context, userID string, pushEnabled, emailEnabled bool, quietStart, quietEnd string) error {

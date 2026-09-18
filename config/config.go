@@ -27,6 +27,12 @@ type Config struct {
 	// optional external config, not a hard dependency for local dev.
 	GoogleClientID string
 	AppleBundleID  string
+	// ResendAPIKey/FirebaseCredentialsPath: same optional-external-config
+	// pattern — empty disables that delivery channel (email/push skipped
+	// and logged, not an error) instead of failing server startup.
+	ResendAPIKey            string
+	EmailFromAddress        string
+	FirebaseCredentialsPath string
 }
 
 func Load() Config {
@@ -44,6 +50,10 @@ func Load() Config {
 		JWTTTL:         getEnvDuration("JWT_TTL", time.Hour),
 		GoogleClientID: getEnv("GOOGLE_CLIENT_ID", ""),
 		AppleBundleID:  getEnv("APPLE_BUNDLE_ID", ""),
+
+		ResendAPIKey:            getEnv("RESEND_API_KEY", ""),
+		EmailFromAddress:        getEnv("EMAIL_FROM_ADDRESS", "noreply@hivemind.app"),
+		FirebaseCredentialsPath: getEnv("FIREBASE_CREDENTIALS_PATH", ""),
 	}
 }
 

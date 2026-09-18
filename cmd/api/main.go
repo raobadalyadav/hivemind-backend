@@ -38,10 +38,12 @@ import (
 	"github.com/hivemind/backend/internal/social"
 	"github.com/hivemind/backend/internal/subscriptions"
 	"github.com/hivemind/backend/internal/users"
+	"github.com/hivemind/backend/pkg/email"
 	"github.com/hivemind/backend/pkg/grpcmiddleware"
 	"github.com/hivemind/backend/pkg/idempotency"
 	"github.com/hivemind/backend/pkg/oauth"
 	"github.com/hivemind/backend/pkg/observability"
+	"github.com/hivemind/backend/pkg/push"
 	"github.com/hivemind/backend/pkg/security"
 )
 
@@ -101,7 +103,29 @@ func main() {
 		}
 	}
 
-	socialv1.RegisterAuthServiceServer(srv, auth.NewHandler(auth.NewService(auth.NewRepository(pool), issuer, googleVerifier, appleVerifier)))
+	// Declared as the interface type, not *email.Client/*push.Client — a nil
+	// *email.Client assigned to an interface parameter would produce a
+	// non-nil interface wrapping a nil pointer, breaking the `== nil`
+	// graceful-degradation checks inside auth/notifications services.
+	var emailSender notifications.EmailSender
+	if cfg.ResendAPIKey != "" {
+		emailSender = email.NewClient(cfg.ResendAPIKey, cfg.EmailFromAddress)
+	}
+	var pushSender notifications.PushSender
+	if cfg.FirebaseCredentialsPath != "" {
+		p, err := push.NewClient(ctx, cfg.FirebaseCredentialsPath)
+		if err != nil {
+			logger.Error("firebase push client setup failed, push notifications disabled", "error", err)
+		} else {
+			pushSender = p
+		}
+	}
+
+	// auth.EmailSender and notifications.EmailSender are structurally
+	// identical (both just wrap pkg/email.Client's Send method) but
+	// declared separately per package per the plan's decoupling — emailSender
+	// satisfies both without a cast.
+	socialv1.RegisterAuthServiceServer(srv, auth.NewHandler(auth.NewService(auth.NewRepository(pool), issuer, googleVerifier, appleVerifier, emailSender, logger)))
 	socialv1.RegisterUserServiceServer(srv, users.NewHandler(users.NewService(users.NewRepository(pool))))
 	socialv1.RegisterProfileServiceServer(srv, profiles.NewHandler(profiles.NewService(profiles.NewRepository(pool))))
 	socialv1.RegisterDiscoveryServiceServer(srv, discovery.NewHandler(discovery.NewService(discovery.NewRepository(pool))))
@@ -114,7 +138,7 @@ func main() {
 	socialv1.RegisterChatServiceServer(srv, chat.NewHandler(chat.NewService(chat.NewRepository(pool), moderationSvc)))
 	socialv1.RegisterSocialServiceServer(srv, social.NewHandler(social.NewService(social.NewRepository(pool))))
 	socialv1.RegisterModerationServiceServer(srv, moderation.NewHandler(moderationSvc))
-	socialv1.RegisterNotificationServiceServer(srv, notifications.NewHandler(notifications.NewService(notifications.NewRepository(pool))))
+	socialv1.RegisterNotificationServiceServer(srv, notifications.NewHandler(notifications.NewService(notifications.NewRepository(pool), emailSender, pushSender, logger)))
 	socialv1.RegisterSearchServiceServer(srv, search.NewHandler(search.NewService(search.NewRepository(pool))))
 	socialv1.RegisterRecommendationServiceServer(srv, recommendation.NewHandler(recommendation.NewService(recommendation.NewRepository(pool))))
 	socialv1.RegisterAdminServiceServer(srv, admin.NewHandler(admin.NewService(admin.NewRepository(pool))))
