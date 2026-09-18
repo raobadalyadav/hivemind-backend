@@ -13,6 +13,7 @@ var ErrInvalidToken = errors.New("security: invalid token")
 
 type Claims struct {
 	UserID string `json:"user_id"`
+	Role   string `json:"role"`
 	jwt.RegisteredClaims
 }
 
@@ -25,10 +26,11 @@ func NewTokenIssuer(secret string, ttl time.Duration) *TokenIssuer {
 	return &TokenIssuer{secret: []byte(secret), ttl: ttl}
 }
 
-func (i *TokenIssuer) Issue(userID string) (string, time.Time, error) {
+func (i *TokenIssuer) Issue(userID, role string) (string, time.Time, error) {
 	expiresAt := time.Now().Add(i.ttl)
 	claims := Claims{
 		UserID: userID,
+		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiresAt),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

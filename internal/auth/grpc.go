@@ -8,11 +8,12 @@ import (
 	"google.golang.org/grpc/status"
 
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
+	"github.com/hivemind/backend/pkg/grpcmiddleware"
 )
 
-// Handler implements socialv1.AuthServiceServer. SignUp/SignIn are real;
-// RefreshToken/SignOut/RequestPasswordReset inherit
-// socialv1.UnimplementedAuthServiceServer — see PRD §13.1.
+// Handler implements socialv1.AuthServiceServer — every RPC is fully
+// implemented (see PRD §13.1 and service.go for the refresh-token rotation
+// design).
 type Handler struct {
 	socialv1.UnimplementedAuthServiceServer
 	svc *Service
@@ -32,7 +33,7 @@ func (h *Handler) SignUp(ctx context.Context, req *socialv1.SignUpRequest) (*soc
 		dob = parsed
 	}
 
-	tokens, err := h.svc.SignUp(ctx, req.GetEmail(), req.GetPassword(), dob)
+	tokens, err := h.svc.SignUp(ctx, req.GetEmail(), req.GetPassword(), req.GetDeviceId(), "", dob)
 	if err != nil {
 		switch err {
 		case ErrInvalidInput:
@@ -49,7 +50,7 @@ func (h *Handler) SignUp(ctx context.Context, req *socialv1.SignUpRequest) (*soc
 }
 
 func (h *Handler) SignIn(ctx context.Context, req *socialv1.SignInRequest) (*socialv1.AuthTokens, error) {
-	tokens, err := h.svc.SignIn(ctx, req.GetEmail(), req.GetPassword())
+	tokens, err := h.svc.SignIn(ctx, req.GetEmail(), req.GetPassword(), req.GetDeviceId(), "")
 	if err != nil {
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -57,6 +58,38 @@ func (h *Handler) SignIn(ctx context.Context, req *socialv1.SignInRequest) (*soc
 		return nil, status.Error(codes.Unauthenticated, "invalid credentials")
 	}
 	return toProto(tokens), nil
+}
+
+func (h *Handler) RefreshToken(ctx context.Context, req *socialv1.RefreshTokenRequest) (*socialv1.AuthTokens, error) {
+	tokens, err := h.svc.RefreshToken(ctx, req.GetRefreshToken())
+	if err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Unauthenticated, "invalid or expired refresh token")
+	}
+	return toProto(tokens), nil
+}
+
+func (h *Handler) SignOut(ctx context.Context, req *socialv1.SignOutRequest) (*socialv1.SignOutResponse, error) {
+	userID, _ := grpcmiddleware.UserIDFromContext(ctx)
+	if err := h.svc.SignOut(ctx, userID, req.GetDeviceId()); err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to sign out")
+	}
+	return &socialv1.SignOutResponse{}, nil
+}
+
+func (h *Handler) RequestPasswordReset(ctx context.Context, req *socialv1.RequestPasswordResetRequest) (*socialv1.RequestPasswordResetResponse, error) {
+	if err := h.svc.RequestPasswordReset(ctx, req.GetEmail()); err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to request password reset")
+	}
+	return &socialv1.RequestPasswordResetResponse{}, nil
 }
 
 func toProto(t *Tokens) *socialv1.AuthTokens {

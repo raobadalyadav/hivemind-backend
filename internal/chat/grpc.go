@@ -10,9 +10,8 @@ import (
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
 )
 
-// Handler implements socialv1.ChatServiceServer. CreateRoom/SendMessage are
-// real; ListMessages/ReportMessage inherit
-// socialv1.UnimplementedChatServiceServer — see PRD §13.7.
+// Handler implements socialv1.ChatServiceServer — every RPC is fully
+// implemented (see PRD §13.7).
 type Handler struct {
 	socialv1.UnimplementedChatServiceServer
 	svc *Service
@@ -37,16 +36,54 @@ func (h *Handler) SendMessage(ctx context.Context, req *socialv1.SendMessageRequ
 	m := &Message{RoomID: req.GetRoomId(), SenderID: req.GetSenderId(), Body: req.GetBody()}
 	sent, err := h.svc.SendMessage(ctx, m)
 	if err != nil {
+		switch err {
+		case ErrInvalidInput:
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		case ErrNotAMember:
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		default:
+			return nil, status.Error(codes.Internal, "failed to send message")
+		}
+	}
+	return toProtoMessage(sent), nil
+}
+
+func (h *Handler) ListMessages(ctx context.Context, req *socialv1.ListMessagesRequest) (*socialv1.ListMessagesResponse, error) {
+	list, err := h.svc.ListMessages(ctx, req.GetRoomId())
+	if err != nil {
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
-		return nil, status.Error(codes.Internal, "failed to send message")
+		return nil, status.Error(codes.Internal, "failed to list messages")
 	}
+	out := make([]*socialv1.Message, 0, len(list))
+	for _, m := range list {
+		out = append(out, toProtoMessage(m))
+	}
+	return &socialv1.ListMessagesResponse{Messages: out}, nil
+}
+
+func (h *Handler) ReportMessage(ctx context.Context, req *socialv1.ReportMessageRequest) (*socialv1.ReportMessageResponse, error) {
+	caseID, err := h.svc.ReportMessage(ctx, req.GetMessageId(), req.GetReporterId(), req.GetReason())
+	if err != nil {
+		switch err {
+		case ErrInvalidInput:
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		case ErrMessageNotFound:
+			return nil, status.Error(codes.NotFound, err.Error())
+		default:
+			return nil, status.Error(codes.Internal, "failed to report message")
+		}
+	}
+	return &socialv1.ReportMessageResponse{ModerationCaseId: caseID}, nil
+}
+
+func toProtoMessage(m *Message) *socialv1.Message {
 	return &socialv1.Message{
-		Id:       sent.ID,
-		RoomId:   sent.RoomID,
-		SenderId: sent.SenderID,
-		Body:     sent.Body,
-		SentAt:   timestamppb.New(sent.SentAt),
-	}, nil
+		Id:       m.ID,
+		RoomId:   m.RoomID,
+		SenderId: m.SenderID,
+		Body:     m.Body,
+		SentAt:   timestamppb.New(m.SentAt),
+	}
 }

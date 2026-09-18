@@ -1,6 +1,5 @@
-// Package moderation implements PRD §13.16 Trust & Safety. SubmitReport/
-// GetCase are the fully working vertical slice; ResolveCase/BlockUser are
-// typed stubs.
+// Package moderation implements PRD §13.16 Trust & Safety — every RPC is
+// fully implemented.
 package moderation
 
 import (
@@ -73,4 +72,32 @@ func (r *Repository) Get(ctx context.Context, id string) (*Case, error) {
 		return nil, err
 	}
 	return &c, nil
+}
+
+func (r *Repository) Resolve(ctx context.Context, caseID, resolution string) (*Case, error) {
+	var c Case
+	c.ID = caseID
+	err := r.pool.QueryRow(ctx, `
+		UPDATE moderation_cases SET status = 'resolved', resolution = $2, updated_at = now()
+		WHERE id = $1
+		RETURNING (SELECT reporter_id FROM reports WHERE id = moderation_cases.report_id),
+			(SELECT subject_type FROM reports WHERE id = moderation_cases.report_id),
+			(SELECT subject_id::text FROM reports WHERE id = moderation_cases.report_id),
+			(SELECT reason FROM reports WHERE id = moderation_cases.report_id),
+			status, resolution`,
+		caseID, resolution,
+	).Scan(&c.ReporterID, &c.SubjectType, &c.SubjectID, &c.Reason, &c.Status, &c.Resolution)
+	if err != nil {
+		return nil, err
+	}
+	return &c, nil
+}
+
+func (r *Repository) BlockUser(ctx context.Context, userID, blockedUserID string) error {
+	_, err := r.pool.Exec(ctx, `
+		INSERT INTO blocks (user_id, blocked_user_id) VALUES ($1, $2)
+		ON CONFLICT (user_id, blocked_user_id) DO NOTHING`,
+		userID, blockedUserID,
+	)
+	return err
 }

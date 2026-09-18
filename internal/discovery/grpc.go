@@ -9,9 +9,8 @@ import (
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
 )
 
-// Handler implements socialv1.DiscoveryServiceServer. GetNearbyPlans is real;
-// GetHomeFeed inherits socialv1.UnimplementedDiscoveryServiceServer — see
-// PRD §13.3.
+// Handler implements socialv1.DiscoveryServiceServer — every RPC is fully
+// implemented (see PRD §13.3).
 type Handler struct {
 	socialv1.UnimplementedDiscoveryServiceServer
 	svc *Service
@@ -33,4 +32,24 @@ func (h *Handler) GetNearbyPlans(ctx context.Context, req *socialv1.GetNearbyPla
 		return nil, status.Error(codes.Internal, "failed to search nearby plans")
 	}
 	return &socialv1.GetNearbyPlansResponse{PlanIds: ids}, nil
+}
+
+var feedSectionNames = map[socialv1.FeedSection]string{
+	socialv1.FeedSection_TODAY:    "TODAY",
+	socialv1.FeedSection_TONIGHT:  "TONIGHT",
+	socialv1.FeedSection_WEEKEND:  "WEEKEND",
+	socialv1.FeedSection_NEAR_YOU: "NEAR_YOU",
+	socialv1.FeedSection_FOR_YOU:  "FOR_YOU",
+}
+
+func (h *Handler) GetHomeFeed(ctx context.Context, req *socialv1.GetHomeFeedRequest) (*socialv1.GetHomeFeedResponse, error) {
+	section := feedSectionNames[req.GetSection()]
+	ids, err := h.svc.GetHomeFeed(ctx, req.GetUserId(), section)
+	if err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to load home feed")
+	}
+	return &socialv1.GetHomeFeedResponse{PlanIds: ids}, nil
 }

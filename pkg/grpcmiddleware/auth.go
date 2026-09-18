@@ -16,7 +16,10 @@ import (
 
 type contextKey string
 
-const userIDContextKey contextKey = "user_id"
+const (
+	userIDContextKey contextKey = "user_id"
+	roleContextKey   contextKey = "role"
+)
 
 // publicMethods lists full gRPC method names (service/Method) that don't require a token.
 var publicMethods = map[string]bool{
@@ -28,9 +31,28 @@ var publicMethods = map[string]bool{
 	"/grpc.health.v1.Health/Watch":                true,
 }
 
+// adminMethods lists full gRPC method names restricted to admin/super_admin
+// roles — the RBAC gate PRD §23 calls for on the admin surface.
+var adminMethods = map[string]bool{
+	"/social.v1.AdminService/ListUsers":             true,
+	"/social.v1.AdminService/SuspendUser":           true,
+	"/social.v1.AdminService/ListReports":           true,
+	"/social.v1.AdminService/OverrideBookingStatus": true,
+	"/social.v1.AdminService/GetDashboardStats":     true,
+}
+
+func isAdminRole(role string) bool {
+	return role == "admin" || role == "super_admin"
+}
+
 func UserIDFromContext(ctx context.Context) (string, bool) {
 	id, ok := ctx.Value(userIDContextKey).(string)
 	return id, ok
+}
+
+func RoleFromContext(ctx context.Context) (string, bool) {
+	role, ok := ctx.Value(roleContextKey).(string)
+	return role, ok
 }
 
 func AuthUnaryInterceptor(issuer *security.TokenIssuer) grpc.UnaryServerInterceptor {
@@ -53,7 +75,12 @@ func AuthUnaryInterceptor(issuer *security.TokenIssuer) grpc.UnaryServerIntercep
 			return nil, status.Error(codes.Unauthenticated, "invalid token")
 		}
 
+		if adminMethods[info.FullMethod] && !isAdminRole(claims.Role) {
+			return nil, status.Error(codes.PermissionDenied, "admin role required")
+		}
+
 		ctx = context.WithValue(ctx, userIDContextKey, claims.UserID)
+		ctx = context.WithValue(ctx, roleContextKey, claims.Role)
 		return handler(ctx, req)
 	}
 }

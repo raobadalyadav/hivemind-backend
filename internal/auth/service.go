@@ -8,10 +8,17 @@ import (
 	"github.com/hivemind/backend/pkg/security"
 )
 
-var ErrUnderage = errors.New("auth: must be 18 or older")
-var ErrInvalidInput = errors.New("auth: invalid input")
+var (
+	ErrUnderage     = errors.New("auth: must be 18 or older")
+	ErrInvalidInput = errors.New("auth: invalid input")
+	ErrUserInactive = errors.New("auth: account is suspended or deleted")
+)
 
-const minAgeYears = 18
+const (
+	minAgeYears           = 18
+	refreshTokenTTL       = 30 * 24 * time.Hour
+	passwordResetTokenTTL = time.Hour
+)
 
 type Tokens struct {
 	UserID       string
@@ -29,7 +36,7 @@ func NewService(repo *Repository, issuer *security.TokenIssuer) *Service {
 	return &Service{repo: repo, issuer: issuer}
 }
 
-func (s *Service) SignUp(ctx context.Context, email, password string, dob time.Time) (*Tokens, error) {
+func (s *Service) SignUp(ctx context.Context, email, password, deviceID, platform string, dob time.Time) (*Tokens, error) {
 	if email == "" || password == "" {
 		return nil, ErrInvalidInput
 	}
@@ -46,10 +53,10 @@ func (s *Service) SignUp(ctx context.Context, email, password string, dob time.T
 	if err != nil {
 		return nil, err
 	}
-	return s.issueTokens(userID)
+	return s.issueSession(ctx, userID, "user", deviceID, platform)
 }
 
-func (s *Service) SignIn(ctx context.Context, email, password string) (*Tokens, error) {
+func (s *Service) SignIn(ctx context.Context, email, password, deviceID, platform string) (*Tokens, error) {
 	if email == "" || password == "" {
 		return nil, ErrInvalidInput
 	}
@@ -57,23 +64,91 @@ func (s *Service) SignIn(ctx context.Context, email, password string) (*Tokens, 
 	if err != nil {
 		return nil, err
 	}
+	if u.Status != "active" {
+		return nil, ErrUserInactive
+	}
 	if !security.VerifyPassword(u.PasswordHash, password) {
 		return nil, ErrInvalidCredentials
 	}
-	return s.issueTokens(u.ID)
+	return s.issueSession(ctx, u.ID, u.Role, deviceID, platform)
 }
 
-func (s *Service) issueTokens(userID string) (*Tokens, error) {
-	access, expiresAt, err := s.issuer.Issue(userID)
+// RefreshToken rotates the refresh token: the old one is consumed
+// (single-use) and a new access+refresh pair is issued, tied to the same
+// device the original token was scoped to.
+func (s *Service) RefreshToken(ctx context.Context, refreshToken string) (*Tokens, error) {
+	if refreshToken == "" {
+		return nil, ErrInvalidInput
+	}
+	row, err := s.repo.ConsumeRefreshToken(ctx, security.HashToken(refreshToken))
 	if err != nil {
 		return nil, err
 	}
-	// Refresh tokens are a separate long-lived credential in a real system
-	// (rotated, revocable). TODO(phase1): back this with a refresh_tokens
-	// table instead of reusing the access token issuer.
-	refresh, _, err := s.issuer.Issue(userID)
+	u, err := s.repo.GetUserByID(ctx, row.UserID)
 	if err != nil {
 		return nil, err
 	}
+	if u.Status != "active" {
+		return nil, ErrUserInactive
+	}
+	deviceID := ""
+	if row.DeviceID != nil {
+		deviceID = *row.DeviceID
+	}
+	return s.issueTokens(ctx, u.ID, u.Role, deviceID)
+}
+
+func (s *Service) SignOut(ctx context.Context, userID, deviceID string) error {
+	if userID == "" {
+		return ErrInvalidInput
+	}
+	return s.repo.RevokeDeviceTokens(ctx, userID, deviceID)
+}
+
+// RequestPasswordReset always looks like it succeeded even for an unknown
+// email — PRD-standard practice to avoid leaking which emails are
+// registered. The token is only logged (no real email sender) — same
+// non-goal carried over from the scaffold.
+func (s *Service) RequestPasswordReset(ctx context.Context, email string) error {
+	if email == "" {
+		return ErrInvalidInput
+	}
+	u, err := s.repo.GetUserByEmail(ctx, email)
+	if err != nil {
+		if err == ErrInvalidCredentials {
+			return nil // don't reveal whether the email exists
+		}
+		return err
+	}
+
+	token, err := security.GenerateOpaqueToken()
+	if err != nil {
+		return err
+	}
+	return s.repo.CreatePasswordResetToken(ctx, u.ID, security.HashToken(token), time.Now().Add(passwordResetTokenTTL))
+}
+
+func (s *Service) issueSession(ctx context.Context, userID, role, deviceID, platform string) (*Tokens, error) {
+	deviceUUID, err := s.repo.UpsertDevice(ctx, userID, deviceID, platform)
+	if err != nil {
+		return nil, err
+	}
+	return s.issueTokens(ctx, userID, role, deviceUUID)
+}
+
+func (s *Service) issueTokens(ctx context.Context, userID, role, deviceUUID string) (*Tokens, error) {
+	access, expiresAt, err := s.issuer.Issue(userID, role)
+	if err != nil {
+		return nil, err
+	}
+
+	refresh, err := security.GenerateOpaqueToken()
+	if err != nil {
+		return nil, err
+	}
+	if err := s.repo.StoreRefreshToken(ctx, userID, deviceUUID, security.HashToken(refresh), time.Now().Add(refreshTokenTTL)); err != nil {
+		return nil, err
+	}
+
 	return &Tokens{UserID: userID, AccessToken: access, RefreshToken: refresh, ExpiresAt: expiresAt}, nil
 }

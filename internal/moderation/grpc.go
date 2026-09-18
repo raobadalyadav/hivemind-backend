@@ -9,9 +9,8 @@ import (
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
 )
 
-// Handler implements socialv1.ModerationServiceServer. SubmitReport/GetCase
-// are real; ResolveCase/BlockUser inherit
-// socialv1.UnimplementedModerationServiceServer — see PRD §13.16.
+// Handler implements socialv1.ModerationServiceServer — every RPC is fully
+// implemented (see PRD §13.16).
 type Handler struct {
 	socialv1.UnimplementedModerationServiceServer
 	svc *Service
@@ -44,6 +43,27 @@ func (h *Handler) GetCase(ctx context.Context, req *socialv1.GetCaseRequest) (*s
 		return nil, status.Error(codes.NotFound, "case not found")
 	}
 	return toProto(c), nil
+}
+
+func (h *Handler) ResolveCase(ctx context.Context, req *socialv1.ResolveCaseRequest) (*socialv1.ModerationCase, error) {
+	c, err := h.svc.ResolveCase(ctx, req.GetCaseId(), req.GetResolution())
+	if err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.NotFound, "case not found")
+	}
+	return toProto(c), nil
+}
+
+func (h *Handler) BlockUser(ctx context.Context, req *socialv1.BlockUserRequest) (*socialv1.BlockUserResponse, error) {
+	if err := h.svc.BlockUser(ctx, req.GetUserId(), req.GetBlockedUserId()); err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to block user")
+	}
+	return &socialv1.BlockUserResponse{}, nil
 }
 
 var statusToProtoMap = map[string]socialv1.CaseStatus{

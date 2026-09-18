@@ -10,10 +10,8 @@ import (
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
 )
 
-// Handler implements socialv1.PlanServiceServer. CreatePlan/GetPlan are real;
-// every other method inherits socialv1.UnimplementedPlanServiceServer's
-// codes.Unimplemented response — see proto/social/v1/plan.proto for the
-// deferred RPC list and PRD §13.4/§17 for the full spec.
+// Handler implements socialv1.PlanServiceServer — every RPC is fully
+// implemented (see PRD §13.4/§17).
 type Handler struct {
 	socialv1.UnimplementedPlanServiceServer
 	svc *Service
@@ -64,6 +62,63 @@ func (h *Handler) GetPlan(ctx context.Context, req *socialv1.GetPlanRequest) (*s
 		return nil, status.Error(codes.NotFound, "plan not found")
 	}
 	return toProto(p), nil
+}
+
+func (h *Handler) SearchPlans(ctx context.Context, req *socialv1.SearchPlansRequest) (*socialv1.SearchPlansResponse, error) {
+	f := SearchFilter{CityID: req.GetCityId(), CategoryID: req.GetCategoryId(), RadiusKM: req.GetRadiusKm()}
+	if req.GetOrigin() != nil {
+		lat, lng := req.GetOrigin().GetLatitude(), req.GetOrigin().GetLongitude()
+		f.Latitude, f.Longitude = &lat, &lng
+	}
+	results, err := h.svc.SearchPlans(ctx, f)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "search failed")
+	}
+	out := make([]*socialv1.Plan, 0, len(results))
+	for _, p := range results {
+		out = append(out, toProto(p))
+	}
+	return &socialv1.SearchPlansResponse{Plans: out}, nil
+}
+
+func (h *Handler) JoinPlan(ctx context.Context, req *socialv1.JoinPlanRequest) (*socialv1.JoinPlanResponse, error) {
+	bookingID, err := h.svc.JoinPlan(ctx, req.GetPlanId(), req.GetUserId(), req.GetIdempotencyKey())
+	if err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, mapBookingCreationError(err)
+	}
+	return &socialv1.JoinPlanResponse{BookingId: bookingID}, nil
+}
+
+func (h *Handler) LeavePlan(ctx context.Context, req *socialv1.LeavePlanRequest) (*socialv1.LeavePlanResponse, error) {
+	if err := h.svc.LeavePlan(ctx, req.GetPlanId(), req.GetUserId()); err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to leave plan")
+	}
+	return &socialv1.LeavePlanResponse{}, nil
+}
+
+func (h *Handler) CancelPlan(ctx context.Context, req *socialv1.CancelPlanRequest) (*socialv1.Plan, error) {
+	p, err := h.svc.CancelPlan(ctx, req.GetPlanId(), req.GetReason())
+	if err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to cancel plan")
+	}
+	return toProto(p), nil
+}
+
+// mapBookingCreationError avoids importing internal/bookings just to switch
+// on its sentinel errors (ErrPlanFull, idempotency.ErrDuplicateRequest) —
+// that would defeat the point of the BookingCreator interface. The message
+// is descriptive enough for the client without needing exact error codes.
+func mapBookingCreationError(err error) error {
+	return status.Error(codes.FailedPrecondition, err.Error())
 }
 
 func toProto(p *Plan) *socialv1.Plan {

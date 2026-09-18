@@ -9,13 +9,10 @@ import (
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
 )
 
-// Handler implements socialv1.AdminServiceServer. ListUsers/SuspendUser are
-// real; ListReports/OverrideBookingStatus/GetDashboardStats inherit
-// socialv1.UnimplementedAdminServiceServer — see PRD §13.18/§23.
-//
-// RBAC (restricting these RPCs to admin-role callers) is not yet enforced —
-// TODO(phase1): add a role claim to security.Claims and check it here or in
-// a dedicated admin interceptor before this ships past the scaffold stage.
+// Handler implements socialv1.AdminServiceServer — every RPC is fully
+// implemented (see PRD §13.18/§23). RBAC is enforced by
+// pkg/grpcmiddleware's adminMethods gate (checked before any handler here
+// runs), not by this package.
 type Handler struct {
 	socialv1.UnimplementedAdminServiceServer
 	svc *Service
@@ -42,4 +39,34 @@ func (h *Handler) SuspendUser(ctx context.Context, req *socialv1.SuspendUserRequ
 		return nil, status.Error(codes.Internal, "failed to suspend user")
 	}
 	return &socialv1.SuspendUserResponse{}, nil
+}
+
+func (h *Handler) ListReports(ctx context.Context, req *socialv1.ListReportsRequest) (*socialv1.ListReportsResponse, error) {
+	ids, err := h.svc.ListReports(ctx, req.GetStatus())
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list reports")
+	}
+	return &socialv1.ListReportsResponse{CaseIds: ids}, nil
+}
+
+func (h *Handler) OverrideBookingStatus(ctx context.Context, req *socialv1.OverrideBookingStatusRequest) (*socialv1.OverrideBookingStatusResponse, error) {
+	err := h.svc.OverrideBookingStatus(ctx, req.GetBookingId(), req.GetNewStatus(), req.GetReason(), req.GetActorId())
+	if err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.InvalidArgument, "invalid booking id or status value")
+	}
+	return &socialv1.OverrideBookingStatusResponse{}, nil
+}
+
+func (h *Handler) GetDashboardStats(ctx context.Context, req *socialv1.GetDashboardStatsRequest) (*socialv1.GetDashboardStatsResponse, error) {
+	stats, err := h.svc.GetDashboardStats(ctx, req.GetCityId())
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to load dashboard stats")
+	}
+	return &socialv1.GetDashboardStatsResponse{
+		BookingsToday: stats.BookingsToday,
+		GmvMinorUnits: stats.GMVMinorUnits,
+	}, nil
 }

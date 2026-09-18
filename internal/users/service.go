@@ -21,3 +21,24 @@ func (s *Service) GetUser(ctx context.Context, id string) (*User, error) {
 	}
 	return s.repo.Get(ctx, id)
 }
+
+func (s *Service) UpdateUser(ctx context.Context, id, cityID string) (*User, error) {
+	if id == "" {
+		return nil, ErrInvalidInput
+	}
+	return s.repo.UpdateCity(ctx, id, cityID)
+}
+
+func (s *Service) DeleteAccount(ctx context.Context, id string) error {
+	if id == "" {
+		return ErrInvalidInput
+	}
+	return s.repo.SoftDelete(ctx, id)
+}
+
+func (s *Service) RegisterDevice(ctx context.Context, userID, deviceID, pushToken, platform string) error {
+	if userID == "" || deviceID == "" {
+		return ErrInvalidInput
+	}
+	return s.repo.UpsertDevice(ctx, userID, deviceID, pushToken, platform)
+}

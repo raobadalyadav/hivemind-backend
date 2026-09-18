@@ -6,14 +6,31 @@ import (
 	"time"
 )
 
-var ErrInvalidInput = errors.New("plans: invalid input")
+var (
+	ErrInvalidInput = errors.New("plans: invalid input")
+)
 
-type Service struct {
-	repo *Repository
+const defaultSearchLimit = 20
+
+// BookingCreator/BookingCanceller are satisfied by *bookings.Service (wired
+// in cmd/api/main.go) — declared here, not imported from internal/bookings,
+// so neither package needs to import the other.
+type BookingCreator interface {
+	CreateBookingForPlan(ctx context.Context, planID, userID, idempotencyKey string) (bookingID string, err error)
 }
 
-func NewService(repo *Repository) *Service {
-	return &Service{repo: repo}
+type BookingCanceller interface {
+	CancelBookingForPlan(ctx context.Context, planID, userID string) error
+}
+
+type Service struct {
+	repo      *Repository
+	creator   BookingCreator
+	canceller BookingCanceller
+}
+
+func NewService(repo *Repository, creator BookingCreator, canceller BookingCanceller) *Service {
+	return &Service{repo: repo, creator: creator, canceller: canceller}
 }
 
 func (s *Service) CreatePlan(ctx context.Context, p *Plan) (*Plan, error) {
@@ -34,4 +51,29 @@ func (s *Service) GetPlan(ctx context.Context, id string) (*Plan, error) {
 		return nil, ErrInvalidInput
 	}
 	return s.repo.Get(ctx, id)
+}
+
+func (s *Service) SearchPlans(ctx context.Context, f SearchFilter) ([]*Plan, error) {
+	return s.repo.Search(ctx, f, defaultSearchLimit)
+}
+
+func (s *Service) JoinPlan(ctx context.Context, planID, userID, idempotencyKey string) (string, error) {
+	if planID == "" || userID == "" {
+		return "", ErrInvalidInput
+	}
+	return s.creator.CreateBookingForPlan(ctx, planID, userID, idempotencyKey)
+}
+
+func (s *Service) LeavePlan(ctx context.Context, planID, userID string) error {
+	if planID == "" || userID == "" {
+		return ErrInvalidInput
+	}
+	return s.canceller.CancelBookingForPlan(ctx, planID, userID)
+}
+
+func (s *Service) CancelPlan(ctx context.Context, planID, reason string) (*Plan, error) {
+	if planID == "" {
+		return nil, ErrInvalidInput
+	}
+	return s.repo.Cancel(ctx, planID, reason)
 }

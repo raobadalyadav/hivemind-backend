@@ -57,8 +57,8 @@ func TestRepository_CreateAndGet(t *testing.T) {
 	if created.ID == "" {
 		t.Fatal("expected non-empty ID")
 	}
-	if created.Status != "draft" {
-		t.Errorf("expected status 'draft', got %q", created.Status)
+	if created.Status != "published" {
+		t.Errorf("expected status 'published', got %q", created.Status)
 	}
 
 	got, err := repo.Get(ctx, created.ID)

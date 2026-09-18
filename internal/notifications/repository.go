@@ -1,10 +1,9 @@
-// Package notifications implements PRD §13.15 Notifications. SendNotification
-// is called internally by cmd/worker event handlers (see PRD §19), not
-// exposed to mobile clients directly. ListNotifications is the other real
-// vertical slice; UpdatePreferences is a typed stub.
+// Package notifications implements PRD §13.15 Notifications — every RPC is
+// fully implemented. SendNotification is called internally by cmd/worker
+// event handlers (see PRD §19), not exposed to mobile clients directly.
 //
 // This scaffold persists notifications to Postgres only — actual push/email
-// delivery (FCM/APNs/SMTP) is a TODO(phase1): wire a sender interface here.
+// delivery (FCM/APNs/SMTP) is a TODO(phase1+): wire a sender interface here.
 package notifications
 
 import (
@@ -65,4 +64,18 @@ func (r *Repository) ListForUser(ctx context.Context, userID string, limit int) 
 		out = append(out, &n)
 	}
 	return out, rows.Err()
+}
+
+func (r *Repository) UpsertPreferences(ctx context.Context, userID string, pushEnabled, emailEnabled bool, quietStart, quietEnd string) error {
+	_, err := r.pool.Exec(ctx, `
+		INSERT INTO notification_preferences (user_id, push_enabled, email_enabled, quiet_hours_start, quiet_hours_end)
+		VALUES ($1, $2, $3, NULLIF($4,'')::time, NULLIF($5,'')::time)
+		ON CONFLICT (user_id) DO UPDATE SET
+			push_enabled = EXCLUDED.push_enabled,
+			email_enabled = EXCLUDED.email_enabled,
+			quiet_hours_start = EXCLUDED.quiet_hours_start,
+			quiet_hours_end = EXCLUDED.quiet_hours_end`,
+		userID, pushEnabled, emailEnabled, quietStart, quietEnd,
+	)
+	return err
 }

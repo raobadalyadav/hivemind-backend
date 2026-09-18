@@ -28,3 +28,17 @@ func (s *Service) GetProfile(ctx context.Context, userID string) (*Profile, erro
 	}
 	return s.repo.Get(ctx, userID)
 }
+
+func (s *Service) UpdateProfile(ctx context.Context, p *Profile) (*Profile, error) {
+	if p.UserID == "" {
+		return nil, ErrInvalidInput
+	}
+	return s.repo.Update(ctx, p)
+}
+
+func (s *Service) SetPrivacy(ctx context.Context, userID string, showInPreviews bool) (*Profile, error) {
+	if userID == "" {
+		return nil, ErrInvalidInput
+	}
+	return s.repo.SetPrivacy(ctx, userID, showInPreviews)
+}

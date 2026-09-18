@@ -9,9 +9,8 @@ import (
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
 )
 
-// Handler implements socialv1.NotificationServiceServer. SendNotification/
-// ListNotifications are real; UpdatePreferences inherits
-// socialv1.UnimplementedNotificationServiceServer — see PRD §13.15.
+// Handler implements socialv1.NotificationServiceServer — every RPC is fully
+// implemented (see PRD §13.15).
 type Handler struct {
 	socialv1.UnimplementedNotificationServiceServer
 	svc *Service
@@ -60,4 +59,16 @@ func (h *Handler) ListNotifications(ctx context.Context, req *socialv1.ListNotif
 		})
 	}
 	return &socialv1.ListNotificationsResponse{Notifications: out}, nil
+}
+
+func (h *Handler) UpdatePreferences(ctx context.Context, req *socialv1.UpdatePreferencesRequest) (*socialv1.UpdatePreferencesResponse, error) {
+	err := h.svc.UpdatePreferences(ctx, req.GetUserId(), req.GetPushEnabled(), req.GetEmailEnabled(),
+		req.GetQuietHoursStart(), req.GetQuietHoursEnd())
+	if err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to update preferences")
+	}
+	return &socialv1.UpdatePreferencesResponse{}, nil
 }

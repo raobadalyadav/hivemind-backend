@@ -30,3 +30,10 @@ func (s *Service) ListNotifications(ctx context.Context, userID string) ([]*Noti
 	}
 	return s.repo.ListForUser(ctx, userID, defaultPageSize)
 }
+
+func (s *Service) UpdatePreferences(ctx context.Context, userID string, pushEnabled, emailEnabled bool, quietStart, quietEnd string) error {
+	if userID == "" {
+		return ErrInvalidInput
+	}
+	return s.repo.UpsertPreferences(ctx, userID, pushEnabled, emailEnabled, quietStart, quietEnd)
+}

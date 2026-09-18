@@ -1,8 +1,7 @@
 // cmd/worker drains the outbox table to NATS (PRD §19: "Transaction → Outbox
 // row → Publisher → NATS JetStream → Worker → Push/Email/Analytics/Search")
-// and consumes domain events for downstream side effects. Handlers here are
-// deliberately minimal — real fan-out to push/email/analytics per PRD §19's
-// consumer table is a TODO(phase1+) per event type.
+// and consumes domain events for downstream side effects. See handlers.go
+// for what each event actually does.
 package main
 
 import (
@@ -14,26 +13,20 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nats-io/nats.go/jetstream"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/hivemind/backend/config"
+	"github.com/hivemind/backend/internal/bookings"
+	"github.com/hivemind/backend/internal/chat"
+	"github.com/hivemind/backend/internal/moderation"
+	"github.com/hivemind/backend/internal/notifications"
+	"github.com/hivemind/backend/internal/payments"
 	"github.com/hivemind/backend/pkg/eventbus"
+	"github.com/hivemind/backend/pkg/idempotency"
 	"github.com/hivemind/backend/pkg/observability"
 )
 
 const outboxPollInterval = 2 * time.Second
-
-// consumedEvents lists the PRD §19 domain events this worker handles.
-// Each currently only logs — TODO(phase1): wire real consumers (chat
-// membership, push, refunds, search invalidation, etc.) per the PRD table.
-var consumedEvents = []string{
-	"BOOKING_CONFIRMED",
-	"BOOKING_CANCELLED",
-	"PLAN_CANCELLED",
-	"PLAN_COMPLETED",
-	"USER_REPORTED",
-	"PAYMENT_CAPTURED",
-	"PAYOUT_PROCESSED",
-}
 
 func main() {
 	logger := observability.NewLogger()
@@ -49,16 +42,43 @@ func main() {
 	}
 	defer pool.Close()
 
+	rdb := redis.NewClient(&redis.Options{Addr: cfg.RedisAddr})
+	defer rdb.Close()
+
 	publisher, err := eventbus.Connect(cfg.NATSURL)
 	if err != nil {
 		logger.Error("connect nats", "error", err)
 		os.Exit(1)
 	}
 
-	for _, eventType := range consumedEvents {
-		et := eventType
+	// moderationSvc is needed transitively by chat.Service's ReportSubmitter
+	// interface, even though the worker never calls chat.ReportMessage
+	// itself — see internal/chat/service.go.
+	d := &deps{
+		chatSvc:          chat.NewService(chat.NewRepository(pool), moderation.NewService(moderation.NewRepository(pool))),
+		notificationsSvc: notifications.NewService(notifications.NewRepository(pool)),
+		paymentsSvc:      payments.NewService(payments.NewRepository(pool)),
+		bookingsSvc:      bookings.NewService(bookings.NewRepository(pool), idempotency.NewGuard(rdb)),
+		logger:           logger,
+	}
+
+	handlers := map[string]func(context.Context, []byte) error{
+		"BOOKING_CONFIRMED": d.handleBookingConfirmed,
+		"BOOKING_CANCELLED": d.handleBookingCancelled,
+		"PLAN_CANCELLED":    d.handlePlanCancelled,
+		"PLAN_COMPLETED":    d.logOnly("PLAN_COMPLETED"),
+		"USER_REPORTED":     d.logOnly("USER_REPORTED"),
+		"PAYMENT_CAPTURED":  d.logOnly("PAYMENT_CAPTURED"),
+		"PAYOUT_PROCESSED":  d.logOnly("PAYOUT_PROCESSED"),
+	}
+
+	for eventType, handle := range handlers {
+		et, h := eventType, handle
 		err := publisher.Consume(ctx, "worker-"+et, et, func(msg jetstream.Msg) error {
-			logger.Info("event received", "type", et, "data", string(msg.Data()))
+			if err := h(ctx, msg.Data()); err != nil {
+				logger.Error("event handler failed", "type", et, "error", err)
+				return err
+			}
 			return nil
 		})
 		if err != nil {

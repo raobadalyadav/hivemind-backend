@@ -9,9 +9,8 @@ import (
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
 )
 
-// Handler implements socialv1.PaymentServiceServer. CreateOrder is real;
-// GetPayment/RefundPayment inherit
-// socialv1.UnimplementedPaymentServiceServer — see PRD §13.13.
+// Handler implements socialv1.PaymentServiceServer — every RPC is fully
+// implemented (see PRD §13.13).
 type Handler struct {
 	socialv1.UnimplementedPaymentServiceServer
 	svc *Service
@@ -40,5 +39,46 @@ func (h *Handler) CreateOrder(ctx context.Context, req *socialv1.CreateOrderRequ
 		Amount:         &socialv1.Money{MinorUnits: created.AmountMinor, Currency: created.Currency},
 		GatewayOrderId: created.GatewayOrderID,
 		Status:         created.Status,
+	}, nil
+}
+
+func (h *Handler) GetPayment(ctx context.Context, req *socialv1.GetPaymentRequest) (*socialv1.Payment, error) {
+	p, err := h.svc.GetPayment(ctx, req.GetId())
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "payment not found")
+	}
+	return &socialv1.Payment{
+		Id:      p.ID,
+		OrderId: p.OrderID,
+		Amount:  &socialv1.Money{MinorUnits: p.AmountMinor, Currency: p.Currency},
+		Status:  p.Status,
+	}, nil
+}
+
+func (h *Handler) RefundPayment(ctx context.Context, req *socialv1.RefundPaymentRequest) (*socialv1.Refund, error) {
+	var amount int64
+	var currency string
+	if req.GetAmount() != nil {
+		amount = req.GetAmount().GetMinorUnits()
+		currency = req.GetAmount().GetCurrency()
+	}
+	r, err := h.svc.RefundPayment(ctx, req.GetPaymentId(), amount, req.GetReason())
+	if err != nil {
+		switch err {
+		case ErrInvalidInput:
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		case ErrPaymentNotFound:
+			return nil, status.Error(codes.NotFound, err.Error())
+		case ErrPaymentNotRefundable:
+			return nil, status.Error(codes.FailedPrecondition, err.Error())
+		default:
+			return nil, status.Error(codes.Internal, "failed to refund payment")
+		}
+	}
+	return &socialv1.Refund{
+		Id:        r.ID,
+		PaymentId: r.PaymentID,
+		Amount:    &socialv1.Money{MinorUnits: r.AmountMinor, Currency: currency},
+		Status:    r.Status,
 	}, nil
 }

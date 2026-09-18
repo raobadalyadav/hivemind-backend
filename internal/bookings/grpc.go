@@ -10,10 +10,8 @@ import (
 	"github.com/hivemind/backend/pkg/idempotency"
 )
 
-// Handler implements socialv1.BookingServiceServer. CreateBooking/GetBooking
-// are real; QuoteBooking/CancelBooking/CheckIn inherit
-// socialv1.UnimplementedBookingServiceServer's codes.Unimplemented response —
-// see proto/social/v1/booking.proto and PRD §13.6/§33.
+// Handler implements socialv1.BookingServiceServer — every RPC is fully
+// implemented (see PRD §13.6/§33).
 type Handler struct {
 	socialv1.UnimplementedBookingServiceServer
 	svc *Service
@@ -37,6 +35,10 @@ func (h *Handler) CreateBooking(ctx context.Context, req *socialv1.CreateBooking
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	case err == ErrPlanFull:
 		return nil, status.Error(codes.FailedPrecondition, "plan is full")
+	case err == ErrAlreadyBooked:
+		return nil, status.Error(codes.AlreadyExists, err.Error())
+	case err == ErrPlanNotFound:
+		return nil, status.Error(codes.NotFound, "plan not found or not published")
 	case err == idempotency.ErrDuplicateRequest:
 		return nil, status.Error(codes.AlreadyExists, "booking already requested")
 	default:
@@ -50,6 +52,44 @@ func (h *Handler) GetBooking(ctx context.Context, req *socialv1.GetBookingReques
 		return nil, status.Error(codes.NotFound, "booking not found")
 	}
 	return toProto(b), nil
+}
+
+func (h *Handler) QuoteBooking(ctx context.Context, req *socialv1.QuoteBookingRequest) (*socialv1.BookingQuote, error) {
+	q, err := h.svc.QuoteBooking(ctx, req.GetPlanId(), req.GetUserId())
+	if err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.NotFound, "plan not found")
+	}
+	return &socialv1.BookingQuote{
+		Price:      &socialv1.Money{MinorUnits: q.PriceMinor, Currency: q.Currency},
+		ServiceFee: &socialv1.Money{MinorUnits: q.ServiceFeeMinor, Currency: q.Currency},
+		Total:      &socialv1.Money{MinorUnits: q.TotalMinor, Currency: q.Currency},
+		Eligible:   q.Eligible,
+	}, nil
+}
+
+func (h *Handler) CancelBooking(ctx context.Context, req *socialv1.CancelBookingRequest) (*socialv1.Booking, error) {
+	b, err := h.svc.CancelBooking(ctx, req.GetId(), req.GetReason())
+	if err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.NotFound, "booking not found or not cancellable")
+	}
+	return toProto(b), nil
+}
+
+func (h *Handler) CheckIn(ctx context.Context, req *socialv1.CheckInRequest) (*socialv1.CheckInResult, error) {
+	b, err := h.svc.CheckIn(ctx, req.GetBookingId(), req.GetCheckedInBy())
+	if err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.NotFound, "booking not found or not checkable-in")
+	}
+	return &socialv1.CheckInResult{Booking: toProto(b)}, nil
 }
 
 func toProto(b *Booking) *socialv1.Booking {

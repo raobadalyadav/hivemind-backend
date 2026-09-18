@@ -75,19 +75,26 @@ func main() {
 	)
 	srv := grpc.NewServer(interceptors)
 
+	// Construction order matters: bookingsSvc and moderationSvc are built
+	// first so they can be injected into plans/chat via the
+	// BookingCreator/BookingCanceller/ReportSubmitter interfaces those
+	// packages declare (see internal/plans/service.go, internal/chat/service.go).
+	bookingsSvc := bookings.NewService(bookings.NewRepository(pool), guard)
+	moderationSvc := moderation.NewService(moderation.NewRepository(pool))
+
 	socialv1.RegisterAuthServiceServer(srv, auth.NewHandler(auth.NewService(auth.NewRepository(pool), issuer)))
 	socialv1.RegisterUserServiceServer(srv, users.NewHandler(users.NewService(users.NewRepository(pool))))
 	socialv1.RegisterProfileServiceServer(srv, profiles.NewHandler(profiles.NewService(profiles.NewRepository(pool))))
 	socialv1.RegisterDiscoveryServiceServer(srv, discovery.NewHandler(discovery.NewService(discovery.NewRepository(pool))))
-	socialv1.RegisterPlanServiceServer(srv, plans.NewHandler(plans.NewService(plans.NewRepository(pool))))
-	socialv1.RegisterBookingServiceServer(srv, bookings.NewHandler(bookings.NewService(bookings.NewRepository(pool), guard)))
+	socialv1.RegisterPlanServiceServer(srv, plans.NewHandler(plans.NewService(plans.NewRepository(pool), bookingsSvc, bookingsSvc)))
+	socialv1.RegisterBookingServiceServer(srv, bookings.NewHandler(bookingsSvc))
 	socialv1.RegisterPaymentServiceServer(srv, payments.NewHandler(payments.NewService(payments.NewRepository(pool))))
 	socialv1.RegisterSubscriptionServiceServer(srv, subscriptions.NewHandler(subscriptions.NewService(subscriptions.NewRepository(pool))))
 	socialv1.RegisterCommunityServiceServer(srv, communities.NewHandler(communities.NewService(communities.NewRepository(pool))))
 	socialv1.RegisterConnectionServiceServer(srv, connections.NewHandler(connections.NewService(connections.NewRepository(pool))))
-	socialv1.RegisterChatServiceServer(srv, chat.NewHandler(chat.NewService(chat.NewRepository(pool))))
+	socialv1.RegisterChatServiceServer(srv, chat.NewHandler(chat.NewService(chat.NewRepository(pool), moderationSvc)))
 	socialv1.RegisterSocialServiceServer(srv, social.NewHandler(social.NewService(social.NewRepository(pool))))
-	socialv1.RegisterModerationServiceServer(srv, moderation.NewHandler(moderation.NewService(moderation.NewRepository(pool))))
+	socialv1.RegisterModerationServiceServer(srv, moderation.NewHandler(moderationSvc))
 	socialv1.RegisterNotificationServiceServer(srv, notifications.NewHandler(notifications.NewService(notifications.NewRepository(pool))))
 	socialv1.RegisterSearchServiceServer(srv, search.NewHandler(search.NewService(search.NewRepository(pool))))
 	socialv1.RegisterRecommendationServiceServer(srv, recommendation.NewHandler(recommendation.NewService(recommendation.NewRepository(pool))))

@@ -23,3 +23,10 @@ func (s *Service) GetNearbyPlans(ctx context.Context, lat, lng, radiusKM float64
 	}
 	return s.repo.NearbyPlanIDs(ctx, lat, lng, radiusKM, defaultPageSize)
 }
+
+func (s *Service) GetHomeFeed(ctx context.Context, userID, section string) ([]string, error) {
+	if userID == "" {
+		return nil, ErrInvalidInput
+	}
+	return s.repo.HomeFeedPlanIDs(ctx, userID, section, defaultPageSize)
+}
