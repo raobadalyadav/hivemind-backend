@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "google/protobuf/timestamp.proto";
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// PromotionService — PRD §13.11 "promo tools" / promoted listings. A
+// PromotedListing is its own paid item (own gateway order/payment fields),
+// kept separate from PaymentService's orders so the booking-payment path
+// stays untouched. Capture confirmation arrives via the same Cashfree
+// webhook handler as PaymentService (see cmd/api/webhook.go), not an RPC.
+service PromotionService {
+  rpc PurchasePromotion(PurchasePromotionRequest) returns (PromotedListing);
+  rpc ListMyPromotedListings(ListMyPromotedListingsRequest) returns (ListMyPromotedListingsResponse);
+}
+
+message PromotedListing {
+  string id = 1;
+  string plan_id = 2;
+  Money amount = 3;
+  string status = 4; // pending_payment | paid | failed
+  google.protobuf.Timestamp starts_at = 5;
+  google.protobuf.Timestamp ends_at = 6;
+  string payment_session_id = 7;
+}
+
+message PurchasePromotionRequest {
+  string plan_id = 1;
+  int32 duration_days = 2;
+  string customer_phone = 3;
+}
+
+message ListMyPromotedListingsRequest {
+  PageRequest page = 1;
+}
+
+message ListMyPromotedListingsResponse {
+  repeated PromotedListing listings = 1;
+  PageResponse page = 2;
+}

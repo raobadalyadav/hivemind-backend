@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PaymentService_CreateOrder_FullMethodName   = "/social.v1.PaymentService/CreateOrder"
-	PaymentService_GetPayment_FullMethodName    = "/social.v1.PaymentService/GetPayment"
-	PaymentService_RefundPayment_FullMethodName = "/social.v1.PaymentService/RefundPayment"
+	PaymentService_CreateOrder_FullMethodName        = "/social.v1.PaymentService/CreateOrder"
+	PaymentService_GetPayment_FullMethodName         = "/social.v1.PaymentService/GetPayment"
+	PaymentService_RefundPayment_FullMethodName      = "/social.v1.PaymentService/RefundPayment"
+	PaymentService_GetMyCreditBalance_FullMethodName = "/social.v1.PaymentService/GetMyCreditBalance"
 )
 
 // PaymentServiceClient is the client API for PaymentService service.
@@ -37,6 +38,7 @@ type PaymentServiceClient interface {
 	CreateOrder(ctx context.Context, in *CreateOrderRequest, opts ...grpc.CallOption) (*Order, error)
 	GetPayment(ctx context.Context, in *GetPaymentRequest, opts ...grpc.CallOption) (*Payment, error)
 	RefundPayment(ctx context.Context, in *RefundPaymentRequest, opts ...grpc.CallOption) (*Refund, error)
+	GetMyCreditBalance(ctx context.Context, in *GetMyCreditBalanceRequest, opts ...grpc.CallOption) (*CreditBalance, error)
 }
 
 type paymentServiceClient struct {
@@ -77,6 +79,16 @@ func (c *paymentServiceClient) RefundPayment(ctx context.Context, in *RefundPaym
 	return out, nil
 }
 
+func (c *paymentServiceClient) GetMyCreditBalance(ctx context.Context, in *GetMyCreditBalanceRequest, opts ...grpc.CallOption) (*CreditBalance, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreditBalance)
+	err := c.cc.Invoke(ctx, PaymentService_GetMyCreditBalance_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PaymentServiceServer is the server API for PaymentService service.
 // All implementations must embed UnimplementedPaymentServiceServer
 // for forward compatibility.
@@ -90,6 +102,7 @@ type PaymentServiceServer interface {
 	CreateOrder(context.Context, *CreateOrderRequest) (*Order, error)
 	GetPayment(context.Context, *GetPaymentRequest) (*Payment, error)
 	RefundPayment(context.Context, *RefundPaymentRequest) (*Refund, error)
+	GetMyCreditBalance(context.Context, *GetMyCreditBalanceRequest) (*CreditBalance, error)
 	mustEmbedUnimplementedPaymentServiceServer()
 }
 
@@ -108,6 +121,9 @@ func (UnimplementedPaymentServiceServer) GetPayment(context.Context, *GetPayment
 }
 func (UnimplementedPaymentServiceServer) RefundPayment(context.Context, *RefundPaymentRequest) (*Refund, error) {
 	return nil, status.Error(codes.Unimplemented, "method RefundPayment not implemented")
+}
+func (UnimplementedPaymentServiceServer) GetMyCreditBalance(context.Context, *GetMyCreditBalanceRequest) (*CreditBalance, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetMyCreditBalance not implemented")
 }
 func (UnimplementedPaymentServiceServer) mustEmbedUnimplementedPaymentServiceServer() {}
 func (UnimplementedPaymentServiceServer) testEmbeddedByValue()                        {}
@@ -184,6 +200,24 @@ func _PaymentService_RefundPayment_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PaymentService_GetMyCreditBalance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMyCreditBalanceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServiceServer).GetMyCreditBalance(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PaymentService_GetMyCreditBalance_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServiceServer).GetMyCreditBalance(ctx, req.(*GetMyCreditBalanceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PaymentService_ServiceDesc is the grpc.ServiceDesc for PaymentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -202,6 +236,10 @@ var PaymentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RefundPayment",
 			Handler:    _PaymentService_RefundPayment_Handler,
+		},
+		{
+			MethodName: "GetMyCreditBalance",
+			Handler:    _PaymentService_GetMyCreditBalance_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

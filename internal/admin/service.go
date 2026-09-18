@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"errors"
+	"time"
 )
 
 var ErrInvalidInput = errors.New("admin: invalid input")
@@ -41,4 +42,43 @@ func (s *Service) OverrideBookingStatus(ctx context.Context, bookingID, newStatu
 
 func (s *Service) GetDashboardStats(ctx context.Context, cityID string) (*DashboardStats, error) {
 	return s.repo.GetDashboardStats(ctx, cityID)
+}
+
+func (s *Service) ApproveHost(ctx context.Context, userID, actorID string) error {
+	if userID == "" {
+		return ErrInvalidInput
+	}
+	return s.repo.ApproveHost(ctx, userID, actorID)
+}
+
+func (s *Service) MarkPayoutProcessed(ctx context.Context, payoutID, actorID string) error {
+	if payoutID == "" {
+		return ErrInvalidInput
+	}
+	return s.repo.MarkPayoutProcessed(ctx, payoutID, actorID)
+}
+
+func (s *Service) AdminGrantCredit(ctx context.Context, userID string, amountMinor int64, reason, actorID string) error {
+	if userID == "" || amountMinor <= 0 {
+		return ErrInvalidInput
+	}
+	return s.repo.GrantCredit(ctx, userID, amountMinor, reason, actorID)
+}
+
+func (s *Service) CreateCoupon(ctx context.Context, code, discountType string, discountValue int64, maxUses int32, expiresAt *time.Time) (*Coupon, error) {
+	if code == "" || discountValue <= 0 {
+		return nil, ErrInvalidInput
+	}
+	return s.repo.CreateCoupon(ctx, code, discountType, discountValue, maxUses, expiresAt)
+}
+
+func (s *Service) ListCoupons(ctx context.Context) ([]*Coupon, error) {
+	return s.repo.ListCoupons(ctx, defaultPageSize)
+}
+
+func (s *Service) DeactivateCoupon(ctx context.Context, id string) error {
+	if id == "" {
+		return ErrInvalidInput
+	}
+	return s.repo.DeactivateCoupon(ctx, id)
 }

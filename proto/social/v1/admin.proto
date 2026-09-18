@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package social.v1;
 
+import "google/protobuf/timestamp.proto";
 import "social/v1/common.proto";
 
 option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
@@ -15,6 +16,15 @@ service AdminService {
   rpc ListReports(ListReportsRequest) returns (ListReportsResponse);
   rpc OverrideBookingStatus(OverrideBookingStatusRequest) returns (OverrideBookingStatusResponse);
   rpc GetDashboardStats(GetDashboardStatsRequest) returns (GetDashboardStatsResponse);
+
+  // Phase 3 Marketplace admin actions — same RBAC + audit_logs discipline as
+  // SuspendUser/OverrideBookingStatus above.
+  rpc ApproveHost(ApproveHostRequest) returns (ApproveHostResponse);
+  rpc MarkPayoutProcessed(MarkPayoutProcessedRequest) returns (MarkPayoutProcessedResponse);
+  rpc AdminGrantCredit(AdminGrantCreditRequest) returns (AdminGrantCreditResponse);
+  rpc CreateCoupon(CreateCouponRequest) returns (Coupon);
+  rpc ListCoupons(ListCouponsRequest) returns (ListCouponsResponse);
+  rpc DeactivateCoupon(DeactivateCouponRequest) returns (DeactivateCouponResponse);
 }
 
 message ListUsersRequest {
@@ -64,3 +74,56 @@ message GetDashboardStatsResponse {
   int64 bookings_today = 3;
   int64 gmv_minor_units = 4;
 }
+
+message ApproveHostRequest {
+  string user_id = 1;
+}
+
+message ApproveHostResponse {}
+
+message MarkPayoutProcessedRequest {
+  string payout_id = 1;
+}
+
+message MarkPayoutProcessedResponse {}
+
+message AdminGrantCreditRequest {
+  string user_id = 1;
+  int64 amount_minor = 2;
+  string reason = 3;
+}
+
+message AdminGrantCreditResponse {}
+
+message CreateCouponRequest {
+  string code = 1;
+  string discount_type = 2; // percent | fixed
+  int64 discount_value = 3;
+  int32 max_uses = 4; // 0 = unlimited
+  google.protobuf.Timestamp expires_at = 5;
+}
+
+message Coupon {
+  string id = 1;
+  string code = 2;
+  string discount_type = 3;
+  int64 discount_value = 4;
+  int32 max_uses = 5;
+  int32 uses_count = 6;
+  bool active = 7;
+}
+
+message ListCouponsRequest {
+  PageRequest page = 1;
+}
+
+message ListCouponsResponse {
+  repeated Coupon coupons = 1;
+  PageResponse page = 2;
+}
+
+message DeactivateCouponRequest {
+  string id = 1;
+}
+
+message DeactivateCouponResponse {}

@@ -251,6 +251,12 @@ type CreateOrderRequest struct {
 	// number; the user model here (OAuth-only, no phone field) doesn't
 	// collect one at signup, so the client supplies it at checkout time.
 	CustomerPhone string `protobuf:"bytes,3,opt,name=customer_phone,json=customerPhone,proto3" json:"customer_phone,omitempty"`
+	// promo_code: optional, validated and applied as a discount server-side —
+	// see internal/payments.Service.CreateOrder.
+	PromoCode string `protobuf:"bytes,4,opt,name=promo_code,json=promoCode,proto3" json:"promo_code,omitempty"`
+	// use_credits: explicit opt-in — credits are never spent silently, same
+	// as refunds/cancellations never happening silently elsewhere in this API.
+	UseCredits    bool `protobuf:"varint,5,opt,name=use_credits,json=useCredits,proto3" json:"use_credits,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -304,6 +310,20 @@ func (x *CreateOrderRequest) GetCustomerPhone() string {
 		return x.CustomerPhone
 	}
 	return ""
+}
+
+func (x *CreateOrderRequest) GetPromoCode() string {
+	if x != nil {
+		return x.PromoCode
+	}
+	return ""
+}
+
+func (x *CreateOrderRequest) GetUseCredits() bool {
+	if x != nil {
+		return x.UseCredits
+	}
+	return false
 }
 
 type GetPaymentRequest struct {
@@ -410,6 +430,86 @@ func (x *RefundPaymentRequest) GetReason() string {
 	return ""
 }
 
+type GetMyCreditBalanceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetMyCreditBalanceRequest) Reset() {
+	*x = GetMyCreditBalanceRequest{}
+	mi := &file_social_v1_payment_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetMyCreditBalanceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMyCreditBalanceRequest) ProtoMessage() {}
+
+func (x *GetMyCreditBalanceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_payment_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMyCreditBalanceRequest.ProtoReflect.Descriptor instead.
+func (*GetMyCreditBalanceRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_payment_proto_rawDescGZIP(), []int{6}
+}
+
+type CreditBalance struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BalanceMinor  int64                  `protobuf:"varint,1,opt,name=balance_minor,json=balanceMinor,proto3" json:"balance_minor,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreditBalance) Reset() {
+	*x = CreditBalance{}
+	mi := &file_social_v1_payment_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreditBalance) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreditBalance) ProtoMessage() {}
+
+func (x *CreditBalance) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_payment_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreditBalance.ProtoReflect.Descriptor instead.
+func (*CreditBalance) Descriptor() ([]byte, []int) {
+	return file_social_v1_payment_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *CreditBalance) GetBalanceMinor() int64 {
+	if x != nil {
+		return x.BalanceMinor
+	}
+	return 0
+}
+
 var File_social_v1_payment_proto protoreflect.FileDescriptor
 
 const file_social_v1_payment_proto_rawDesc = "" +
@@ -433,24 +533,32 @@ const file_social_v1_payment_proto_rawDesc = "" +
 	"\n" +
 	"payment_id\x18\x02 \x01(\tR\tpaymentId\x12(\n" +
 	"\x06amount\x18\x03 \x01(\v2\x10.social.v1.MoneyR\x06amount\x12\x16\n" +
-	"\x06status\x18\x04 \x01(\tR\x06status\"\x84\x01\n" +
+	"\x06status\x18\x04 \x01(\tR\x06status\"\xc4\x01\n" +
 	"\x12CreateOrderRequest\x12\x1d\n" +
 	"\n" +
 	"booking_id\x18\x01 \x01(\tR\tbookingId\x12(\n" +
 	"\x06amount\x18\x02 \x01(\v2\x10.social.v1.MoneyR\x06amount\x12%\n" +
-	"\x0ecustomer_phone\x18\x03 \x01(\tR\rcustomerPhone\"#\n" +
+	"\x0ecustomer_phone\x18\x03 \x01(\tR\rcustomerPhone\x12\x1d\n" +
+	"\n" +
+	"promo_code\x18\x04 \x01(\tR\tpromoCode\x12\x1f\n" +
+	"\vuse_credits\x18\x05 \x01(\bR\n" +
+	"useCredits\"#\n" +
 	"\x11GetPaymentRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"w\n" +
 	"\x14RefundPaymentRequest\x12\x1d\n" +
 	"\n" +
 	"payment_id\x18\x01 \x01(\tR\tpaymentId\x12(\n" +
 	"\x06amount\x18\x02 \x01(\v2\x10.social.v1.MoneyR\x06amount\x12\x16\n" +
-	"\x06reason\x18\x03 \x01(\tR\x06reason2\xd5\x01\n" +
+	"\x06reason\x18\x03 \x01(\tR\x06reason\"\x1b\n" +
+	"\x19GetMyCreditBalanceRequest\"4\n" +
+	"\rCreditBalance\x12#\n" +
+	"\rbalance_minor\x18\x01 \x01(\x03R\fbalanceMinor2\xab\x02\n" +
 	"\x0ePaymentService\x12>\n" +
 	"\vCreateOrder\x12\x1d.social.v1.CreateOrderRequest\x1a\x10.social.v1.Order\x12>\n" +
 	"\n" +
 	"GetPayment\x12\x1c.social.v1.GetPaymentRequest\x1a\x12.social.v1.Payment\x12C\n" +
-	"\rRefundPayment\x12\x1f.social.v1.RefundPaymentRequest\x1a\x11.social.v1.RefundB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
+	"\rRefundPayment\x12\x1f.social.v1.RefundPaymentRequest\x1a\x11.social.v1.Refund\x12T\n" +
+	"\x12GetMyCreditBalance\x12$.social.v1.GetMyCreditBalanceRequest\x1a\x18.social.v1.CreditBalanceB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
 var (
 	file_social_v1_payment_proto_rawDescOnce sync.Once
@@ -464,30 +572,34 @@ func file_social_v1_payment_proto_rawDescGZIP() []byte {
 	return file_social_v1_payment_proto_rawDescData
 }
 
-var file_social_v1_payment_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_social_v1_payment_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_social_v1_payment_proto_goTypes = []any{
-	(*Order)(nil),                // 0: social.v1.Order
-	(*Payment)(nil),              // 1: social.v1.Payment
-	(*Refund)(nil),               // 2: social.v1.Refund
-	(*CreateOrderRequest)(nil),   // 3: social.v1.CreateOrderRequest
-	(*GetPaymentRequest)(nil),    // 4: social.v1.GetPaymentRequest
-	(*RefundPaymentRequest)(nil), // 5: social.v1.RefundPaymentRequest
-	(*Money)(nil),                // 6: social.v1.Money
+	(*Order)(nil),                     // 0: social.v1.Order
+	(*Payment)(nil),                   // 1: social.v1.Payment
+	(*Refund)(nil),                    // 2: social.v1.Refund
+	(*CreateOrderRequest)(nil),        // 3: social.v1.CreateOrderRequest
+	(*GetPaymentRequest)(nil),         // 4: social.v1.GetPaymentRequest
+	(*RefundPaymentRequest)(nil),      // 5: social.v1.RefundPaymentRequest
+	(*GetMyCreditBalanceRequest)(nil), // 6: social.v1.GetMyCreditBalanceRequest
+	(*CreditBalance)(nil),             // 7: social.v1.CreditBalance
+	(*Money)(nil),                     // 8: social.v1.Money
 }
 var file_social_v1_payment_proto_depIdxs = []int32{
-	6, // 0: social.v1.Order.amount:type_name -> social.v1.Money
-	6, // 1: social.v1.Payment.amount:type_name -> social.v1.Money
-	6, // 2: social.v1.Refund.amount:type_name -> social.v1.Money
-	6, // 3: social.v1.CreateOrderRequest.amount:type_name -> social.v1.Money
-	6, // 4: social.v1.RefundPaymentRequest.amount:type_name -> social.v1.Money
+	8, // 0: social.v1.Order.amount:type_name -> social.v1.Money
+	8, // 1: social.v1.Payment.amount:type_name -> social.v1.Money
+	8, // 2: social.v1.Refund.amount:type_name -> social.v1.Money
+	8, // 3: social.v1.CreateOrderRequest.amount:type_name -> social.v1.Money
+	8, // 4: social.v1.RefundPaymentRequest.amount:type_name -> social.v1.Money
 	3, // 5: social.v1.PaymentService.CreateOrder:input_type -> social.v1.CreateOrderRequest
 	4, // 6: social.v1.PaymentService.GetPayment:input_type -> social.v1.GetPaymentRequest
 	5, // 7: social.v1.PaymentService.RefundPayment:input_type -> social.v1.RefundPaymentRequest
-	0, // 8: social.v1.PaymentService.CreateOrder:output_type -> social.v1.Order
-	1, // 9: social.v1.PaymentService.GetPayment:output_type -> social.v1.Payment
-	2, // 10: social.v1.PaymentService.RefundPayment:output_type -> social.v1.Refund
-	8, // [8:11] is the sub-list for method output_type
-	5, // [5:8] is the sub-list for method input_type
+	6, // 8: social.v1.PaymentService.GetMyCreditBalance:input_type -> social.v1.GetMyCreditBalanceRequest
+	0, // 9: social.v1.PaymentService.CreateOrder:output_type -> social.v1.Order
+	1, // 10: social.v1.PaymentService.GetPayment:output_type -> social.v1.Payment
+	2, // 11: social.v1.PaymentService.RefundPayment:output_type -> social.v1.Refund
+	7, // 12: social.v1.PaymentService.GetMyCreditBalance:output_type -> social.v1.CreditBalance
+	9, // [9:13] is the sub-list for method output_type
+	5, // [5:9] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name
 	5, // [5:5] is the sub-list for extension extendee
 	0, // [0:5] is the sub-list for field type_name
@@ -505,7 +617,7 @@ func file_social_v1_payment_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_payment_proto_rawDesc), len(file_social_v1_payment_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// VenueService — PRD §13.12 Venue Marketplace. owner_host_id always comes
+// from the authenticated caller's JWT, never a request field.
+service VenueService {
+  rpc CreateVenue(CreateVenueRequest) returns (Venue);
+  rpc GetVenue(GetVenueRequest) returns (Venue);
+  rpc ListMyVenues(ListMyVenuesRequest) returns (ListMyVenuesResponse);
+  rpc UpdateVenue(UpdateVenueRequest) returns (Venue);
+  rpc GetVenueDashboard(GetVenueDashboardRequest) returns (VenueDashboard);
+}
+
+message Venue {
+  string id = 1;
+  string owner_host_id = 2;
+  string city_id = 3;
+  string name = 4;
+  string address = 5;
+  GeoPoint location = 6;
+  int32 capacity = 7;
+}
+
+message CreateVenueRequest {
+  string city_id = 1;
+  string name = 2;
+  string address = 3;
+  GeoPoint location = 4;
+  int32 capacity = 5;
+}
+
+message GetVenueRequest {
+  string id = 1;
+}
+
+message ListMyVenuesRequest {
+  PageRequest page = 1;
+}
+
+message ListMyVenuesResponse {
+  repeated Venue venues = 1;
+  PageResponse page = 2;
+}
+
+message UpdateVenueRequest {
+  string id = 1;
+  string name = 2;
+  string address = 3;
+  int32 capacity = 4;
+}
+
+message GetVenueDashboardRequest {
+  string venue_id = 1;
+}
+
+message VenueDashboard {
+  int64 total_bookings = 1;
+  int64 total_attendees = 2;
+  Money gross_revenue = 3;
+  double avg_rating = 4;
+}

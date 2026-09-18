@@ -24,6 +24,12 @@ const (
 	AdminService_ListReports_FullMethodName           = "/social.v1.AdminService/ListReports"
 	AdminService_OverrideBookingStatus_FullMethodName = "/social.v1.AdminService/OverrideBookingStatus"
 	AdminService_GetDashboardStats_FullMethodName     = "/social.v1.AdminService/GetDashboardStats"
+	AdminService_ApproveHost_FullMethodName           = "/social.v1.AdminService/ApproveHost"
+	AdminService_MarkPayoutProcessed_FullMethodName   = "/social.v1.AdminService/MarkPayoutProcessed"
+	AdminService_AdminGrantCredit_FullMethodName      = "/social.v1.AdminService/AdminGrantCredit"
+	AdminService_CreateCoupon_FullMethodName          = "/social.v1.AdminService/CreateCoupon"
+	AdminService_ListCoupons_FullMethodName           = "/social.v1.AdminService/ListCoupons"
+	AdminService_DeactivateCoupon_FullMethodName      = "/social.v1.AdminService/DeactivateCoupon"
 )
 
 // AdminServiceClient is the client API for AdminService service.
@@ -39,6 +45,14 @@ type AdminServiceClient interface {
 	ListReports(ctx context.Context, in *ListReportsRequest, opts ...grpc.CallOption) (*ListReportsResponse, error)
 	OverrideBookingStatus(ctx context.Context, in *OverrideBookingStatusRequest, opts ...grpc.CallOption) (*OverrideBookingStatusResponse, error)
 	GetDashboardStats(ctx context.Context, in *GetDashboardStatsRequest, opts ...grpc.CallOption) (*GetDashboardStatsResponse, error)
+	// Phase 3 Marketplace admin actions — same RBAC + audit_logs discipline as
+	// SuspendUser/OverrideBookingStatus above.
+	ApproveHost(ctx context.Context, in *ApproveHostRequest, opts ...grpc.CallOption) (*ApproveHostResponse, error)
+	MarkPayoutProcessed(ctx context.Context, in *MarkPayoutProcessedRequest, opts ...grpc.CallOption) (*MarkPayoutProcessedResponse, error)
+	AdminGrantCredit(ctx context.Context, in *AdminGrantCreditRequest, opts ...grpc.CallOption) (*AdminGrantCreditResponse, error)
+	CreateCoupon(ctx context.Context, in *CreateCouponRequest, opts ...grpc.CallOption) (*Coupon, error)
+	ListCoupons(ctx context.Context, in *ListCouponsRequest, opts ...grpc.CallOption) (*ListCouponsResponse, error)
+	DeactivateCoupon(ctx context.Context, in *DeactivateCouponRequest, opts ...grpc.CallOption) (*DeactivateCouponResponse, error)
 }
 
 type adminServiceClient struct {
@@ -99,6 +113,66 @@ func (c *adminServiceClient) GetDashboardStats(ctx context.Context, in *GetDashb
 	return out, nil
 }
 
+func (c *adminServiceClient) ApproveHost(ctx context.Context, in *ApproveHostRequest, opts ...grpc.CallOption) (*ApproveHostResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApproveHostResponse)
+	err := c.cc.Invoke(ctx, AdminService_ApproveHost_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) MarkPayoutProcessed(ctx context.Context, in *MarkPayoutProcessedRequest, opts ...grpc.CallOption) (*MarkPayoutProcessedResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MarkPayoutProcessedResponse)
+	err := c.cc.Invoke(ctx, AdminService_MarkPayoutProcessed_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) AdminGrantCredit(ctx context.Context, in *AdminGrantCreditRequest, opts ...grpc.CallOption) (*AdminGrantCreditResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AdminGrantCreditResponse)
+	err := c.cc.Invoke(ctx, AdminService_AdminGrantCredit_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) CreateCoupon(ctx context.Context, in *CreateCouponRequest, opts ...grpc.CallOption) (*Coupon, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Coupon)
+	err := c.cc.Invoke(ctx, AdminService_CreateCoupon_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) ListCoupons(ctx context.Context, in *ListCouponsRequest, opts ...grpc.CallOption) (*ListCouponsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListCouponsResponse)
+	err := c.cc.Invoke(ctx, AdminService_ListCoupons_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) DeactivateCoupon(ctx context.Context, in *DeactivateCouponRequest, opts ...grpc.CallOption) (*DeactivateCouponResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeactivateCouponResponse)
+	err := c.cc.Invoke(ctx, AdminService_DeactivateCoupon_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AdminServiceServer is the server API for AdminService service.
 // All implementations must embed UnimplementedAdminServiceServer
 // for forward compatibility.
@@ -112,6 +186,14 @@ type AdminServiceServer interface {
 	ListReports(context.Context, *ListReportsRequest) (*ListReportsResponse, error)
 	OverrideBookingStatus(context.Context, *OverrideBookingStatusRequest) (*OverrideBookingStatusResponse, error)
 	GetDashboardStats(context.Context, *GetDashboardStatsRequest) (*GetDashboardStatsResponse, error)
+	// Phase 3 Marketplace admin actions — same RBAC + audit_logs discipline as
+	// SuspendUser/OverrideBookingStatus above.
+	ApproveHost(context.Context, *ApproveHostRequest) (*ApproveHostResponse, error)
+	MarkPayoutProcessed(context.Context, *MarkPayoutProcessedRequest) (*MarkPayoutProcessedResponse, error)
+	AdminGrantCredit(context.Context, *AdminGrantCreditRequest) (*AdminGrantCreditResponse, error)
+	CreateCoupon(context.Context, *CreateCouponRequest) (*Coupon, error)
+	ListCoupons(context.Context, *ListCouponsRequest) (*ListCouponsResponse, error)
+	DeactivateCoupon(context.Context, *DeactivateCouponRequest) (*DeactivateCouponResponse, error)
 	mustEmbedUnimplementedAdminServiceServer()
 }
 
@@ -136,6 +218,24 @@ func (UnimplementedAdminServiceServer) OverrideBookingStatus(context.Context, *O
 }
 func (UnimplementedAdminServiceServer) GetDashboardStats(context.Context, *GetDashboardStatsRequest) (*GetDashboardStatsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetDashboardStats not implemented")
+}
+func (UnimplementedAdminServiceServer) ApproveHost(context.Context, *ApproveHostRequest) (*ApproveHostResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ApproveHost not implemented")
+}
+func (UnimplementedAdminServiceServer) MarkPayoutProcessed(context.Context, *MarkPayoutProcessedRequest) (*MarkPayoutProcessedResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method MarkPayoutProcessed not implemented")
+}
+func (UnimplementedAdminServiceServer) AdminGrantCredit(context.Context, *AdminGrantCreditRequest) (*AdminGrantCreditResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AdminGrantCredit not implemented")
+}
+func (UnimplementedAdminServiceServer) CreateCoupon(context.Context, *CreateCouponRequest) (*Coupon, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateCoupon not implemented")
+}
+func (UnimplementedAdminServiceServer) ListCoupons(context.Context, *ListCouponsRequest) (*ListCouponsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListCoupons not implemented")
+}
+func (UnimplementedAdminServiceServer) DeactivateCoupon(context.Context, *DeactivateCouponRequest) (*DeactivateCouponResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeactivateCoupon not implemented")
 }
 func (UnimplementedAdminServiceServer) mustEmbedUnimplementedAdminServiceServer() {}
 func (UnimplementedAdminServiceServer) testEmbeddedByValue()                      {}
@@ -248,6 +348,114 @@ func _AdminService_GetDashboardStats_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AdminService_ApproveHost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ApproveHostRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ApproveHost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ApproveHost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ApproveHost(ctx, req.(*ApproveHostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_MarkPayoutProcessed_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarkPayoutProcessedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).MarkPayoutProcessed(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_MarkPayoutProcessed_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).MarkPayoutProcessed(ctx, req.(*MarkPayoutProcessedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_AdminGrantCredit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AdminGrantCreditRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).AdminGrantCredit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_AdminGrantCredit_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).AdminGrantCredit(ctx, req.(*AdminGrantCreditRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_CreateCoupon_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateCouponRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).CreateCoupon(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_CreateCoupon_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).CreateCoupon(ctx, req.(*CreateCouponRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_ListCoupons_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCouponsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ListCoupons(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ListCoupons_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ListCoupons(ctx, req.(*ListCouponsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_DeactivateCoupon_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeactivateCouponRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).DeactivateCoupon(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_DeactivateCoupon_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).DeactivateCoupon(ctx, req.(*DeactivateCouponRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AdminService_ServiceDesc is the grpc.ServiceDesc for AdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -274,6 +482,30 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetDashboardStats",
 			Handler:    _AdminService_GetDashboardStats_Handler,
+		},
+		{
+			MethodName: "ApproveHost",
+			Handler:    _AdminService_ApproveHost_Handler,
+		},
+		{
+			MethodName: "MarkPayoutProcessed",
+			Handler:    _AdminService_MarkPayoutProcessed_Handler,
+		},
+		{
+			MethodName: "AdminGrantCredit",
+			Handler:    _AdminService_AdminGrantCredit_Handler,
+		},
+		{
+			MethodName: "CreateCoupon",
+			Handler:    _AdminService_CreateCoupon_Handler,
+		},
+		{
+			MethodName: "ListCoupons",
+			Handler:    _AdminService_ListCoupons_Handler,
+		},
+		{
+			MethodName: "DeactivateCoupon",
+			Handler:    _AdminService_DeactivateCoupon_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

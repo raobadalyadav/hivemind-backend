@@ -5,6 +5,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
 	"github.com/hivemind/backend/pkg/grpcmiddleware"
@@ -76,4 +77,87 @@ func (h *Handler) GetDashboardStats(ctx context.Context, req *socialv1.GetDashbo
 		BookingsToday: stats.BookingsToday,
 		GmvMinorUnits: stats.GMVMinorUnits,
 	}, nil
+}
+
+func (h *Handler) ApproveHost(ctx context.Context, req *socialv1.ApproveHostRequest) (*socialv1.ApproveHostResponse, error) {
+	actorID, _ := grpcmiddleware.UserIDFromContext(ctx)
+	if err := h.svc.ApproveHost(ctx, req.GetUserId(), actorID); err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to approve host")
+	}
+	return &socialv1.ApproveHostResponse{}, nil
+}
+
+func (h *Handler) MarkPayoutProcessed(ctx context.Context, req *socialv1.MarkPayoutProcessedRequest) (*socialv1.MarkPayoutProcessedResponse, error) {
+	actorID, _ := grpcmiddleware.UserIDFromContext(ctx)
+	if err := h.svc.MarkPayoutProcessed(ctx, req.GetPayoutId(), actorID); err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to mark payout processed")
+	}
+	return &socialv1.MarkPayoutProcessedResponse{}, nil
+}
+
+func (h *Handler) AdminGrantCredit(ctx context.Context, req *socialv1.AdminGrantCreditRequest) (*socialv1.AdminGrantCreditResponse, error) {
+	actorID, _ := grpcmiddleware.UserIDFromContext(ctx)
+	if err := h.svc.AdminGrantCredit(ctx, req.GetUserId(), req.GetAmountMinor(), req.GetReason(), actorID); err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to grant credit")
+	}
+	return &socialv1.AdminGrantCreditResponse{}, nil
+}
+
+func (h *Handler) CreateCoupon(ctx context.Context, req *socialv1.CreateCouponRequest) (*socialv1.Coupon, error) {
+	var expiresAt *time.Time
+	if req.GetExpiresAt() != nil {
+		t := req.GetExpiresAt().AsTime()
+		expiresAt = &t
+	}
+	c, err := h.svc.CreateCoupon(ctx, req.GetCode(), req.GetDiscountType(), req.GetDiscountValue(), req.GetMaxUses(), expiresAt)
+	if err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to create coupon")
+	}
+	return couponToProto(c), nil
+}
+
+func (h *Handler) ListCoupons(ctx context.Context, req *socialv1.ListCouponsRequest) (*socialv1.ListCouponsResponse, error) {
+	list, err := h.svc.ListCoupons(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list coupons")
+	}
+	out := make([]*socialv1.Coupon, 0, len(list))
+	for _, c := range list {
+		out = append(out, couponToProto(c))
+	}
+	return &socialv1.ListCouponsResponse{Coupons: out}, nil
+}
+
+func (h *Handler) DeactivateCoupon(ctx context.Context, req *socialv1.DeactivateCouponRequest) (*socialv1.DeactivateCouponResponse, error) {
+	if err := h.svc.DeactivateCoupon(ctx, req.GetId()); err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to deactivate coupon")
+	}
+	return &socialv1.DeactivateCouponResponse{}, nil
+}
+
+func couponToProto(c *Coupon) *socialv1.Coupon {
+	return &socialv1.Coupon{
+		Id:            c.ID,
+		Code:          c.Code,
+		DiscountType:  c.DiscountType,
+		DiscountValue: c.DiscountValue,
+		MaxUses:       c.MaxUses,
+		UsesCount:     c.UsesCount,
+		Active:        c.Active,
+	}
 }

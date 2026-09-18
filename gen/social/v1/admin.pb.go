@@ -9,6 +9,7 @@ package socialv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -541,11 +542,611 @@ func (x *GetDashboardStatsResponse) GetGmvMinorUnits() int64 {
 	return 0
 }
 
+type ApproveHostRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApproveHostRequest) Reset() {
+	*x = ApproveHostRequest{}
+	mi := &file_social_v1_admin_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApproveHostRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApproveHostRequest) ProtoMessage() {}
+
+func (x *ApproveHostRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApproveHostRequest.ProtoReflect.Descriptor instead.
+func (*ApproveHostRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ApproveHostRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type ApproveHostResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApproveHostResponse) Reset() {
+	*x = ApproveHostResponse{}
+	mi := &file_social_v1_admin_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApproveHostResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApproveHostResponse) ProtoMessage() {}
+
+func (x *ApproveHostResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApproveHostResponse.ProtoReflect.Descriptor instead.
+func (*ApproveHostResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{11}
+}
+
+type MarkPayoutProcessedRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PayoutId      string                 `protobuf:"bytes,1,opt,name=payout_id,json=payoutId,proto3" json:"payout_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkPayoutProcessedRequest) Reset() {
+	*x = MarkPayoutProcessedRequest{}
+	mi := &file_social_v1_admin_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkPayoutProcessedRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkPayoutProcessedRequest) ProtoMessage() {}
+
+func (x *MarkPayoutProcessedRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkPayoutProcessedRequest.ProtoReflect.Descriptor instead.
+func (*MarkPayoutProcessedRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *MarkPayoutProcessedRequest) GetPayoutId() string {
+	if x != nil {
+		return x.PayoutId
+	}
+	return ""
+}
+
+type MarkPayoutProcessedResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkPayoutProcessedResponse) Reset() {
+	*x = MarkPayoutProcessedResponse{}
+	mi := &file_social_v1_admin_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkPayoutProcessedResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkPayoutProcessedResponse) ProtoMessage() {}
+
+func (x *MarkPayoutProcessedResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkPayoutProcessedResponse.ProtoReflect.Descriptor instead.
+func (*MarkPayoutProcessedResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{13}
+}
+
+type AdminGrantCreditRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	AmountMinor   int64                  `protobuf:"varint,2,opt,name=amount_minor,json=amountMinor,proto3" json:"amount_minor,omitempty"`
+	Reason        string                 `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AdminGrantCreditRequest) Reset() {
+	*x = AdminGrantCreditRequest{}
+	mi := &file_social_v1_admin_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdminGrantCreditRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdminGrantCreditRequest) ProtoMessage() {}
+
+func (x *AdminGrantCreditRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdminGrantCreditRequest.ProtoReflect.Descriptor instead.
+func (*AdminGrantCreditRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *AdminGrantCreditRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *AdminGrantCreditRequest) GetAmountMinor() int64 {
+	if x != nil {
+		return x.AmountMinor
+	}
+	return 0
+}
+
+func (x *AdminGrantCreditRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+type AdminGrantCreditResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AdminGrantCreditResponse) Reset() {
+	*x = AdminGrantCreditResponse{}
+	mi := &file_social_v1_admin_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdminGrantCreditResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdminGrantCreditResponse) ProtoMessage() {}
+
+func (x *AdminGrantCreditResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdminGrantCreditResponse.ProtoReflect.Descriptor instead.
+func (*AdminGrantCreditResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{15}
+}
+
+type CreateCouponRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
+	DiscountType  string                 `protobuf:"bytes,2,opt,name=discount_type,json=discountType,proto3" json:"discount_type,omitempty"` // percent | fixed
+	DiscountValue int64                  `protobuf:"varint,3,opt,name=discount_value,json=discountValue,proto3" json:"discount_value,omitempty"`
+	MaxUses       int32                  `protobuf:"varint,4,opt,name=max_uses,json=maxUses,proto3" json:"max_uses,omitempty"` // 0 = unlimited
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateCouponRequest) Reset() {
+	*x = CreateCouponRequest{}
+	mi := &file_social_v1_admin_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateCouponRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateCouponRequest) ProtoMessage() {}
+
+func (x *CreateCouponRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateCouponRequest.ProtoReflect.Descriptor instead.
+func (*CreateCouponRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *CreateCouponRequest) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *CreateCouponRequest) GetDiscountType() string {
+	if x != nil {
+		return x.DiscountType
+	}
+	return ""
+}
+
+func (x *CreateCouponRequest) GetDiscountValue() int64 {
+	if x != nil {
+		return x.DiscountValue
+	}
+	return 0
+}
+
+func (x *CreateCouponRequest) GetMaxUses() int32 {
+	if x != nil {
+		return x.MaxUses
+	}
+	return 0
+}
+
+func (x *CreateCouponRequest) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+type Coupon struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
+	DiscountType  string                 `protobuf:"bytes,3,opt,name=discount_type,json=discountType,proto3" json:"discount_type,omitempty"`
+	DiscountValue int64                  `protobuf:"varint,4,opt,name=discount_value,json=discountValue,proto3" json:"discount_value,omitempty"`
+	MaxUses       int32                  `protobuf:"varint,5,opt,name=max_uses,json=maxUses,proto3" json:"max_uses,omitempty"`
+	UsesCount     int32                  `protobuf:"varint,6,opt,name=uses_count,json=usesCount,proto3" json:"uses_count,omitempty"`
+	Active        bool                   `protobuf:"varint,7,opt,name=active,proto3" json:"active,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Coupon) Reset() {
+	*x = Coupon{}
+	mi := &file_social_v1_admin_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Coupon) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Coupon) ProtoMessage() {}
+
+func (x *Coupon) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Coupon.ProtoReflect.Descriptor instead.
+func (*Coupon) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *Coupon) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Coupon) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *Coupon) GetDiscountType() string {
+	if x != nil {
+		return x.DiscountType
+	}
+	return ""
+}
+
+func (x *Coupon) GetDiscountValue() int64 {
+	if x != nil {
+		return x.DiscountValue
+	}
+	return 0
+}
+
+func (x *Coupon) GetMaxUses() int32 {
+	if x != nil {
+		return x.MaxUses
+	}
+	return 0
+}
+
+func (x *Coupon) GetUsesCount() int32 {
+	if x != nil {
+		return x.UsesCount
+	}
+	return 0
+}
+
+func (x *Coupon) GetActive() bool {
+	if x != nil {
+		return x.Active
+	}
+	return false
+}
+
+type ListCouponsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Page          *PageRequest           `protobuf:"bytes,1,opt,name=page,proto3" json:"page,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCouponsRequest) Reset() {
+	*x = ListCouponsRequest{}
+	mi := &file_social_v1_admin_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCouponsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCouponsRequest) ProtoMessage() {}
+
+func (x *ListCouponsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCouponsRequest.ProtoReflect.Descriptor instead.
+func (*ListCouponsRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *ListCouponsRequest) GetPage() *PageRequest {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+type ListCouponsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Coupons       []*Coupon              `protobuf:"bytes,1,rep,name=coupons,proto3" json:"coupons,omitempty"`
+	Page          *PageResponse          `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCouponsResponse) Reset() {
+	*x = ListCouponsResponse{}
+	mi := &file_social_v1_admin_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCouponsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCouponsResponse) ProtoMessage() {}
+
+func (x *ListCouponsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCouponsResponse.ProtoReflect.Descriptor instead.
+func (*ListCouponsResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *ListCouponsResponse) GetCoupons() []*Coupon {
+	if x != nil {
+		return x.Coupons
+	}
+	return nil
+}
+
+func (x *ListCouponsResponse) GetPage() *PageResponse {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+type DeactivateCouponRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeactivateCouponRequest) Reset() {
+	*x = DeactivateCouponRequest{}
+	mi := &file_social_v1_admin_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeactivateCouponRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeactivateCouponRequest) ProtoMessage() {}
+
+func (x *DeactivateCouponRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeactivateCouponRequest.ProtoReflect.Descriptor instead.
+func (*DeactivateCouponRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *DeactivateCouponRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type DeactivateCouponResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeactivateCouponResponse) Reset() {
+	*x = DeactivateCouponResponse{}
+	mi := &file_social_v1_admin_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeactivateCouponResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeactivateCouponResponse) ProtoMessage() {}
+
+func (x *DeactivateCouponResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeactivateCouponResponse.ProtoReflect.Descriptor instead.
+func (*DeactivateCouponResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{21}
+}
+
 var File_social_v1_admin_proto protoreflect.FileDescriptor
 
 const file_social_v1_admin_proto_rawDesc = "" +
 	"\n" +
-	"\x15social/v1/admin.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"T\n" +
+	"\x15social/v1/admin.proto\x12\tsocial.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x16social/v1/common.proto\"T\n" +
 	"\x10ListUsersRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12*\n" +
 	"\x04page\x18\x02 \x01(\v2\x16.social.v1.PageRequestR\x04page\"[\n" +
@@ -577,13 +1178,54 @@ const file_social_v1_admin_proto_rawDesc = "" +
 	"\x03dau\x18\x01 \x01(\x03R\x03dau\x12\x10\n" +
 	"\x03mau\x18\x02 \x01(\x03R\x03mau\x12%\n" +
 	"\x0ebookings_today\x18\x03 \x01(\x03R\rbookingsToday\x12&\n" +
-	"\x0fgmv_minor_units\x18\x04 \x01(\x03R\rgmvMinorUnits2\xbe\x03\n" +
+	"\x0fgmv_minor_units\x18\x04 \x01(\x03R\rgmvMinorUnits\"-\n" +
+	"\x12ApproveHostRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"\x15\n" +
+	"\x13ApproveHostResponse\"9\n" +
+	"\x1aMarkPayoutProcessedRequest\x12\x1b\n" +
+	"\tpayout_id\x18\x01 \x01(\tR\bpayoutId\"\x1d\n" +
+	"\x1bMarkPayoutProcessedResponse\"m\n" +
+	"\x17AdminGrantCreditRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
+	"\famount_minor\x18\x02 \x01(\x03R\vamountMinor\x12\x16\n" +
+	"\x06reason\x18\x03 \x01(\tR\x06reason\"\x1a\n" +
+	"\x18AdminGrantCreditResponse\"\xcb\x01\n" +
+	"\x13CreateCouponRequest\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\x12#\n" +
+	"\rdiscount_type\x18\x02 \x01(\tR\fdiscountType\x12%\n" +
+	"\x0ediscount_value\x18\x03 \x01(\x03R\rdiscountValue\x12\x19\n" +
+	"\bmax_uses\x18\x04 \x01(\x05R\amaxUses\x129\n" +
+	"\n" +
+	"expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\xca\x01\n" +
+	"\x06Coupon\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\tR\x04code\x12#\n" +
+	"\rdiscount_type\x18\x03 \x01(\tR\fdiscountType\x12%\n" +
+	"\x0ediscount_value\x18\x04 \x01(\x03R\rdiscountValue\x12\x19\n" +
+	"\bmax_uses\x18\x05 \x01(\x05R\amaxUses\x12\x1d\n" +
+	"\n" +
+	"uses_count\x18\x06 \x01(\x05R\tusesCount\x12\x16\n" +
+	"\x06active\x18\a \x01(\bR\x06active\"@\n" +
+	"\x12ListCouponsRequest\x12*\n" +
+	"\x04page\x18\x01 \x01(\v2\x16.social.v1.PageRequestR\x04page\"o\n" +
+	"\x13ListCouponsResponse\x12+\n" +
+	"\acoupons\x18\x01 \x03(\v2\x11.social.v1.CouponR\acoupons\x12+\n" +
+	"\x04page\x18\x02 \x01(\v2\x17.social.v1.PageResponseR\x04page\")\n" +
+	"\x17DeactivateCouponRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x1a\n" +
+	"\x18DeactivateCouponResponse2\xbd\a\n" +
 	"\fAdminService\x12F\n" +
 	"\tListUsers\x12\x1b.social.v1.ListUsersRequest\x1a\x1c.social.v1.ListUsersResponse\x12L\n" +
 	"\vSuspendUser\x12\x1d.social.v1.SuspendUserRequest\x1a\x1e.social.v1.SuspendUserResponse\x12L\n" +
 	"\vListReports\x12\x1d.social.v1.ListReportsRequest\x1a\x1e.social.v1.ListReportsResponse\x12j\n" +
 	"\x15OverrideBookingStatus\x12'.social.v1.OverrideBookingStatusRequest\x1a(.social.v1.OverrideBookingStatusResponse\x12^\n" +
-	"\x11GetDashboardStats\x12#.social.v1.GetDashboardStatsRequest\x1a$.social.v1.GetDashboardStatsResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
+	"\x11GetDashboardStats\x12#.social.v1.GetDashboardStatsRequest\x1a$.social.v1.GetDashboardStatsResponse\x12L\n" +
+	"\vApproveHost\x12\x1d.social.v1.ApproveHostRequest\x1a\x1e.social.v1.ApproveHostResponse\x12d\n" +
+	"\x13MarkPayoutProcessed\x12%.social.v1.MarkPayoutProcessedRequest\x1a&.social.v1.MarkPayoutProcessedResponse\x12[\n" +
+	"\x10AdminGrantCredit\x12\".social.v1.AdminGrantCreditRequest\x1a#.social.v1.AdminGrantCreditResponse\x12A\n" +
+	"\fCreateCoupon\x12\x1e.social.v1.CreateCouponRequest\x1a\x11.social.v1.Coupon\x12L\n" +
+	"\vListCoupons\x12\x1d.social.v1.ListCouponsRequest\x1a\x1e.social.v1.ListCouponsResponse\x12[\n" +
+	"\x10DeactivateCoupon\x12\".social.v1.DeactivateCouponRequest\x1a#.social.v1.DeactivateCouponResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
 var (
 	file_social_v1_admin_proto_rawDescOnce sync.Once
@@ -597,7 +1239,7 @@ func file_social_v1_admin_proto_rawDescGZIP() []byte {
 	return file_social_v1_admin_proto_rawDescData
 }
 
-var file_social_v1_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_social_v1_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_social_v1_admin_proto_goTypes = []any{
 	(*ListUsersRequest)(nil),              // 0: social.v1.ListUsersRequest
 	(*ListUsersResponse)(nil),             // 1: social.v1.ListUsersResponse
@@ -609,29 +1251,58 @@ var file_social_v1_admin_proto_goTypes = []any{
 	(*OverrideBookingStatusResponse)(nil), // 7: social.v1.OverrideBookingStatusResponse
 	(*GetDashboardStatsRequest)(nil),      // 8: social.v1.GetDashboardStatsRequest
 	(*GetDashboardStatsResponse)(nil),     // 9: social.v1.GetDashboardStatsResponse
-	(*PageRequest)(nil),                   // 10: social.v1.PageRequest
-	(*PageResponse)(nil),                  // 11: social.v1.PageResponse
+	(*ApproveHostRequest)(nil),            // 10: social.v1.ApproveHostRequest
+	(*ApproveHostResponse)(nil),           // 11: social.v1.ApproveHostResponse
+	(*MarkPayoutProcessedRequest)(nil),    // 12: social.v1.MarkPayoutProcessedRequest
+	(*MarkPayoutProcessedResponse)(nil),   // 13: social.v1.MarkPayoutProcessedResponse
+	(*AdminGrantCreditRequest)(nil),       // 14: social.v1.AdminGrantCreditRequest
+	(*AdminGrantCreditResponse)(nil),      // 15: social.v1.AdminGrantCreditResponse
+	(*CreateCouponRequest)(nil),           // 16: social.v1.CreateCouponRequest
+	(*Coupon)(nil),                        // 17: social.v1.Coupon
+	(*ListCouponsRequest)(nil),            // 18: social.v1.ListCouponsRequest
+	(*ListCouponsResponse)(nil),           // 19: social.v1.ListCouponsResponse
+	(*DeactivateCouponRequest)(nil),       // 20: social.v1.DeactivateCouponRequest
+	(*DeactivateCouponResponse)(nil),      // 21: social.v1.DeactivateCouponResponse
+	(*PageRequest)(nil),                   // 22: social.v1.PageRequest
+	(*PageResponse)(nil),                  // 23: social.v1.PageResponse
+	(*timestamppb.Timestamp)(nil),         // 24: google.protobuf.Timestamp
 }
 var file_social_v1_admin_proto_depIdxs = []int32{
-	10, // 0: social.v1.ListUsersRequest.page:type_name -> social.v1.PageRequest
-	11, // 1: social.v1.ListUsersResponse.page:type_name -> social.v1.PageResponse
-	10, // 2: social.v1.ListReportsRequest.page:type_name -> social.v1.PageRequest
-	11, // 3: social.v1.ListReportsResponse.page:type_name -> social.v1.PageResponse
-	0,  // 4: social.v1.AdminService.ListUsers:input_type -> social.v1.ListUsersRequest
-	2,  // 5: social.v1.AdminService.SuspendUser:input_type -> social.v1.SuspendUserRequest
-	4,  // 6: social.v1.AdminService.ListReports:input_type -> social.v1.ListReportsRequest
-	6,  // 7: social.v1.AdminService.OverrideBookingStatus:input_type -> social.v1.OverrideBookingStatusRequest
-	8,  // 8: social.v1.AdminService.GetDashboardStats:input_type -> social.v1.GetDashboardStatsRequest
-	1,  // 9: social.v1.AdminService.ListUsers:output_type -> social.v1.ListUsersResponse
-	3,  // 10: social.v1.AdminService.SuspendUser:output_type -> social.v1.SuspendUserResponse
-	5,  // 11: social.v1.AdminService.ListReports:output_type -> social.v1.ListReportsResponse
-	7,  // 12: social.v1.AdminService.OverrideBookingStatus:output_type -> social.v1.OverrideBookingStatusResponse
-	9,  // 13: social.v1.AdminService.GetDashboardStats:output_type -> social.v1.GetDashboardStatsResponse
-	9,  // [9:14] is the sub-list for method output_type
-	4,  // [4:9] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	22, // 0: social.v1.ListUsersRequest.page:type_name -> social.v1.PageRequest
+	23, // 1: social.v1.ListUsersResponse.page:type_name -> social.v1.PageResponse
+	22, // 2: social.v1.ListReportsRequest.page:type_name -> social.v1.PageRequest
+	23, // 3: social.v1.ListReportsResponse.page:type_name -> social.v1.PageResponse
+	24, // 4: social.v1.CreateCouponRequest.expires_at:type_name -> google.protobuf.Timestamp
+	22, // 5: social.v1.ListCouponsRequest.page:type_name -> social.v1.PageRequest
+	17, // 6: social.v1.ListCouponsResponse.coupons:type_name -> social.v1.Coupon
+	23, // 7: social.v1.ListCouponsResponse.page:type_name -> social.v1.PageResponse
+	0,  // 8: social.v1.AdminService.ListUsers:input_type -> social.v1.ListUsersRequest
+	2,  // 9: social.v1.AdminService.SuspendUser:input_type -> social.v1.SuspendUserRequest
+	4,  // 10: social.v1.AdminService.ListReports:input_type -> social.v1.ListReportsRequest
+	6,  // 11: social.v1.AdminService.OverrideBookingStatus:input_type -> social.v1.OverrideBookingStatusRequest
+	8,  // 12: social.v1.AdminService.GetDashboardStats:input_type -> social.v1.GetDashboardStatsRequest
+	10, // 13: social.v1.AdminService.ApproveHost:input_type -> social.v1.ApproveHostRequest
+	12, // 14: social.v1.AdminService.MarkPayoutProcessed:input_type -> social.v1.MarkPayoutProcessedRequest
+	14, // 15: social.v1.AdminService.AdminGrantCredit:input_type -> social.v1.AdminGrantCreditRequest
+	16, // 16: social.v1.AdminService.CreateCoupon:input_type -> social.v1.CreateCouponRequest
+	18, // 17: social.v1.AdminService.ListCoupons:input_type -> social.v1.ListCouponsRequest
+	20, // 18: social.v1.AdminService.DeactivateCoupon:input_type -> social.v1.DeactivateCouponRequest
+	1,  // 19: social.v1.AdminService.ListUsers:output_type -> social.v1.ListUsersResponse
+	3,  // 20: social.v1.AdminService.SuspendUser:output_type -> social.v1.SuspendUserResponse
+	5,  // 21: social.v1.AdminService.ListReports:output_type -> social.v1.ListReportsResponse
+	7,  // 22: social.v1.AdminService.OverrideBookingStatus:output_type -> social.v1.OverrideBookingStatusResponse
+	9,  // 23: social.v1.AdminService.GetDashboardStats:output_type -> social.v1.GetDashboardStatsResponse
+	11, // 24: social.v1.AdminService.ApproveHost:output_type -> social.v1.ApproveHostResponse
+	13, // 25: social.v1.AdminService.MarkPayoutProcessed:output_type -> social.v1.MarkPayoutProcessedResponse
+	15, // 26: social.v1.AdminService.AdminGrantCredit:output_type -> social.v1.AdminGrantCreditResponse
+	17, // 27: social.v1.AdminService.CreateCoupon:output_type -> social.v1.Coupon
+	19, // 28: social.v1.AdminService.ListCoupons:output_type -> social.v1.ListCouponsResponse
+	21, // 29: social.v1.AdminService.DeactivateCoupon:output_type -> social.v1.DeactivateCouponResponse
+	19, // [19:30] is the sub-list for method output_type
+	8,  // [8:19] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_admin_proto_init() }
@@ -646,7 +1317,7 @@ func file_social_v1_admin_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_admin_proto_rawDesc), len(file_social_v1_admin_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

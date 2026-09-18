@@ -130,6 +130,17 @@ func (r *Repository) Cancel(ctx context.Context, id string) (*Subscription, erro
 	return &s, nil
 }
 
+// HasEntitlement satisfies host.EntitlementChecker — internal/host uses it
+// to look up a host's commission tier without listing every key.
+func (r *Repository) HasEntitlement(ctx context.Context, userID, key string) (bool, error) {
+	var exists bool
+	err := r.pool.QueryRow(ctx,
+		`SELECT EXISTS(SELECT 1 FROM entitlements WHERE user_id = $1 AND entitlement_key = $2)`,
+		userID, key,
+	).Scan(&exists)
+	return exists, err
+}
+
 func (r *Repository) ListEntitlements(ctx context.Context, userID string) ([]string, error) {
 	rows, err := r.pool.Query(ctx,
 		`SELECT entitlement_key FROM entitlements WHERE user_id = $1`, userID,

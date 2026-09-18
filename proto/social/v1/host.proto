@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// HostService — PRD §13.11 Host Marketplace + §21 host payouts. Host
+// identity always comes from the JWT, never a request field. RequestPayout
+// deliberately has no amount field: the payable balance is computed
+// server-side (captured payments minus commission minus prior payouts),
+// never client-supplied.
+service HostService {
+  rpc ApplyForHost(ApplyForHostRequest) returns (HostStatus);
+  rpc GetHostStatus(GetHostStatusRequest) returns (HostStatus);
+  rpc RequestPayout(RequestPayoutRequest) returns (Payout);
+  rpc ListPayouts(ListPayoutsRequest) returns (ListPayoutsResponse);
+  rpc GetHostDashboard(GetHostDashboardRequest) returns (HostDashboard);
+}
+
+message HostStatus {
+  string user_id = 1;
+  string role = 2;
+  string payout_account_status = 3; // pending | active
+  string id_document_url = 4;
+}
+
+message ApplyForHostRequest {
+  string id_document_url = 1;
+  string bank_account_number = 2;
+  string bank_ifsc = 3;
+}
+
+message GetHostStatusRequest {}
+
+message RequestPayoutRequest {}
+
+message Payout {
+  string id = 1;
+  Money amount = 2;
+  string status = 3; // pending | processed | failed
+}
+
+message ListPayoutsRequest {
+  PageRequest page = 1;
+}
+
+message ListPayoutsResponse {
+  repeated Payout payouts = 1;
+  PageResponse page = 2;
+}
+
+message GetHostDashboardRequest {}
+
+message HostDashboard {
+  int64 total_bookings = 1;
+  int64 total_attendees = 2;
+  Money gross_revenue = 3;
+  Money pending_payout_balance = 4;
+  double avg_rating = 5;
+}

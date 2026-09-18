@@ -15,6 +15,7 @@ service PaymentService {
   rpc CreateOrder(CreateOrderRequest) returns (Order);
   rpc GetPayment(GetPaymentRequest) returns (Payment);
   rpc RefundPayment(RefundPaymentRequest) returns (Refund);
+  rpc GetMyCreditBalance(GetMyCreditBalanceRequest) returns (CreditBalance);
 }
 
 message Order {
@@ -49,6 +50,12 @@ message CreateOrderRequest {
   // number; the user model here (OAuth-only, no phone field) doesn't
   // collect one at signup, so the client supplies it at checkout time.
   string customer_phone = 3;
+  // promo_code: optional, validated and applied as a discount server-side —
+  // see internal/payments.Service.CreateOrder.
+  string promo_code = 4;
+  // use_credits: explicit opt-in — credits are never spent silently, same
+  // as refunds/cancellations never happening silently elsewhere in this API.
+  bool use_credits = 5;
 }
 
 message GetPaymentRequest {
@@ -59,4 +66,10 @@ message RefundPaymentRequest {
   string payment_id = 1;
   Money amount = 2;
   string reason = 3;
+}
+
+message GetMyCreditBalanceRequest {}
+
+message CreditBalance {
+  int64 balance_minor = 1;
 }

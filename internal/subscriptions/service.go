@@ -51,3 +51,11 @@ func (s *Service) GetEntitlements(ctx context.Context, userID string) ([]string,
 	}
 	return s.repo.ListEntitlements(ctx, userID)
 }
+
+// HasEntitlement satisfies host.EntitlementChecker (wired in cmd/api/main.go).
+func (s *Service) HasEntitlement(ctx context.Context, userID, key string) (bool, error) {
+	if userID == "" || key == "" {
+		return false, nil
+	}
+	return s.repo.HasEntitlement(ctx, userID, key)
+}

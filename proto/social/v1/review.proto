@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// ReviewService — PRD §13.11 "reviews" (host dashboard requirement).
+// plan_id/user_id are always derived from the booking row, never the
+// request; a review requires that booking to be in 'attended' status.
+service ReviewService {
+  rpc CreateReview(CreateReviewRequest) returns (Review);
+  rpc GetPlanReviews(GetPlanReviewsRequest) returns (GetPlanReviewsResponse);
+}
+
+message Review {
+  string id = 1;
+  string plan_id = 2;
+  string user_id = 3;
+  int32 rating = 4;
+  string comment = 5;
+}
+
+message CreateReviewRequest {
+  string booking_id = 1;
+  int32 rating = 2;
+  string comment = 3;
+}
+
+message GetPlanReviewsRequest {
+  string plan_id = 1;
+  PageRequest page = 2;
+}
+
+message GetPlanReviewsResponse {
+  repeated Review reviews = 1;
+  double avg_rating = 2;
+  PageResponse page = 3;
+}
