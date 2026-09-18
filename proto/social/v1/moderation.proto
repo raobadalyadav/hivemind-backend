@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// ModerationService — PRD §13.16 Trust & Safety.
+service ModerationService {
+  rpc SubmitReport(SubmitReportRequest) returns (ModerationCase);
+  rpc GetCase(GetCaseRequest) returns (ModerationCase);
+  rpc ResolveCase(ResolveCaseRequest) returns (ModerationCase);
+  rpc BlockUser(BlockUserRequest) returns (BlockUserResponse);
+}
+
+enum CaseStatus {
+  CASE_STATUS_UNSPECIFIED = 0;
+  OPEN = 1;
+  UNDER_REVIEW = 2;
+  RESOLVED = 3;
+  APPEALED = 4;
+}
+
+message ModerationCase {
+  string id = 1;
+  string reporter_id = 2;
+  string subject_type = 3; // user | plan | message | post
+  string subject_id = 4;
+  string reason = 5;
+  CaseStatus status = 6;
+  string resolution = 7;
+  Audit audit = 8;
+}
+
+message SubmitReportRequest {
+  string reporter_id = 1;
+  string subject_type = 2;
+  string subject_id = 3;
+  string reason = 4;
+  string evidence = 5;
+}
+
+message GetCaseRequest {
+  string id = 1;
+}
+
+message ResolveCaseRequest {
+  string case_id = 1;
+  string resolution = 2;
+  string resolved_by = 3;
+}
+
+message BlockUserRequest {
+  string user_id = 1;
+  string blocked_user_id = 2;
+}
+
+message BlockUserResponse {}

@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "google/protobuf/timestamp.proto";
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// ChatService — PRD §13.7 Chat. Transactional membership/history goes through this
+// gRPC service; live delivery uses the separate WebSocket gateway described in PRD §16
+// (not part of this proto — the gateway reads persisted messages via this service).
+service ChatService {
+  rpc CreateRoom(CreateRoomRequest) returns (ChatRoom);
+  rpc SendMessage(SendMessageRequest) returns (Message);
+  rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse);
+  rpc ReportMessage(ReportMessageRequest) returns (ReportMessageResponse);
+}
+
+message ChatRoom {
+  string id = 1;
+  string plan_id = 2;
+  Audit audit = 3;
+}
+
+message Message {
+  string id = 1;
+  string room_id = 2;
+  string sender_id = 3;
+  string body = 4;
+  google.protobuf.Timestamp sent_at = 5;
+}
+
+message CreateRoomRequest {
+  string plan_id = 1;
+}
+
+message SendMessageRequest {
+  string room_id = 1;
+  string sender_id = 2;
+  string body = 3;
+}
+
+message ListMessagesRequest {
+  string room_id = 1;
+  PageRequest page = 2;
+}
+
+message ListMessagesResponse {
+  repeated Message messages = 1;
+  PageResponse page = 2;
+}
+
+message ReportMessageRequest {
+  string message_id = 1;
+  string reporter_id = 2;
+  string reason = 3;
+}
+
+message ReportMessageResponse {
+  string moderation_case_id = 1;
+}

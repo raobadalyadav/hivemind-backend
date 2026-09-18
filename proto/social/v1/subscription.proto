@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// SubscriptionService — PRD §13.14 Subscription (Phase 2). Consumer subscriptions are
+// governed by app-store billing (PRD §21); this service tracks entitlement state derived
+// from store webhooks, it never charges cards directly.
+service SubscriptionService {
+  rpc GetCatalog(GetCatalogRequest) returns (GetCatalogResponse);
+  rpc Subscribe(SubscribeRequest) returns (Subscription);
+  rpc CancelSubscription(CancelSubscriptionRequest) returns (Subscription);
+  rpc GetEntitlements(GetEntitlementsRequest) returns (GetEntitlementsResponse);
+}
+
+message SubscriptionProduct {
+  string id = 1;
+  string name = 2;
+  Money price = 3;
+  string interval = 4; // month | year
+}
+
+message Subscription {
+  string id = 1;
+  string user_id = 2;
+  string product_id = 3;
+  string status = 4; // active | cancelled | expired
+}
+
+message GetCatalogRequest {}
+
+message GetCatalogResponse {
+  repeated SubscriptionProduct products = 1;
+}
+
+message SubscribeRequest {
+  string user_id = 1;
+  string product_id = 2;
+  string store_receipt = 3;
+}
+
+message CancelSubscriptionRequest {
+  string subscription_id = 1;
+}
+
+message GetEntitlementsRequest {
+  string user_id = 1;
+}
+
+message GetEntitlementsResponse {
+  repeated string entitlements = 1;
+}

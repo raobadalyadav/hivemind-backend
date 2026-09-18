@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// UserService — PRD §13.1 Authentication & Account (post-signup account management).
+service UserService {
+  rpc GetUser(GetUserRequest) returns (User);
+  rpc UpdateUser(UpdateUserRequest) returns (User);
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
+  rpc RegisterDevice(RegisterDeviceRequest) returns (RegisterDeviceResponse);
+}
+
+message User {
+  string id = 1;
+  string email = 2;
+  string city_id = 3;
+  bool age_verified = 4;
+  Audit audit = 5;
+}
+
+message GetUserRequest {
+  string user_id = 1;
+}
+
+message UpdateUserRequest {
+  string user_id = 1;
+  string city_id = 2;
+}
+
+message DeleteAccountRequest {
+  string user_id = 1;
+}
+
+message DeleteAccountResponse {}
+
+message RegisterDeviceRequest {
+  string user_id = 1;
+  string device_id = 2;
+  string push_token = 3;
+  string platform = 4; // ios | android
+}
+
+message RegisterDeviceResponse {}

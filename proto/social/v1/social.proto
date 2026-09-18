@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// SocialService — PRD §13.10 Social Content / §9 Memories (Phase 2).
+service SocialService {
+  rpc CreatePost(CreatePostRequest) returns (Post);
+  rpc GetPost(GetPostRequest) returns (Post);
+  rpc ListPosts(ListPostsRequest) returns (ListPostsResponse);
+  rpc CommentOnPost(CommentOnPostRequest) returns (Comment);
+  rpc LikePost(LikePostRequest) returns (LikePostResponse);
+}
+
+message Post {
+  string id = 1;
+  string author_id = 2;
+  string plan_id = 3; // memory origin, per PRD §9
+  string body = 4;
+  repeated string media_urls = 5;
+  string visibility = 6; // private | public
+  Audit audit = 7;
+}
+
+message Comment {
+  string id = 1;
+  string post_id = 2;
+  string author_id = 3;
+  string body = 4;
+}
+
+message CreatePostRequest {
+  string author_id = 1;
+  string plan_id = 2;
+  string body = 3;
+  repeated string media_urls = 4;
+  string visibility = 5;
+}
+
+message GetPostRequest {
+  string id = 1;
+}
+
+message ListPostsRequest {
+  string author_id = 1;
+  PageRequest page = 2;
+}
+
+message ListPostsResponse {
+  repeated Post posts = 1;
+  PageResponse page = 2;
+}
+
+message CommentOnPostRequest {
+  string post_id = 1;
+  string author_id = 2;
+  string body = 3;
+}
+
+message LikePostRequest {
+  string post_id = 1;
+  string user_id = 2;
+}
+
+message LikePostResponse {
+  int32 like_count = 1;
+}

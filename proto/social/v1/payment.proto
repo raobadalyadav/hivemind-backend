@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// PaymentService — PRD §13.13 Payments. Real gateway calls go through the
+// internal/payments gateway.Client interface (fake impl for local dev); no
+// direct Razorpay dependency belongs in this proto or its service layer.
+service PaymentService {
+  rpc CreateOrder(CreateOrderRequest) returns (Order);
+  rpc GetPayment(GetPaymentRequest) returns (Payment);
+  rpc RefundPayment(RefundPaymentRequest) returns (Refund);
+}
+
+message Order {
+  string id = 1;
+  string booking_id = 2;
+  Money amount = 3;
+  string gateway_order_id = 4;
+  string status = 5;
+}
+
+message Payment {
+  string id = 1;
+  string order_id = 2;
+  Money amount = 3;
+  string status = 4; // pending | captured | failed
+}
+
+message Refund {
+  string id = 1;
+  string payment_id = 2;
+  Money amount = 3;
+  string status = 4;
+}
+
+message CreateOrderRequest {
+  string booking_id = 1;
+  Money amount = 2;
+}
+
+message GetPaymentRequest {
+  string id = 1;
+}
+
+message RefundPaymentRequest {
+  string payment_id = 1;
+  Money amount = 2;
+  string reason = 3;
+}

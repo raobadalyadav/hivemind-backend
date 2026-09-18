@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// SearchService — PRD §20 Search, Geospatial and Recommendation Design.
+// MVP backs this with Postgres FTS/trigram (PRD §20 table); OpenSearch is a
+// Phase-4+ upgrade behind this same interface, not a rewrite of callers.
+service SearchService {
+  rpc SearchText(SearchTextRequest) returns (SearchTextResponse);
+}
+
+message SearchTextRequest {
+  string query = 1;
+  string city_id = 2;
+  PageRequest page = 3;
+}
+
+message SearchTextResponse {
+  repeated string plan_ids = 1;
+  PageResponse page = 2;
+}

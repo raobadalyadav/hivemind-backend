@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: hivemind
+          POSTGRES_PASSWORD: hivemind
+          POSTGRES_DB: hivemind
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U hivemind"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+
+      - name: Install migrate CLI
+        run: go install github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+
+      - name: gofmt check
+        run: test -z "$(gofmt -l .)"
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go build
+        run: go build ./...
+
+      - name: Run migrations
+        run: migrate -path migrations -database "postgres://hivemind:hivemind@localhost:5432/hivemind?sslmode=disable" up
+
+      - name: go test
+        run: go test ./...

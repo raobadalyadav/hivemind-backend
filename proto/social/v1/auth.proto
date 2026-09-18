@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package social.v1;
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// AuthService — PRD §13.1 Authentication & Account.
+service AuthService {
+  rpc SignUp(SignUpRequest) returns (AuthTokens);
+  rpc SignIn(SignInRequest) returns (AuthTokens);
+  rpc RefreshToken(RefreshTokenRequest) returns (AuthTokens);
+  rpc SignOut(SignOutRequest) returns (SignOutResponse);
+  rpc RequestPasswordReset(RequestPasswordResetRequest) returns (RequestPasswordResetResponse);
+}
+
+message SignUpRequest {
+  string email = 1;
+  string password = 2;
+  string date_of_birth = 3; // ISO 8601 date, used for 18+ age gate
+  string device_id = 4;
+}
+
+message SignInRequest {
+  string email = 1;
+  string password = 2;
+  string device_id = 3;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message SignOutRequest {
+  string device_id = 1;
+}
+
+message SignOutResponse {}
+
+message RequestPasswordResetRequest {
+  string email = 1;
+}
+
+message RequestPasswordResetResponse {}
+
+message AuthTokens {
+  string user_id = 1;
+  string access_token = 2;
+  string refresh_token = 3;
+  int64 expires_at_unix = 4;
+}

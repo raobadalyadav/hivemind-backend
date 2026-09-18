@@ -1,0 +1,6 @@
+DROP TABLE IF EXISTS reconciliation_entries;
+DROP TABLE IF EXISTS payouts;
+DROP TABLE IF EXISTS payout_accounts;
+DROP TABLE IF EXISTS refunds;
+DROP TABLE IF EXISTS payments;
+DROP TABLE IF EXISTS orders;

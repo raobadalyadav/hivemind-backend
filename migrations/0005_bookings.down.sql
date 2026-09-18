@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS reviews;
+DROP TABLE IF EXISTS checkins;
+DROP TABLE IF EXISTS waitlist_entries;
+DROP TABLE IF EXISTS booking_items;
+DROP TABLE IF EXISTS bookings;

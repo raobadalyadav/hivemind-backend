@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// ConnectionService — PRD §13.9 Connections (Phase 2) + §33 example contract.
+service ConnectionService {
+  rpc RequestConnection(RequestConnectionRequest) returns (Connection);
+  rpc RespondConnection(RespondConnectionRequest) returns (Connection);
+  rpc ListConnections(ListConnectionsRequest) returns (ListConnectionsResponse);
+}
+
+enum ConnectionStatus {
+  CONNECTION_STATUS_UNSPECIFIED = 0;
+  PENDING = 1;
+  ACCEPTED = 2;
+  REJECTED = 3;
+}
+
+message Connection {
+  string id = 1;
+  string requester_id = 2;
+  string recipient_id = 3;
+  string origin_plan_id = 4; // plan that brought them together, per PRD §13.9
+  ConnectionStatus status = 5;
+  Audit audit = 6;
+}
+
+message RequestConnectionRequest {
+  string requester_id = 1;
+  string recipient_id = 2;
+  string origin_plan_id = 3;
+}
+
+message RespondConnectionRequest {
+  string connection_id = 1;
+  bool accept = 2;
+}
+
+message ListConnectionsRequest {
+  string user_id = 1;
+  PageRequest page = 2;
+}
+
+message ListConnectionsResponse {
+  repeated Connection connections = 1;
+  PageResponse page = 2;
+}

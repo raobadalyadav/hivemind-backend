@@ -1,0 +1,6 @@
+DROP TABLE IF EXISTS audit_logs;
+DROP TABLE IF EXISTS appeals;
+DROP TABLE IF EXISTS sanctions;
+DROP TABLE IF EXISTS moderation_cases;
+DROP TABLE IF EXISTS blocks;
+DROP TABLE IF EXISTS reports;

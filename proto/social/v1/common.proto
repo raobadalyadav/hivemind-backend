@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// Money is always integer minor units (paise) + ISO currency code, never a float.
+message Money {
+  int64 minor_units = 1;
+  string currency = 2; // ISO 4217, e.g. "INR"
+}
+
+// GeoPoint mirrors a PostGIS GEOGRAPHY(Point,4326) column.
+message GeoPoint {
+  double latitude = 1;
+  double longitude = 2;
+}
+
+// PageRequest/PageResponse implement cursor-based pagination per PRD §17.
+message PageRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message PageResponse {
+  string next_page_token = 1;
+  bool has_more = 2;
+}
+
+// ErrorCode enumerates the domain error codes named in PRD §33 (Appendix: Example Protobuf Contracts).
+// Returned via google.rpc.Status details, not as a field on success responses.
+enum ErrorCode {
+  ERROR_CODE_UNSPECIFIED = 0;
+  PLAN_FULL = 1;
+  BOOKING_NOT_ELIGIBLE = 2;
+  ALREADY_BOOKED = 3;
+  PAYMENT_REQUIRED = 4;
+  PAYMENT_PENDING = 5;
+  PAYMENT_FAILED = 6;
+  REFUND_WINDOW_CLOSED = 7;
+  USER_BLOCKED = 8;
+  SAFETY_RESTRICTION = 9;
+  VERIFICATION_REQUIRED = 10;
+  RATE_LIMITED = 11;
+}
+
+message Audit {
+  google.protobuf.Timestamp created_at = 1;
+  google.protobuf.Timestamp updated_at = 2;
+}

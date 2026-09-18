@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// ProfileService — PRD §13.2 Profile & Identity.
+service ProfileService {
+  rpc CreateProfile(CreateProfileRequest) returns (Profile);
+  rpc GetProfile(GetProfileRequest) returns (Profile);
+  rpc UpdateProfile(UpdateProfileRequest) returns (Profile);
+  rpc SetPrivacy(SetPrivacyRequest) returns (Profile);
+}
+
+message Profile {
+  string user_id = 1;
+  string display_name = 2;
+  string bio = 3;
+  repeated string interests = 4;
+  repeated string languages = 5;
+  string occupation = 6;
+  string verification_status = 7; // unverified | email | phone | id
+  Audit audit = 8;
+}
+
+message CreateProfileRequest {
+  string user_id = 1;
+  string display_name = 2;
+  repeated string interests = 3;
+}
+
+message GetProfileRequest {
+  string user_id = 1;
+}
+
+message UpdateProfileRequest {
+  string user_id = 1;
+  string bio = 2;
+  repeated string interests = 3;
+  repeated string languages = 4;
+  string occupation = 5;
+}
+
+message SetPrivacyRequest {
+  string user_id = 1;
+  bool show_in_participant_previews = 2;
+}

@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "google/protobuf/timestamp.proto";
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// BookingService — PRD §13.6 Booking + §33 example contract.
+// CreateBooking/GetBooking are the fully-implemented vertical slice (writes an outbox
+// BOOKING_CONFIRMED event); QuoteBooking/CancelBooking/CheckIn are typed stubs.
+service BookingService {
+  rpc QuoteBooking(QuoteBookingRequest) returns (BookingQuote);
+  rpc CreateBooking(CreateBookingRequest) returns (Booking);
+  rpc GetBooking(GetBookingRequest) returns (Booking);
+  rpc CancelBooking(CancelBookingRequest) returns (Booking);
+  rpc CheckIn(CheckInRequest) returns (CheckInResult);
+}
+
+enum BookingStatus {
+  BOOKING_STATUS_UNSPECIFIED = 0;
+  BOOKING_INITIATED = 1;
+  BOOKING_PAYMENT_PENDING = 2;
+  BOOKING_CONFIRMED = 3;
+  BOOKING_CANCELLED = 4;
+  BOOKING_REFUNDED = 5;
+  BOOKING_NO_SHOW = 6;
+  BOOKING_ATTENDED = 7;
+}
+
+message Booking {
+  string id = 1;
+  string plan_id = 2;
+  string user_id = 3;
+  BookingStatus status = 4;
+  Money price = 5;
+  google.protobuf.Timestamp checked_in_at = 6;
+  Audit audit = 7;
+}
+
+message QuoteBookingRequest {
+  string plan_id = 1;
+  string user_id = 2;
+}
+
+message BookingQuote {
+  Money price = 1;
+  Money service_fee = 2;
+  Money total = 3;
+  bool eligible = 4;
+}
+
+message CreateBookingRequest {
+  string plan_id = 1;
+  string user_id = 2;
+  string idempotency_key = 3;
+}
+
+message GetBookingRequest {
+  string id = 1;
+}
+
+message CancelBookingRequest {
+  string id = 1;
+  string reason = 2;
+}
+
+message CheckInRequest {
+  string booking_id = 1;
+  string checked_in_by = 2; // host/admin user id
+}
+
+message CheckInResult {
+  Booking booking = 1;
+}

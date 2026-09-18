@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// NotificationService — PRD §13.15 Notifications. SendNotification is called
+// internally by cmd/worker event handlers, not exposed to mobile clients directly.
+service NotificationService {
+  rpc SendNotification(SendNotificationRequest) returns (SendNotificationResponse);
+  rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse);
+  rpc UpdatePreferences(UpdatePreferencesRequest) returns (UpdatePreferencesResponse);
+}
+
+message Notification {
+  string id = 1;
+  string user_id = 2;
+  string channel = 3; // push | in_app | email
+  string title = 4;
+  string body = 5;
+  string deep_link = 6;
+  bool read = 7;
+}
+
+message SendNotificationRequest {
+  string user_id = 1;
+  string channel = 2;
+  string title = 3;
+  string body = 4;
+  string deep_link = 5;
+}
+
+message SendNotificationResponse {
+  string notification_id = 1;
+}
+
+message ListNotificationsRequest {
+  string user_id = 1;
+  PageRequest page = 2;
+}
+
+message ListNotificationsResponse {
+  repeated Notification notifications = 1;
+  PageResponse page = 2;
+}
+
+message UpdatePreferencesRequest {
+  string user_id = 1;
+  bool push_enabled = 2;
+  bool email_enabled = 3;
+  string quiet_hours_start = 4;
+  string quiet_hours_end = 5;
+}
+
+message UpdatePreferencesResponse {}

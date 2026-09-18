@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS venues;
+DROP TABLE IF EXISTS interests;
+DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS neighborhoods;
+DROP TABLE IF EXISTS cities;

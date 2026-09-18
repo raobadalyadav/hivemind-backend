@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS verifications;
+DROP TABLE IF EXISTS consents;
+DROP TABLE IF EXISTS devices;
+DROP TABLE IF EXISTS user_profiles;
+DROP TABLE IF EXISTS users;

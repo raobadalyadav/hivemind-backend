@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// AdminService — PRD §13.18 Admin & Analytics + §23 Admin and Operations Platform.
+// Every mutating RPC here is expected to be behind RBAC (pkg/grpcmiddleware) and
+// produce an audit_logs row, per PRD §31 Definition of Done.
+service AdminService {
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+  rpc SuspendUser(SuspendUserRequest) returns (SuspendUserResponse);
+  rpc ListReports(ListReportsRequest) returns (ListReportsResponse);
+  rpc OverrideBookingStatus(OverrideBookingStatusRequest) returns (OverrideBookingStatusResponse);
+  rpc GetDashboardStats(GetDashboardStatsRequest) returns (GetDashboardStatsResponse);
+}
+
+message ListUsersRequest {
+  string query = 1;
+  PageRequest page = 2;
+}
+
+message ListUsersResponse {
+  repeated string user_ids = 1;
+  PageResponse page = 2;
+}
+
+message SuspendUserRequest {
+  string user_id = 1;
+  string reason = 2;
+  string actor_id = 3; // admin performing the action, for the audit log
+}
+
+message SuspendUserResponse {}
+
+message ListReportsRequest {
+  string status = 1;
+  PageRequest page = 2;
+}
+
+message ListReportsResponse {
+  repeated string case_ids = 1;
+  PageResponse page = 2;
+}
+
+message OverrideBookingStatusRequest {
+  string booking_id = 1;
+  string new_status = 2;
+  string reason = 3;
+  string actor_id = 4;
+}
+
+message OverrideBookingStatusResponse {}
+
+message GetDashboardStatsRequest {
+  string city_id = 1;
+}
+
+message GetDashboardStatsResponse {
+  int64 dau = 1;
+  int64 mau = 2;
+  int64 bookings_today = 3;
+  int64 gmv_minor_units = 4;
+}

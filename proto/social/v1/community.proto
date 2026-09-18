@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// CommunityService — PRD §13.8 Communities (Phase 2) + §33 example contract.
+service CommunityService {
+  rpc CreateCommunity(CreateCommunityRequest) returns (Community);
+  rpc GetCommunity(GetCommunityRequest) returns (Community);
+  rpc JoinCommunity(JoinCommunityRequest) returns (Membership);
+  rpc ListCommunityPlans(ListCommunityPlansRequest) returns (ListPlansResponse);
+}
+
+message Community {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string city_id = 4;
+  string owner_id = 5;
+  Audit audit = 6;
+}
+
+message Membership {
+  string community_id = 1;
+  string user_id = 2;
+  string role = 3; // member | moderator | owner
+}
+
+message CreateCommunityRequest {
+  string name = 1;
+  string description = 2;
+  string city_id = 3;
+  string owner_id = 4;
+}
+
+message GetCommunityRequest {
+  string id = 1;
+}
+
+message JoinCommunityRequest {
+  string community_id = 1;
+  string user_id = 2;
+}
+
+message ListCommunityPlansRequest {
+  string community_id = 1;
+  PageRequest page = 2;
+}
+
+message ListPlansResponse {
+  repeated string plan_ids = 1;
+  PageResponse page = 2;
+}

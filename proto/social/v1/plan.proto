@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "google/protobuf/timestamp.proto";
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// PlanService — PRD §13.4 Plans + §17 example contract.
+// CreatePlan/GetPlan are the fully-implemented vertical slice for this scaffold;
+// SearchPlans/JoinPlan/LeavePlan/CancelPlan are typed stubs (see service.go TODOs).
+service PlanService {
+  rpc CreatePlan(CreatePlanRequest) returns (Plan);
+  rpc GetPlan(GetPlanRequest) returns (Plan);
+  rpc SearchPlans(SearchPlansRequest) returns (SearchPlansResponse);
+  rpc JoinPlan(JoinPlanRequest) returns (JoinPlanResponse);
+  rpc LeavePlan(LeavePlanRequest) returns (LeavePlanResponse);
+  rpc CancelPlan(CancelPlanRequest) returns (Plan);
+}
+
+enum PlanStatus {
+  PLAN_STATUS_UNSPECIFIED = 0;
+  PLAN_STATUS_DRAFT = 1;
+  PLAN_STATUS_PUBLISHED = 2;
+  PLAN_STATUS_FULL = 3;
+  PLAN_STATUS_CANCELLED = 4;
+  PLAN_STATUS_COMPLETED = 5;
+}
+
+message Plan {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  string category_id = 4;
+  string host_id = 5;
+  string city_id = 6;
+  string venue_id = 7;
+  google.protobuf.Timestamp starts_at = 8;
+  google.protobuf.Timestamp ends_at = 9;
+  int32 capacity = 10;
+  int32 confirmed_count = 11;
+  Money price = 12;
+  PlanStatus status = 13;
+  GeoPoint location = 14;
+  Audit audit = 15;
+}
+
+message CreatePlanRequest {
+  string title = 1;
+  string description = 2;
+  string category_id = 3;
+  string host_id = 4;
+  string city_id = 5;
+  string venue_id = 6;
+  google.protobuf.Timestamp starts_at = 7;
+  google.protobuf.Timestamp ends_at = 8;
+  int32 capacity = 9;
+  Money price = 10;
+  GeoPoint location = 11;
+}
+
+message GetPlanRequest {
+  string id = 1;
+}
+
+message SearchPlansRequest {
+  string city_id = 1;
+  string category_id = 2;
+  GeoPoint origin = 3;
+  double radius_km = 4;
+  PageRequest page = 5;
+}
+
+message SearchPlansResponse {
+  repeated Plan plans = 1;
+  PageResponse page = 2;
+}
+
+message JoinPlanRequest {
+  string plan_id = 1;
+  string user_id = 2;
+  string idempotency_key = 3;
+}
+
+message JoinPlanResponse {
+  string booking_id = 1;
+}
+
+message LeavePlanRequest {
+  string plan_id = 1;
+  string user_id = 2;
+}
+
+message LeavePlanResponse {}
+
+message CancelPlanRequest {
+  string plan_id = 1;
+  string reason = 2;
+}

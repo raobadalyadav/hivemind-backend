@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// DiscoveryService — PRD §13.3 Discovery (home feed: today/tonight/weekend/near you/for you).
+service DiscoveryService {
+  rpc GetHomeFeed(GetHomeFeedRequest) returns (GetHomeFeedResponse);
+  rpc GetNearbyPlans(GetNearbyPlansRequest) returns (GetNearbyPlansResponse);
+}
+
+enum FeedSection {
+  FEED_SECTION_UNSPECIFIED = 0;
+  TODAY = 1;
+  TONIGHT = 2;
+  WEEKEND = 3;
+  NEAR_YOU = 4;
+  FOR_YOU = 5;
+}
+
+message GetHomeFeedRequest {
+  string user_id = 1;
+  FeedSection section = 2;
+  PageRequest page = 3;
+}
+
+message GetHomeFeedResponse {
+  repeated string plan_ids = 1; // hydrated via PlanService.GetPlan
+  PageResponse page = 2;
+}
+
+message GetNearbyPlansRequest {
+  GeoPoint origin = 1;
+  double radius_km = 2;
+  PageRequest page = 3;
+}
+
+message GetNearbyPlansResponse {
+  repeated string plan_ids = 1;
+  PageResponse page = 2;
+}
