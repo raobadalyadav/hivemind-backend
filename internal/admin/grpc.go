@@ -71,6 +71,8 @@ func (h *Handler) GetDashboardStats(ctx context.Context, req *socialv1.GetDashbo
 		return nil, status.Error(codes.Internal, "failed to load dashboard stats")
 	}
 	return &socialv1.GetDashboardStatsResponse{
+		Dau:           stats.DAU,
+		Mau:           stats.MAU,
 		BookingsToday: stats.BookingsToday,
 		GmvMinorUnits: stats.GMVMinorUnits,
 	}, nil

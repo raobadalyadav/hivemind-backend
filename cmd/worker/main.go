@@ -21,6 +21,7 @@ import (
 	"github.com/hivemind/backend/internal/moderation"
 	"github.com/hivemind/backend/internal/notifications"
 	"github.com/hivemind/backend/internal/payments"
+	"github.com/hivemind/backend/pkg/analytics"
 	"github.com/hivemind/backend/pkg/email"
 	"github.com/hivemind/backend/pkg/eventbus"
 	"github.com/hivemind/backend/pkg/idempotency"
@@ -75,9 +76,13 @@ func main() {
 	d := &deps{
 		chatSvc:          chat.NewService(chat.NewRepository(pool), moderation.NewService(moderation.NewRepository(pool))),
 		notificationsSvc: notifications.NewService(notifications.NewRepository(pool), emailSender, pushSender, logger),
-		paymentsSvc:      payments.NewService(payments.NewRepository(pool)),
-		bookingsSvc:      bookings.NewService(bookings.NewRepository(pool), idempotency.NewGuard(rdb)),
-		logger:           logger,
+		// nil gateway/bookingOwner: the worker only calls
+		// RefundBookingIfCaptured, never CreateOrder — those params exist
+		// for the gRPC-facing Service constructed in cmd/api.
+		paymentsSvc:  payments.NewService(payments.NewRepository(pool), nil, nil, logger),
+		bookingsSvc:  bookings.NewService(bookings.NewRepository(pool), idempotency.NewGuard(rdb)),
+		analyticsRec: analytics.NewRecorder(pool),
+		logger:       logger,
 	}
 
 	handlers := map[string]func(context.Context, []byte) error{

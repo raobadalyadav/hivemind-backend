@@ -28,8 +28,11 @@ type Order struct {
 	Amount         *Money                 `protobuf:"bytes,3,opt,name=amount,proto3" json:"amount,omitempty"`
 	GatewayOrderId string                 `protobuf:"bytes,4,opt,name=gateway_order_id,json=gatewayOrderId,proto3" json:"gateway_order_id,omitempty"`
 	Status         string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// payment_session_id: handed to the mobile client's Cashfree Checkout SDK
+	// to open the payment sheet — short-lived, not persisted server-side.
+	PaymentSessionId string `protobuf:"bytes,6,opt,name=payment_session_id,json=paymentSessionId,proto3" json:"payment_session_id,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *Order) Reset() {
@@ -93,6 +96,13 @@ func (x *Order) GetGatewayOrderId() string {
 func (x *Order) GetStatus() string {
 	if x != nil {
 		return x.Status
+	}
+	return ""
+}
+
+func (x *Order) GetPaymentSessionId() string {
+	if x != nil {
+		return x.PaymentSessionId
 	}
 	return ""
 }
@@ -234,9 +244,13 @@ func (x *Refund) GetStatus() string {
 }
 
 type CreateOrderRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	BookingId     string                 `protobuf:"bytes,1,opt,name=booking_id,json=bookingId,proto3" json:"booking_id,omitempty"`
-	Amount        *Money                 `protobuf:"bytes,2,opt,name=amount,proto3" json:"amount,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	BookingId string                 `protobuf:"bytes,1,opt,name=booking_id,json=bookingId,proto3" json:"booking_id,omitempty"`
+	Amount    *Money                 `protobuf:"bytes,2,opt,name=amount,proto3" json:"amount,omitempty"`
+	// customer_phone: Cashfree's Create Order API requires a customer phone
+	// number; the user model here (OAuth-only, no phone field) doesn't
+	// collect one at signup, so the client supplies it at checkout time.
+	CustomerPhone string `protobuf:"bytes,3,opt,name=customer_phone,json=customerPhone,proto3" json:"customer_phone,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -283,6 +297,13 @@ func (x *CreateOrderRequest) GetAmount() *Money {
 		return x.Amount
 	}
 	return nil
+}
+
+func (x *CreateOrderRequest) GetCustomerPhone() string {
+	if x != nil {
+		return x.CustomerPhone
+	}
+	return ""
 }
 
 type GetPaymentRequest struct {
@@ -393,14 +414,15 @@ var File_social_v1_payment_proto protoreflect.FileDescriptor
 
 const file_social_v1_payment_proto_rawDesc = "" +
 	"\n" +
-	"\x17social/v1/payment.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"\xa2\x01\n" +
+	"\x17social/v1/payment.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"\xd0\x01\n" +
 	"\x05Order\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
 	"booking_id\x18\x02 \x01(\tR\tbookingId\x12(\n" +
 	"\x06amount\x18\x03 \x01(\v2\x10.social.v1.MoneyR\x06amount\x12(\n" +
 	"\x10gateway_order_id\x18\x04 \x01(\tR\x0egatewayOrderId\x12\x16\n" +
-	"\x06status\x18\x05 \x01(\tR\x06status\"v\n" +
+	"\x06status\x18\x05 \x01(\tR\x06status\x12,\n" +
+	"\x12payment_session_id\x18\x06 \x01(\tR\x10paymentSessionId\"v\n" +
 	"\aPayment\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
 	"\border_id\x18\x02 \x01(\tR\aorderId\x12(\n" +
@@ -411,11 +433,12 @@ const file_social_v1_payment_proto_rawDesc = "" +
 	"\n" +
 	"payment_id\x18\x02 \x01(\tR\tpaymentId\x12(\n" +
 	"\x06amount\x18\x03 \x01(\v2\x10.social.v1.MoneyR\x06amount\x12\x16\n" +
-	"\x06status\x18\x04 \x01(\tR\x06status\"]\n" +
+	"\x06status\x18\x04 \x01(\tR\x06status\"\x84\x01\n" +
 	"\x12CreateOrderRequest\x12\x1d\n" +
 	"\n" +
 	"booking_id\x18\x01 \x01(\tR\tbookingId\x12(\n" +
-	"\x06amount\x18\x02 \x01(\v2\x10.social.v1.MoneyR\x06amount\"#\n" +
+	"\x06amount\x18\x02 \x01(\v2\x10.social.v1.MoneyR\x06amount\x12%\n" +
+	"\x0ecustomer_phone\x18\x03 \x01(\tR\rcustomerPhone\"#\n" +
 	"\x11GetPaymentRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"w\n" +
 	"\x14RefundPaymentRequest\x12\x1d\n" +

@@ -29,8 +29,10 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // PaymentService — PRD §13.13 Payments. Real gateway calls go through the
-// internal/payments gateway.Client interface (fake impl for local dev); no
-// direct Razorpay dependency belongs in this proto or its service layer.
+// internal/payments GatewayClient interface, implemented by pkg/cashfree —
+// no direct Cashfree dependency belongs in this proto or its service layer.
+// Payment capture confirmation arrives via Cashfree's webhook (plain HTTP,
+// not gRPC — see cmd/api's webhook HTTP listener), not a client-callable RPC.
 type PaymentServiceClient interface {
 	CreateOrder(ctx context.Context, in *CreateOrderRequest, opts ...grpc.CallOption) (*Order, error)
 	GetPayment(ctx context.Context, in *GetPaymentRequest, opts ...grpc.CallOption) (*Payment, error)
@@ -80,8 +82,10 @@ func (c *paymentServiceClient) RefundPayment(ctx context.Context, in *RefundPaym
 // for forward compatibility.
 //
 // PaymentService — PRD §13.13 Payments. Real gateway calls go through the
-// internal/payments gateway.Client interface (fake impl for local dev); no
-// direct Razorpay dependency belongs in this proto or its service layer.
+// internal/payments GatewayClient interface, implemented by pkg/cashfree —
+// no direct Cashfree dependency belongs in this proto or its service layer.
+// Payment capture confirmation arrives via Cashfree's webhook (plain HTTP,
+// not gRPC — see cmd/api's webhook HTTP listener), not a client-callable RPC.
 type PaymentServiceServer interface {
 	CreateOrder(context.Context, *CreateOrderRequest) (*Order, error)
 	GetPayment(context.Context, *GetPaymentRequest) (*Payment, error)

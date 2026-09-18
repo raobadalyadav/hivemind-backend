@@ -33,6 +33,14 @@ type Config struct {
 	ResendAPIKey            string
 	EmailFromAddress        string
 	FirebaseCredentialsPath string
+	// CashfreeClientID/Secret: same optional-external-config pattern —
+	// empty disables real payment-session creation (order still recorded,
+	// no Cashfree call). WebhookPort is a separate plain net/http listener
+	// (Cashfree webhooks are HTTP POSTs, not gRPC).
+	CashfreeClientID     string
+	CashfreeClientSecret string
+	CashfreeSandbox      bool
+	WebhookPort          string
 }
 
 func Load() Config {
@@ -54,6 +62,11 @@ func Load() Config {
 		ResendAPIKey:            getEnv("RESEND_API_KEY", ""),
 		EmailFromAddress:        getEnv("EMAIL_FROM_ADDRESS", "noreply@hivemind.app"),
 		FirebaseCredentialsPath: getEnv("FIREBASE_CREDENTIALS_PATH", ""),
+
+		CashfreeClientID:     getEnv("CASHFREE_CLIENT_ID", ""),
+		CashfreeClientSecret: getEnv("CASHFREE_CLIENT_SECRET", ""),
+		CashfreeSandbox:      getEnvBool("CASHFREE_SANDBOX", true),
+		WebhookPort:          getEnv("WEBHOOK_PORT", "8080"),
 	}
 }
 

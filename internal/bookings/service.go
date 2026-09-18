@@ -116,6 +116,17 @@ func (s *Service) GetBooking(ctx context.Context, id string) (*Booking, error) {
 	return s.repo.Get(ctx, id)
 }
 
+// GetBookingOwnerID satisfies payments.BookingOwnerChecker — payments.CreateOrder
+// uses it to verify the caller actually owns the booking they're paying
+// for, without importing this package's concrete Booking type.
+func (s *Service) GetBookingOwnerID(ctx context.Context, id string) (string, error) {
+	b, err := s.GetBooking(ctx, id)
+	if err != nil {
+		return "", err
+	}
+	return b.UserID, nil
+}
+
 // GetBookingAsUser is what the gRPC handler calls — only the booking's own
 // user, the plan's host, or an admin may read it (booking price/status is
 // not public data).

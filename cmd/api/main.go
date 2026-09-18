@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -38,6 +39,8 @@ import (
 	"github.com/hivemind/backend/internal/social"
 	"github.com/hivemind/backend/internal/subscriptions"
 	"github.com/hivemind/backend/internal/users"
+	"github.com/hivemind/backend/pkg/analytics"
+	"github.com/hivemind/backend/pkg/cashfree"
 	"github.com/hivemind/backend/pkg/email"
 	"github.com/hivemind/backend/pkg/grpcmiddleware"
 	"github.com/hivemind/backend/pkg/idempotency"
@@ -125,13 +128,27 @@ func main() {
 	// identical (both just wrap pkg/email.Client's Send method) but
 	// declared separately per package per the plan's decoupling — emailSender
 	// satisfies both without a cast.
-	socialv1.RegisterAuthServiceServer(srv, auth.NewHandler(auth.NewService(auth.NewRepository(pool), issuer, googleVerifier, appleVerifier, emailSender, logger)))
+	analyticsRec := analytics.NewRecorder(pool)
+
+	var cashfreeClient *cashfree.Client
+	if cfg.CashfreeClientID != "" {
+		cashfreeClient = cashfree.NewClient(cfg.CashfreeClientID, cfg.CashfreeClientSecret, cfg.CashfreeSandbox)
+	}
+	// Declared as the interface type for the same nil-interface reason as
+	// emailSender/pushSender above.
+	var paymentGateway payments.GatewayClient
+	if cashfreeClient != nil {
+		paymentGateway = cashfreeClient
+	}
+	paymentsSvc := payments.NewService(payments.NewRepository(pool), paymentGateway, bookingsSvc, logger)
+
+	socialv1.RegisterAuthServiceServer(srv, auth.NewHandler(auth.NewService(auth.NewRepository(pool), issuer, googleVerifier, appleVerifier, emailSender, analyticsRec, logger)))
 	socialv1.RegisterUserServiceServer(srv, users.NewHandler(users.NewService(users.NewRepository(pool))))
 	socialv1.RegisterProfileServiceServer(srv, profiles.NewHandler(profiles.NewService(profiles.NewRepository(pool))))
 	socialv1.RegisterDiscoveryServiceServer(srv, discovery.NewHandler(discovery.NewService(discovery.NewRepository(pool))))
 	socialv1.RegisterPlanServiceServer(srv, plans.NewHandler(plans.NewService(plans.NewRepository(pool), bookingsSvc, bookingsSvc)))
 	socialv1.RegisterBookingServiceServer(srv, bookings.NewHandler(bookingsSvc))
-	socialv1.RegisterPaymentServiceServer(srv, payments.NewHandler(payments.NewService(payments.NewRepository(pool))))
+	socialv1.RegisterPaymentServiceServer(srv, payments.NewHandler(paymentsSvc))
 	socialv1.RegisterSubscriptionServiceServer(srv, subscriptions.NewHandler(subscriptions.NewService(subscriptions.NewRepository(pool))))
 	socialv1.RegisterCommunityServiceServer(srv, communities.NewHandler(communities.NewService(communities.NewRepository(pool))))
 	socialv1.RegisterConnectionServiceServer(srv, connections.NewHandler(connections.NewService(connections.NewRepository(pool))))
@@ -165,8 +182,26 @@ func main() {
 		}
 	}()
 
+	// Cashfree webhooks are plain HTTP POSTs from Cashfree's servers, not
+	// gRPC — a second, separate listener, same process.
+	webhookMux := http.NewServeMux()
+	webhookMux.HandleFunc("/webhooks/cashfree", cashfreeWebhookHandler(paymentsSvc, cashfreeClient, logger))
+	webhookSrv := &http.Server{Addr: ":" + cfg.WebhookPort, Handler: webhookMux}
+	go func() {
+		logger.Info("webhook server starting", "port", cfg.WebhookPort)
+		if err := webhookSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Error("webhook serve", "error", err)
+		}
+	}()
+
 	<-ctx.Done()
 	logger.Info("shutting down")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	if err := webhookSrv.Shutdown(shutdownCtx); err != nil {
+		logger.Error("webhook server shutdown", "error", err)
+	}
 
 	stopped := make(chan struct{})
 	go func() {

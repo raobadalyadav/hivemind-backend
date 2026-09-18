@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
+	"github.com/hivemind/backend/pkg/grpcmiddleware"
 )
 
 // Handler implements socialv1.PaymentServiceServer — every RPC is fully
@@ -21,24 +22,33 @@ func NewHandler(svc *Service) *Handler {
 }
 
 func (h *Handler) CreateOrder(ctx context.Context, req *socialv1.CreateOrderRequest) (*socialv1.Order, error) {
+	callerID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
 	o := &Order{BookingID: req.GetBookingId()}
 	if req.GetAmount() != nil {
 		o.AmountMinor = req.GetAmount().GetMinorUnits()
 		o.Currency = req.GetAmount().GetCurrency()
 	}
-	created, err := h.svc.CreateOrder(ctx, o)
+	created, sessionID, err := h.svc.CreateOrder(ctx, o, callerID, req.GetCustomerPhone())
 	if err != nil {
-		if err == ErrInvalidInput {
+		switch err {
+		case ErrInvalidInput:
 			return nil, status.Error(codes.InvalidArgument, err.Error())
+		case ErrForbidden:
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		default:
+			return nil, status.Error(codes.Internal, "failed to create order")
 		}
-		return nil, status.Error(codes.Internal, "failed to create order")
 	}
 	return &socialv1.Order{
-		Id:             created.ID,
-		BookingId:      created.BookingID,
-		Amount:         &socialv1.Money{MinorUnits: created.AmountMinor, Currency: created.Currency},
-		GatewayOrderId: created.GatewayOrderID,
-		Status:         created.Status,
+		Id:               created.ID,
+		BookingId:        created.BookingID,
+		Amount:           &socialv1.Money{MinorUnits: created.AmountMinor, Currency: created.Currency},
+		GatewayOrderId:   created.GatewayOrderID,
+		Status:           created.Status,
+		PaymentSessionId: sessionID,
 	}, nil
 }
 

@@ -1,6 +1,5 @@
 // Package social implements PRD §13.10 Social Content / §9 Memories (Phase
-// 2). CreatePost/GetPost are the fully working vertical slice; ListPosts/
-// CommentOnPost/LikePost are typed stubs.
+// 2) — every RPC is fully implemented.
 package social
 
 import (
@@ -86,4 +85,96 @@ func (r *Repository) Get(ctx context.Context, id string) (*Post, error) {
 		p.MediaURLs = append(p.MediaURLs, url)
 	}
 	return &p, rows.Err()
+}
+
+// ListForAuthor returns posts by author, filtered to visibility='public'
+// unless the caller is the author themselves (private posts stay private —
+// see service.go).
+func (r *Repository) ListForAuthor(ctx context.Context, authorID string, publicOnly bool, limit int) ([]*Post, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT id, author_id, COALESCE(plan_id::text,''), body, visibility
+		FROM posts WHERE author_id = $1 AND (NOT $2 OR visibility = 'public')
+		ORDER BY created_at DESC LIMIT $3`,
+		authorID, publicOnly, limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []*Post
+	ids := make([]string, 0)
+	for rows.Next() {
+		var p Post
+		if err := rows.Scan(&p.ID, &p.AuthorID, &p.PlanID, &p.Body, &p.Visibility); err != nil {
+			return nil, err
+		}
+		posts = append(posts, &p)
+		ids = append(ids, p.ID)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if len(posts) == 0 {
+		return posts, nil
+	}
+
+	mediaRows, err := r.pool.Query(ctx,
+		`SELECT post_id, media_url FROM post_media WHERE post_id = ANY($1::uuid[]) ORDER BY post_id, position`, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer mediaRows.Close()
+	mediaByPost := make(map[string][]string)
+	for mediaRows.Next() {
+		var postID, url string
+		if err := mediaRows.Scan(&postID, &url); err != nil {
+			return nil, err
+		}
+		mediaByPost[postID] = append(mediaByPost[postID], url)
+	}
+	if err := mediaRows.Err(); err != nil {
+		return nil, err
+	}
+	for _, p := range posts {
+		p.MediaURLs = mediaByPost[p.ID]
+	}
+	return posts, nil
+}
+
+type Comment struct {
+	ID       string
+	PostID   string
+	AuthorID string
+	Body     string
+}
+
+func (r *Repository) CreateComment(ctx context.Context, c *Comment) (*Comment, error) {
+	out := *c
+	err := r.pool.QueryRow(ctx,
+		`INSERT INTO comments (post_id, author_id, body) VALUES ($1, $2, $3) RETURNING id`,
+		c.PostID, c.AuthorID, c.Body,
+	).Scan(&out.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Like is idempotent (ON CONFLICT DO NOTHING — a repeated like isn't an
+// error) and returns the current total count either way.
+func (r *Repository) Like(ctx context.Context, postID, userID string) (int32, error) {
+	if _, err := r.pool.Exec(ctx,
+		`INSERT INTO likes (post_id, user_id) VALUES ($1, $2) ON CONFLICT (post_id, user_id) DO NOTHING`,
+		postID, userID,
+	); err != nil {
+		return 0, err
+	}
+	var count int32
+	if err := r.pool.QueryRow(ctx,
+		`SELECT count(*) FROM likes WHERE post_id = $1`, postID,
+	).Scan(&count); err != nil {
+		return 0, err
+	}
+	return count, nil
 }

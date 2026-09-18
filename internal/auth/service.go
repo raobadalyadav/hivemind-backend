@@ -43,20 +43,29 @@ type EmailSender interface {
 	Send(ctx context.Context, to, subject, htmlBody string) error
 }
 
+// EventRecorder is satisfied by *analytics.Recorder — declared here for the
+// same reason as EmailSender. Never nil in practice (analytics has no
+// external credentials to be missing), but treated as optional anyway for
+// consistency and so tests don't need to construct one.
+type EventRecorder interface {
+	Record(ctx context.Context, userID, eventName string, properties map[string]any) error
+}
+
 type Service struct {
 	repo           *Repository
 	issuer         *security.TokenIssuer
 	googleVerifier *oauth.Verifier
 	appleVerifier  *oauth.Verifier
 	emailSender    EmailSender
+	events         EventRecorder
 	logger         *slog.Logger
 }
 
-func NewService(repo *Repository, issuer *security.TokenIssuer, googleVerifier, appleVerifier *oauth.Verifier, emailSender EmailSender, logger *slog.Logger) *Service {
+func NewService(repo *Repository, issuer *security.TokenIssuer, googleVerifier, appleVerifier *oauth.Verifier, emailSender EmailSender, events EventRecorder, logger *slog.Logger) *Service {
 	return &Service{
 		repo: repo, issuer: issuer,
 		googleVerifier: googleVerifier, appleVerifier: appleVerifier,
-		emailSender: emailSender, logger: logger,
+		emailSender: emailSender, events: events, logger: logger,
 	}
 }
 
@@ -280,6 +289,16 @@ func (s *Service) issueTokens(ctx context.Context, userID, role, deviceUUID stri
 	}
 	if err := s.repo.StoreRefreshToken(ctx, userID, deviceUUID, security.HashToken(refresh), time.Now().Add(refreshTokenTTL)); err != nil {
 		return nil, err
+	}
+
+	// One choke point for every session-issuing path (SignInWithGoogle/
+	// SignInWithApple/RefreshToken/RecoverAccount all funnel through here) —
+	// gives GetDashboardStats a real DAU/MAU signal without instrumenting
+	// each RPC individually. A failure here shouldn't fail the sign-in.
+	if s.events != nil {
+		if err := s.events.Record(ctx, userID, "session_active", nil); err != nil {
+			s.logger.Error("record session_active event", "error", err, "user_id", userID)
+		}
 	}
 
 	return &Tokens{UserID: userID, AccessToken: access, RefreshToken: refresh, ExpiresAt: expiresAt}, nil

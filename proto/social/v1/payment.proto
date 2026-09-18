@@ -7,8 +7,10 @@ import "social/v1/common.proto";
 option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
 
 // PaymentService — PRD §13.13 Payments. Real gateway calls go through the
-// internal/payments gateway.Client interface (fake impl for local dev); no
-// direct Razorpay dependency belongs in this proto or its service layer.
+// internal/payments GatewayClient interface, implemented by pkg/cashfree —
+// no direct Cashfree dependency belongs in this proto or its service layer.
+// Payment capture confirmation arrives via Cashfree's webhook (plain HTTP,
+// not gRPC — see cmd/api's webhook HTTP listener), not a client-callable RPC.
 service PaymentService {
   rpc CreateOrder(CreateOrderRequest) returns (Order);
   rpc GetPayment(GetPaymentRequest) returns (Payment);
@@ -21,6 +23,9 @@ message Order {
   Money amount = 3;
   string gateway_order_id = 4;
   string status = 5;
+  // payment_session_id: handed to the mobile client's Cashfree Checkout SDK
+  // to open the payment sheet — short-lived, not persisted server-side.
+  string payment_session_id = 6;
 }
 
 message Payment {
@@ -40,6 +45,10 @@ message Refund {
 message CreateOrderRequest {
   string booking_id = 1;
   Money amount = 2;
+  // customer_phone: Cashfree's Create Order API requires a customer phone
+  // number; the user model here (OAuth-only, no phone field) doesn't
+  // collect one at signup, so the client supplies it at checkout time.
+  string customer_phone = 3;
 }
 
 message GetPaymentRequest {

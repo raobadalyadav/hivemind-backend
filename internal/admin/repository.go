@@ -126,18 +126,25 @@ func (r *Repository) OverrideBookingStatus(ctx context.Context, bookingID, newSt
 }
 
 type DashboardStats struct {
+	DAU           int64
+	MAU           int64
 	BookingsToday int64
 	GMVMinorUnits int64
 }
 
-// GetDashboardStats returns what's actually derivable today. DAU/MAU are
-// TODO(phase2) — no analytics-event emission path exists yet (the `events`
-// table has no writer), and fabricating numbers would be worse than an
-// honest 0.
+// GetDashboardStats. DAU/MAU come from pkg/analytics's session_active
+// events (written on every sign-in/refresh — see internal/auth's
+// issueTokens) — real distinct-user counts, not a TODO(phase2) stub anymore.
 func (r *Repository) GetDashboardStats(ctx context.Context, cityID string) (*DashboardStats, error) {
 	var stats DashboardStats
 	err := r.pool.QueryRow(ctx, `
 		SELECT
+			(SELECT count(DISTINCT e.user_id) FROM events e JOIN users u ON u.id = e.user_id
+			 WHERE e.event_name = 'session_active' AND e.occurred_at::date = current_date
+			   AND (u.city_id = NULLIF($1,'')::uuid OR $1 = '')),
+			(SELECT count(DISTINCT e.user_id) FROM events e JOIN users u ON u.id = e.user_id
+			 WHERE e.event_name = 'session_active' AND e.occurred_at >= now() - interval '30 days'
+			   AND (u.city_id = NULLIF($1,'')::uuid OR $1 = '')),
 			(SELECT count(*) FROM bookings b JOIN plans p ON p.id = b.plan_id
 			 WHERE b.created_at::date = current_date
 			   AND (p.city_id = NULLIF($1,'')::uuid OR $1 = '')),
@@ -148,7 +155,7 @@ func (r *Repository) GetDashboardStats(ctx context.Context, cityID string) (*Das
 			 WHERE pay.status = 'captured' AND pay.created_at::date = current_date
 			   AND (p.city_id = NULLIF($1,'')::uuid OR $1 = ''))`,
 		cityID,
-	).Scan(&stats.BookingsToday, &stats.GMVMinorUnits)
+	).Scan(&stats.DAU, &stats.MAU, &stats.BookingsToday, &stats.GMVMinorUnits)
 	if err != nil {
 		return nil, err
 	}

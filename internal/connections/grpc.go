@@ -10,9 +10,8 @@ import (
 	"github.com/hivemind/backend/pkg/grpcmiddleware"
 )
 
-// Handler implements socialv1.ConnectionServiceServer. RequestConnection/
-// ListConnections are real; RespondConnection inherits
-// socialv1.UnimplementedConnectionServiceServer — see PRD §13.9/§33.
+// Handler implements socialv1.ConnectionServiceServer — every RPC is fully
+// implemented (see PRD §13.9/§33).
 type Handler struct {
 	socialv1.UnimplementedConnectionServiceServer
 	svc *Service
@@ -59,6 +58,27 @@ func (h *Handler) ListConnections(ctx context.Context, req *socialv1.ListConnect
 		out = append(out, toProto(c))
 	}
 	return &socialv1.ListConnectionsResponse{Connections: out}, nil
+}
+
+func (h *Handler) RespondConnection(ctx context.Context, req *socialv1.RespondConnectionRequest) (*socialv1.Connection, error) {
+	callerID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	c, err := h.svc.RespondConnection(ctx, req.GetConnectionId(), callerID, req.GetAccept())
+	if err != nil {
+		switch err {
+		case ErrInvalidInput:
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		case ErrForbidden:
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		case ErrConnectionNotFound:
+			return nil, status.Error(codes.NotFound, err.Error())
+		default:
+			return nil, status.Error(codes.Internal, "failed to respond to connection")
+		}
+	}
+	return toProto(c), nil
 }
 
 var statusToProtoMap = map[string]socialv1.ConnectionStatus{

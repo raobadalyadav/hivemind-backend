@@ -9,6 +9,7 @@ import (
 	"github.com/hivemind/backend/internal/chat"
 	"github.com/hivemind/backend/internal/notifications"
 	"github.com/hivemind/backend/internal/payments"
+	"github.com/hivemind/backend/pkg/analytics"
 )
 
 // deps holds the services worker event handlers call into — real business
@@ -18,6 +19,7 @@ type deps struct {
 	notificationsSvc *notifications.Service
 	paymentsSvc      *payments.Service
 	bookingsSvc      *bookings.Service
+	analyticsRec     *analytics.Recorder
 	logger           *slog.Logger
 }
 
@@ -38,6 +40,10 @@ func (d *deps) handleBookingConfirmed(ctx context.Context, data []byte) error {
 
 	if err := d.chatSvc.EnsureMembership(ctx, p.PlanID, p.UserID); err != nil {
 		return err
+	}
+
+	if err := d.analyticsRec.Record(ctx, p.UserID, "booking_confirmed", map[string]any{"booking_id": p.BookingID, "plan_id": p.PlanID}); err != nil {
+		d.logger.Error("record booking_confirmed event", "error", err)
 	}
 
 	_, err := d.notificationsSvc.SendNotification(ctx, &notifications.Notification{
@@ -69,6 +75,10 @@ func (d *deps) handleBookingCancelled(ctx context.Context, data []byte) error {
 
 	if err := d.paymentsSvc.RefundBookingIfCaptured(ctx, p.BookingID, "booking cancelled: "+p.Reason); err != nil {
 		return err
+	}
+
+	if err := d.analyticsRec.Record(ctx, p.UserID, "booking_cancelled", map[string]any{"booking_id": p.BookingID, "plan_id": p.PlanID}); err != nil {
+		d.logger.Error("record booking_cancelled event", "error", err)
 	}
 
 	_, err := d.notificationsSvc.SendNotification(ctx, &notifications.Notification{

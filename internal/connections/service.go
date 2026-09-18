@@ -5,7 +5,10 @@ import (
 	"errors"
 )
 
-var ErrInvalidInput = errors.New("connections: invalid input")
+var (
+	ErrInvalidInput = errors.New("connections: invalid input")
+	ErrForbidden    = errors.New("connections: only the recipient can respond to this request")
+)
 
 const defaultPageSize = 20
 
@@ -29,4 +32,21 @@ func (s *Service) ListConnections(ctx context.Context, userID string) ([]*Connec
 		return nil, ErrInvalidInput
 	}
 	return s.repo.ListForUser(ctx, userID, defaultPageSize)
+}
+
+// RespondConnection requires the caller to be the request's recipient —
+// the requester can't accept their own request, and an unrelated user
+// can't respond to someone else's.
+func (s *Service) RespondConnection(ctx context.Context, connectionID, callerID string, accept bool) (*Connection, error) {
+	if connectionID == "" || callerID == "" {
+		return nil, ErrInvalidInput
+	}
+	c, err := s.repo.Get(ctx, connectionID)
+	if err != nil {
+		return nil, err
+	}
+	if c.RecipientID != callerID {
+		return nil, ErrForbidden
+	}
+	return s.repo.Respond(ctx, connectionID, accept)
 }

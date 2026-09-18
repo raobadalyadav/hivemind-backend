@@ -28,3 +28,19 @@ func (s *Service) GetCommunity(ctx context.Context, id string) (*Community, erro
 	}
 	return s.repo.Get(ctx, id)
 }
+
+const defaultPlanPageSize = 20
+
+func (s *Service) JoinCommunity(ctx context.Context, communityID, userID string) (*Membership, error) {
+	if communityID == "" || userID == "" {
+		return nil, ErrInvalidInput
+	}
+	return s.repo.Join(ctx, communityID, userID)
+}
+
+func (s *Service) ListCommunityPlans(ctx context.Context, communityID string) ([]string, error) {
+	if communityID == "" {
+		return nil, ErrInvalidInput
+	}
+	return s.repo.ListPlanIDs(ctx, communityID, defaultPlanPageSize)
+}

@@ -1,6 +1,5 @@
-// Package communities implements PRD §13.8 Communities (Phase 2).
-// CreateCommunity/GetCommunity are the fully working vertical slice;
-// JoinCommunity/ListCommunityPlans are typed stubs.
+// Package communities implements PRD §13.8 Communities (Phase 2) — every RPC
+// is fully implemented.
 package communities
 
 import (
@@ -67,4 +66,50 @@ func (r *Repository) Get(ctx context.Context, id string) (*Community, error) {
 		return nil, err
 	}
 	return &c, nil
+}
+
+type Membership struct {
+	CommunityID string
+	UserID      string
+	Role        string
+}
+
+// Join is idempotent — ON CONFLICT DO NOTHING, same pattern as
+// chat.Repository.AddMember — a repeated join isn't an error.
+func (r *Repository) Join(ctx context.Context, communityID, userID string) (*Membership, error) {
+	m := &Membership{CommunityID: communityID, UserID: userID, Role: "member"}
+	_, err := r.pool.Exec(ctx, `
+		INSERT INTO community_members (community_id, user_id, role) VALUES ($1, $2, 'member')
+		ON CONFLICT (community_id, user_id) DO NOTHING`,
+		communityID, userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (r *Repository) ListPlanIDs(ctx context.Context, communityID string, limit int) ([]string, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT p.id FROM community_events ce
+		JOIN plans p ON p.id = ce.plan_id
+		WHERE ce.community_id = $1 AND p.status = 'published'
+		ORDER BY p.starts_at
+		LIMIT $2`,
+		communityID, limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
 }

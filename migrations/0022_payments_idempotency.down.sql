@@ -1,0 +1,1 @@
+ALTER TABLE payments DROP CONSTRAINT payments_gateway_payment_id_key;
