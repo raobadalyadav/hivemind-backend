@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
+	"github.com/hivemind/backend/pkg/grpcmiddleware"
 )
 
 // Handler implements socialv1.NotificationServiceServer — every RPC is fully
@@ -20,6 +21,10 @@ func NewHandler(svc *Service) *Handler {
 	return &Handler{svc: svc}
 }
 
+// SendNotification is not self-referential — the caller sends *to* another
+// user, so context-derived identity doesn't apply here. It's gated to
+// admin/system callers via pkg/grpcmiddleware's adminMethods instead,
+// otherwise any authenticated user could spam arbitrary recipients.
 func (h *Handler) SendNotification(ctx context.Context, req *socialv1.SendNotificationRequest) (*socialv1.SendNotificationResponse, error) {
 	n := &Notification{
 		UserID:   req.GetUserId(),
@@ -39,7 +44,11 @@ func (h *Handler) SendNotification(ctx context.Context, req *socialv1.SendNotifi
 }
 
 func (h *Handler) ListNotifications(ctx context.Context, req *socialv1.ListNotificationsRequest) (*socialv1.ListNotificationsResponse, error) {
-	list, err := h.svc.ListNotifications(ctx, req.GetUserId())
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	list, err := h.svc.ListNotifications(ctx, userID)
 	if err != nil {
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -62,7 +71,11 @@ func (h *Handler) ListNotifications(ctx context.Context, req *socialv1.ListNotif
 }
 
 func (h *Handler) UpdatePreferences(ctx context.Context, req *socialv1.UpdatePreferencesRequest) (*socialv1.UpdatePreferencesResponse, error) {
-	err := h.svc.UpdatePreferences(ctx, req.GetUserId(), req.GetPushEnabled(), req.GetEmailEnabled(),
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	err := h.svc.UpdatePreferences(ctx, userID, req.GetPushEnabled(), req.GetEmailEnabled(),
 		req.GetQuietHoursStart(), req.GetQuietHoursEnd())
 	if err != nil {
 		if err == ErrInvalidInput {

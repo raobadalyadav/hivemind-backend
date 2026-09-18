@@ -21,98 +21,81 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type SignUpRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
-	DateOfBirth   string                 `protobuf:"bytes,3,opt,name=date_of_birth,json=dateOfBirth,proto3" json:"date_of_birth,omitempty"` // ISO 8601 date, used for 18+ age gate
-	DeviceId      string                 `protobuf:"bytes,4,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
+type OAuthProvider int32
 
-func (x *SignUpRequest) Reset() {
-	*x = SignUpRequest{}
-	mi := &file_social_v1_auth_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
+const (
+	OAuthProvider_OAUTH_PROVIDER_UNSPECIFIED OAuthProvider = 0
+	OAuthProvider_OAUTH_PROVIDER_GOOGLE      OAuthProvider = 1
+	OAuthProvider_OAUTH_PROVIDER_APPLE       OAuthProvider = 2
+)
 
-func (x *SignUpRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SignUpRequest) ProtoMessage() {}
-
-func (x *SignUpRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_auth_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
+// Enum value maps for OAuthProvider.
+var (
+	OAuthProvider_name = map[int32]string{
+		0: "OAUTH_PROVIDER_UNSPECIFIED",
+		1: "OAUTH_PROVIDER_GOOGLE",
+		2: "OAUTH_PROVIDER_APPLE",
 	}
-	return mi.MessageOf(x)
+	OAuthProvider_value = map[string]int32{
+		"OAUTH_PROVIDER_UNSPECIFIED": 0,
+		"OAUTH_PROVIDER_GOOGLE":      1,
+		"OAUTH_PROVIDER_APPLE":       2,
+	}
+)
+
+func (x OAuthProvider) Enum() *OAuthProvider {
+	p := new(OAuthProvider)
+	*p = x
+	return p
 }
 
-// Deprecated: Use SignUpRequest.ProtoReflect.Descriptor instead.
-func (*SignUpRequest) Descriptor() ([]byte, []int) {
+func (x OAuthProvider) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (OAuthProvider) Descriptor() protoreflect.EnumDescriptor {
+	return file_social_v1_auth_proto_enumTypes[0].Descriptor()
+}
+
+func (OAuthProvider) Type() protoreflect.EnumType {
+	return &file_social_v1_auth_proto_enumTypes[0]
+}
+
+func (x OAuthProvider) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use OAuthProvider.Descriptor instead.
+func (OAuthProvider) EnumDescriptor() ([]byte, []int) {
 	return file_social_v1_auth_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *SignUpRequest) GetEmail() string {
-	if x != nil {
-		return x.Email
-	}
-	return ""
-}
-
-func (x *SignUpRequest) GetPassword() string {
-	if x != nil {
-		return x.Password
-	}
-	return ""
-}
-
-func (x *SignUpRequest) GetDateOfBirth() string {
-	if x != nil {
-		return x.DateOfBirth
-	}
-	return ""
-}
-
-func (x *SignUpRequest) GetDeviceId() string {
-	if x != nil {
-		return x.DeviceId
-	}
-	return ""
-}
-
-type SignInRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
-	DeviceId      string                 `protobuf:"bytes,3,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+type OAuthSignInRequest struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	IdToken  string                 `protobuf:"bytes,1,opt,name=id_token,json=idToken,proto3" json:"id_token,omitempty"`
+	DeviceId string                 `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	// Only required on first sign-in for a brand-new account — the 18+ age
+	// gate needs it since OAuth providers don't reliably supply a birthdate.
+	DateOfBirth   string `protobuf:"bytes,3,opt,name=date_of_birth,json=dateOfBirth,proto3" json:"date_of_birth,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SignInRequest) Reset() {
-	*x = SignInRequest{}
-	mi := &file_social_v1_auth_proto_msgTypes[1]
+func (x *OAuthSignInRequest) Reset() {
+	*x = OAuthSignInRequest{}
+	mi := &file_social_v1_auth_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SignInRequest) String() string {
+func (x *OAuthSignInRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SignInRequest) ProtoMessage() {}
+func (*OAuthSignInRequest) ProtoMessage() {}
 
-func (x *SignInRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_auth_proto_msgTypes[1]
+func (x *OAuthSignInRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_auth_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -123,28 +106,28 @@ func (x *SignInRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SignInRequest.ProtoReflect.Descriptor instead.
-func (*SignInRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_auth_proto_rawDescGZIP(), []int{1}
+// Deprecated: Use OAuthSignInRequest.ProtoReflect.Descriptor instead.
+func (*OAuthSignInRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_auth_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *SignInRequest) GetEmail() string {
+func (x *OAuthSignInRequest) GetIdToken() string {
 	if x != nil {
-		return x.Email
+		return x.IdToken
 	}
 	return ""
 }
 
-func (x *SignInRequest) GetPassword() string {
-	if x != nil {
-		return x.Password
-	}
-	return ""
-}
-
-func (x *SignInRequest) GetDeviceId() string {
+func (x *OAuthSignInRequest) GetDeviceId() string {
 	if x != nil {
 		return x.DeviceId
+	}
+	return ""
+}
+
+func (x *OAuthSignInRequest) GetDateOfBirth() string {
+	if x != nil {
+		return x.DateOfBirth
 	}
 	return ""
 }
@@ -158,7 +141,7 @@ type RefreshTokenRequest struct {
 
 func (x *RefreshTokenRequest) Reset() {
 	*x = RefreshTokenRequest{}
-	mi := &file_social_v1_auth_proto_msgTypes[2]
+	mi := &file_social_v1_auth_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -170,7 +153,7 @@ func (x *RefreshTokenRequest) String() string {
 func (*RefreshTokenRequest) ProtoMessage() {}
 
 func (x *RefreshTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_auth_proto_msgTypes[2]
+	mi := &file_social_v1_auth_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -183,7 +166,7 @@ func (x *RefreshTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RefreshTokenRequest.ProtoReflect.Descriptor instead.
 func (*RefreshTokenRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_auth_proto_rawDescGZIP(), []int{2}
+	return file_social_v1_auth_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *RefreshTokenRequest) GetRefreshToken() string {
@@ -202,7 +185,7 @@ type SignOutRequest struct {
 
 func (x *SignOutRequest) Reset() {
 	*x = SignOutRequest{}
-	mi := &file_social_v1_auth_proto_msgTypes[3]
+	mi := &file_social_v1_auth_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -214,7 +197,7 @@ func (x *SignOutRequest) String() string {
 func (*SignOutRequest) ProtoMessage() {}
 
 func (x *SignOutRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_auth_proto_msgTypes[3]
+	mi := &file_social_v1_auth_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -227,7 +210,7 @@ func (x *SignOutRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignOutRequest.ProtoReflect.Descriptor instead.
 func (*SignOutRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_auth_proto_rawDescGZIP(), []int{3}
+	return file_social_v1_auth_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *SignOutRequest) GetDeviceId() string {
@@ -245,7 +228,7 @@ type SignOutResponse struct {
 
 func (x *SignOutResponse) Reset() {
 	*x = SignOutResponse{}
-	mi := &file_social_v1_auth_proto_msgTypes[4]
+	mi := &file_social_v1_auth_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -257,7 +240,7 @@ func (x *SignOutResponse) String() string {
 func (*SignOutResponse) ProtoMessage() {}
 
 func (x *SignOutResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_auth_proto_msgTypes[4]
+	mi := &file_social_v1_auth_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -270,31 +253,31 @@ func (x *SignOutResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignOutResponse.ProtoReflect.Descriptor instead.
 func (*SignOutResponse) Descriptor() ([]byte, []int) {
-	return file_social_v1_auth_proto_rawDescGZIP(), []int{4}
+	return file_social_v1_auth_proto_rawDescGZIP(), []int{3}
 }
 
-type RequestPasswordResetRequest struct {
+type AddRecoveryEmailRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *RequestPasswordResetRequest) Reset() {
-	*x = RequestPasswordResetRequest{}
-	mi := &file_social_v1_auth_proto_msgTypes[5]
+func (x *AddRecoveryEmailRequest) Reset() {
+	*x = AddRecoveryEmailRequest{}
+	mi := &file_social_v1_auth_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RequestPasswordResetRequest) String() string {
+func (x *AddRecoveryEmailRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RequestPasswordResetRequest) ProtoMessage() {}
+func (*AddRecoveryEmailRequest) ProtoMessage() {}
 
-func (x *RequestPasswordResetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_auth_proto_msgTypes[5]
+func (x *AddRecoveryEmailRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_auth_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -305,38 +288,75 @@ func (x *RequestPasswordResetRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RequestPasswordResetRequest.ProtoReflect.Descriptor instead.
-func (*RequestPasswordResetRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_auth_proto_rawDescGZIP(), []int{5}
+// Deprecated: Use AddRecoveryEmailRequest.ProtoReflect.Descriptor instead.
+func (*AddRecoveryEmailRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_auth_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *RequestPasswordResetRequest) GetEmail() string {
+func (x *AddRecoveryEmailRequest) GetEmail() string {
 	if x != nil {
 		return x.Email
 	}
 	return ""
 }
 
-type RequestPasswordResetResponse struct {
+type AddRecoveryEmailResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *RequestPasswordResetResponse) Reset() {
-	*x = RequestPasswordResetResponse{}
+func (x *AddRecoveryEmailResponse) Reset() {
+	*x = AddRecoveryEmailResponse{}
+	mi := &file_social_v1_auth_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddRecoveryEmailResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddRecoveryEmailResponse) ProtoMessage() {}
+
+func (x *AddRecoveryEmailResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_auth_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddRecoveryEmailResponse.ProtoReflect.Descriptor instead.
+func (*AddRecoveryEmailResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_auth_proto_rawDescGZIP(), []int{5}
+}
+
+type VerifyRecoveryEmailRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VerifyRecoveryEmailRequest) Reset() {
+	*x = VerifyRecoveryEmailRequest{}
 	mi := &file_social_v1_auth_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RequestPasswordResetResponse) String() string {
+func (x *VerifyRecoveryEmailRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RequestPasswordResetResponse) ProtoMessage() {}
+func (*VerifyRecoveryEmailRequest) ProtoMessage() {}
 
-func (x *RequestPasswordResetResponse) ProtoReflect() protoreflect.Message {
+func (x *VerifyRecoveryEmailRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_social_v1_auth_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -348,9 +368,208 @@ func (x *RequestPasswordResetResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RequestPasswordResetResponse.ProtoReflect.Descriptor instead.
-func (*RequestPasswordResetResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use VerifyRecoveryEmailRequest.ProtoReflect.Descriptor instead.
+func (*VerifyRecoveryEmailRequest) Descriptor() ([]byte, []int) {
 	return file_social_v1_auth_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *VerifyRecoveryEmailRequest) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+type VerifyRecoveryEmailResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VerifyRecoveryEmailResponse) Reset() {
+	*x = VerifyRecoveryEmailResponse{}
+	mi := &file_social_v1_auth_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VerifyRecoveryEmailResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VerifyRecoveryEmailResponse) ProtoMessage() {}
+
+func (x *VerifyRecoveryEmailResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_auth_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VerifyRecoveryEmailResponse.ProtoReflect.Descriptor instead.
+func (*VerifyRecoveryEmailResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_auth_proto_rawDescGZIP(), []int{7}
+}
+
+type RequestAccountRecoveryRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RecoveryEmail string                 `protobuf:"bytes,1,opt,name=recovery_email,json=recoveryEmail,proto3" json:"recovery_email,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RequestAccountRecoveryRequest) Reset() {
+	*x = RequestAccountRecoveryRequest{}
+	mi := &file_social_v1_auth_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestAccountRecoveryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestAccountRecoveryRequest) ProtoMessage() {}
+
+func (x *RequestAccountRecoveryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_auth_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RequestAccountRecoveryRequest.ProtoReflect.Descriptor instead.
+func (*RequestAccountRecoveryRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_auth_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *RequestAccountRecoveryRequest) GetRecoveryEmail() string {
+	if x != nil {
+		return x.RecoveryEmail
+	}
+	return ""
+}
+
+type RequestAccountRecoveryResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RequestAccountRecoveryResponse) Reset() {
+	*x = RequestAccountRecoveryResponse{}
+	mi := &file_social_v1_auth_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestAccountRecoveryResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestAccountRecoveryResponse) ProtoMessage() {}
+
+func (x *RequestAccountRecoveryResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_auth_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RequestAccountRecoveryResponse.ProtoReflect.Descriptor instead.
+func (*RequestAccountRecoveryResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_auth_proto_rawDescGZIP(), []int{9}
+}
+
+type RecoverAccountRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RecoveryEmail string                 `protobuf:"bytes,1,opt,name=recovery_email,json=recoveryEmail,proto3" json:"recovery_email,omitempty"`
+	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
+	Provider      OAuthProvider          `protobuf:"varint,3,opt,name=provider,proto3,enum=social.v1.OAuthProvider" json:"provider,omitempty"`
+	IdToken       string                 `protobuf:"bytes,4,opt,name=id_token,json=idToken,proto3" json:"id_token,omitempty"`
+	DeviceId      string                 `protobuf:"bytes,5,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecoverAccountRequest) Reset() {
+	*x = RecoverAccountRequest{}
+	mi := &file_social_v1_auth_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecoverAccountRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecoverAccountRequest) ProtoMessage() {}
+
+func (x *RecoverAccountRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_auth_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecoverAccountRequest.ProtoReflect.Descriptor instead.
+func (*RecoverAccountRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_auth_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *RecoverAccountRequest) GetRecoveryEmail() string {
+	if x != nil {
+		return x.RecoveryEmail
+	}
+	return ""
+}
+
+func (x *RecoverAccountRequest) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *RecoverAccountRequest) GetProvider() OAuthProvider {
+	if x != nil {
+		return x.Provider
+	}
+	return OAuthProvider_OAUTH_PROVIDER_UNSPECIFIED
+}
+
+func (x *RecoverAccountRequest) GetIdToken() string {
+	if x != nil {
+		return x.IdToken
+	}
+	return ""
+}
+
+func (x *RecoverAccountRequest) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
 }
 
 type AuthTokens struct {
@@ -365,7 +584,7 @@ type AuthTokens struct {
 
 func (x *AuthTokens) Reset() {
 	*x = AuthTokens{}
-	mi := &file_social_v1_auth_proto_msgTypes[7]
+	mi := &file_social_v1_auth_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -377,7 +596,7 @@ func (x *AuthTokens) String() string {
 func (*AuthTokens) ProtoMessage() {}
 
 func (x *AuthTokens) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_auth_proto_msgTypes[7]
+	mi := &file_social_v1_auth_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -390,7 +609,7 @@ func (x *AuthTokens) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuthTokens.ProtoReflect.Descriptor instead.
 func (*AuthTokens) Descriptor() ([]byte, []int) {
-	return file_social_v1_auth_proto_rawDescGZIP(), []int{7}
+	return file_social_v1_auth_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *AuthTokens) GetUserId() string {
@@ -425,36 +644,50 @@ var File_social_v1_auth_proto protoreflect.FileDescriptor
 
 const file_social_v1_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x14social/v1/auth.proto\x12\tsocial.v1\"\x82\x01\n" +
-	"\rSignUpRequest\x12\x14\n" +
-	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\x12\"\n" +
-	"\rdate_of_birth\x18\x03 \x01(\tR\vdateOfBirth\x12\x1b\n" +
-	"\tdevice_id\x18\x04 \x01(\tR\bdeviceId\"^\n" +
-	"\rSignInRequest\x12\x14\n" +
-	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\x12\x1b\n" +
-	"\tdevice_id\x18\x03 \x01(\tR\bdeviceId\":\n" +
+	"\x14social/v1/auth.proto\x12\tsocial.v1\"p\n" +
+	"\x12OAuthSignInRequest\x12\x19\n" +
+	"\bid_token\x18\x01 \x01(\tR\aidToken\x12\x1b\n" +
+	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\x12\"\n" +
+	"\rdate_of_birth\x18\x03 \x01(\tR\vdateOfBirth\":\n" +
 	"\x13RefreshTokenRequest\x12#\n" +
 	"\rrefresh_token\x18\x01 \x01(\tR\frefreshToken\"-\n" +
 	"\x0eSignOutRequest\x12\x1b\n" +
 	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\x11\n" +
-	"\x0fSignOutResponse\"3\n" +
-	"\x1bRequestPasswordResetRequest\x12\x14\n" +
-	"\x05email\x18\x01 \x01(\tR\x05email\"\x1e\n" +
-	"\x1cRequestPasswordResetResponse\"\x95\x01\n" +
+	"\x0fSignOutResponse\"/\n" +
+	"\x17AddRecoveryEmailRequest\x12\x14\n" +
+	"\x05email\x18\x01 \x01(\tR\x05email\"\x1a\n" +
+	"\x18AddRecoveryEmailResponse\"0\n" +
+	"\x1aVerifyRecoveryEmailRequest\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\"\x1d\n" +
+	"\x1bVerifyRecoveryEmailResponse\"F\n" +
+	"\x1dRequestAccountRecoveryRequest\x12%\n" +
+	"\x0erecovery_email\x18\x01 \x01(\tR\rrecoveryEmail\" \n" +
+	"\x1eRequestAccountRecoveryResponse\"\xc0\x01\n" +
+	"\x15RecoverAccountRequest\x12%\n" +
+	"\x0erecovery_email\x18\x01 \x01(\tR\rrecoveryEmail\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\tR\x04code\x124\n" +
+	"\bprovider\x18\x03 \x01(\x0e2\x18.social.v1.OAuthProviderR\bprovider\x12\x19\n" +
+	"\bid_token\x18\x04 \x01(\tR\aidToken\x12\x1b\n" +
+	"\tdevice_id\x18\x05 \x01(\tR\bdeviceId\"\x95\x01\n" +
 	"\n" +
 	"AuthTokens\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
 	"\faccess_token\x18\x02 \x01(\tR\vaccessToken\x12#\n" +
 	"\rrefresh_token\x18\x03 \x01(\tR\frefreshToken\x12&\n" +
-	"\x0fexpires_at_unix\x18\x04 \x01(\x03R\rexpiresAtUnix2\xf5\x02\n" +
-	"\vAuthService\x129\n" +
-	"\x06SignUp\x12\x18.social.v1.SignUpRequest\x1a\x15.social.v1.AuthTokens\x129\n" +
-	"\x06SignIn\x12\x18.social.v1.SignInRequest\x1a\x15.social.v1.AuthTokens\x12E\n" +
+	"\x0fexpires_at_unix\x18\x04 \x01(\x03R\rexpiresAtUnix*d\n" +
+	"\rOAuthProvider\x12\x1e\n" +
+	"\x1aOAUTH_PROVIDER_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15OAUTH_PROVIDER_GOOGLE\x10\x01\x12\x18\n" +
+	"\x14OAUTH_PROVIDER_APPLE\x10\x022\xa6\x05\n" +
+	"\vAuthService\x12H\n" +
+	"\x10SignInWithGoogle\x12\x1d.social.v1.OAuthSignInRequest\x1a\x15.social.v1.AuthTokens\x12G\n" +
+	"\x0fSignInWithApple\x12\x1d.social.v1.OAuthSignInRequest\x1a\x15.social.v1.AuthTokens\x12E\n" +
 	"\fRefreshToken\x12\x1e.social.v1.RefreshTokenRequest\x1a\x15.social.v1.AuthTokens\x12@\n" +
-	"\aSignOut\x12\x19.social.v1.SignOutRequest\x1a\x1a.social.v1.SignOutResponse\x12g\n" +
-	"\x14RequestPasswordReset\x12&.social.v1.RequestPasswordResetRequest\x1a'.social.v1.RequestPasswordResetResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
+	"\aSignOut\x12\x19.social.v1.SignOutRequest\x1a\x1a.social.v1.SignOutResponse\x12[\n" +
+	"\x10AddRecoveryEmail\x12\".social.v1.AddRecoveryEmailRequest\x1a#.social.v1.AddRecoveryEmailResponse\x12d\n" +
+	"\x13VerifyRecoveryEmail\x12%.social.v1.VerifyRecoveryEmailRequest\x1a&.social.v1.VerifyRecoveryEmailResponse\x12m\n" +
+	"\x16RequestAccountRecovery\x12(.social.v1.RequestAccountRecoveryRequest\x1a).social.v1.RequestAccountRecoveryResponse\x12I\n" +
+	"\x0eRecoverAccount\x12 .social.v1.RecoverAccountRequest\x1a\x15.social.v1.AuthTokensB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
 var (
 	file_social_v1_auth_proto_rawDescOnce sync.Once
@@ -468,33 +701,46 @@ func file_social_v1_auth_proto_rawDescGZIP() []byte {
 	return file_social_v1_auth_proto_rawDescData
 }
 
-var file_social_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_social_v1_auth_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_social_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_social_v1_auth_proto_goTypes = []any{
-	(*SignUpRequest)(nil),                // 0: social.v1.SignUpRequest
-	(*SignInRequest)(nil),                // 1: social.v1.SignInRequest
-	(*RefreshTokenRequest)(nil),          // 2: social.v1.RefreshTokenRequest
-	(*SignOutRequest)(nil),               // 3: social.v1.SignOutRequest
-	(*SignOutResponse)(nil),              // 4: social.v1.SignOutResponse
-	(*RequestPasswordResetRequest)(nil),  // 5: social.v1.RequestPasswordResetRequest
-	(*RequestPasswordResetResponse)(nil), // 6: social.v1.RequestPasswordResetResponse
-	(*AuthTokens)(nil),                   // 7: social.v1.AuthTokens
+	(OAuthProvider)(0),                     // 0: social.v1.OAuthProvider
+	(*OAuthSignInRequest)(nil),             // 1: social.v1.OAuthSignInRequest
+	(*RefreshTokenRequest)(nil),            // 2: social.v1.RefreshTokenRequest
+	(*SignOutRequest)(nil),                 // 3: social.v1.SignOutRequest
+	(*SignOutResponse)(nil),                // 4: social.v1.SignOutResponse
+	(*AddRecoveryEmailRequest)(nil),        // 5: social.v1.AddRecoveryEmailRequest
+	(*AddRecoveryEmailResponse)(nil),       // 6: social.v1.AddRecoveryEmailResponse
+	(*VerifyRecoveryEmailRequest)(nil),     // 7: social.v1.VerifyRecoveryEmailRequest
+	(*VerifyRecoveryEmailResponse)(nil),    // 8: social.v1.VerifyRecoveryEmailResponse
+	(*RequestAccountRecoveryRequest)(nil),  // 9: social.v1.RequestAccountRecoveryRequest
+	(*RequestAccountRecoveryResponse)(nil), // 10: social.v1.RequestAccountRecoveryResponse
+	(*RecoverAccountRequest)(nil),          // 11: social.v1.RecoverAccountRequest
+	(*AuthTokens)(nil),                     // 12: social.v1.AuthTokens
 }
 var file_social_v1_auth_proto_depIdxs = []int32{
-	0, // 0: social.v1.AuthService.SignUp:input_type -> social.v1.SignUpRequest
-	1, // 1: social.v1.AuthService.SignIn:input_type -> social.v1.SignInRequest
-	2, // 2: social.v1.AuthService.RefreshToken:input_type -> social.v1.RefreshTokenRequest
-	3, // 3: social.v1.AuthService.SignOut:input_type -> social.v1.SignOutRequest
-	5, // 4: social.v1.AuthService.RequestPasswordReset:input_type -> social.v1.RequestPasswordResetRequest
-	7, // 5: social.v1.AuthService.SignUp:output_type -> social.v1.AuthTokens
-	7, // 6: social.v1.AuthService.SignIn:output_type -> social.v1.AuthTokens
-	7, // 7: social.v1.AuthService.RefreshToken:output_type -> social.v1.AuthTokens
-	4, // 8: social.v1.AuthService.SignOut:output_type -> social.v1.SignOutResponse
-	6, // 9: social.v1.AuthService.RequestPasswordReset:output_type -> social.v1.RequestPasswordResetResponse
-	5, // [5:10] is the sub-list for method output_type
-	0, // [0:5] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0,  // 0: social.v1.RecoverAccountRequest.provider:type_name -> social.v1.OAuthProvider
+	1,  // 1: social.v1.AuthService.SignInWithGoogle:input_type -> social.v1.OAuthSignInRequest
+	1,  // 2: social.v1.AuthService.SignInWithApple:input_type -> social.v1.OAuthSignInRequest
+	2,  // 3: social.v1.AuthService.RefreshToken:input_type -> social.v1.RefreshTokenRequest
+	3,  // 4: social.v1.AuthService.SignOut:input_type -> social.v1.SignOutRequest
+	5,  // 5: social.v1.AuthService.AddRecoveryEmail:input_type -> social.v1.AddRecoveryEmailRequest
+	7,  // 6: social.v1.AuthService.VerifyRecoveryEmail:input_type -> social.v1.VerifyRecoveryEmailRequest
+	9,  // 7: social.v1.AuthService.RequestAccountRecovery:input_type -> social.v1.RequestAccountRecoveryRequest
+	11, // 8: social.v1.AuthService.RecoverAccount:input_type -> social.v1.RecoverAccountRequest
+	12, // 9: social.v1.AuthService.SignInWithGoogle:output_type -> social.v1.AuthTokens
+	12, // 10: social.v1.AuthService.SignInWithApple:output_type -> social.v1.AuthTokens
+	12, // 11: social.v1.AuthService.RefreshToken:output_type -> social.v1.AuthTokens
+	4,  // 12: social.v1.AuthService.SignOut:output_type -> social.v1.SignOutResponse
+	6,  // 13: social.v1.AuthService.AddRecoveryEmail:output_type -> social.v1.AddRecoveryEmailResponse
+	8,  // 14: social.v1.AuthService.VerifyRecoveryEmail:output_type -> social.v1.VerifyRecoveryEmailResponse
+	10, // 15: social.v1.AuthService.RequestAccountRecovery:output_type -> social.v1.RequestAccountRecoveryResponse
+	12, // 16: social.v1.AuthService.RecoverAccount:output_type -> social.v1.AuthTokens
+	9,  // [9:17] is the sub-list for method output_type
+	1,  // [1:9] is the sub-list for method input_type
+	1,  // [1:1] is the sub-list for extension type_name
+	1,  // [1:1] is the sub-list for extension extendee
+	0,  // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_auth_proto_init() }
@@ -507,13 +753,14 @@ func file_social_v1_auth_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_auth_proto_rawDesc), len(file_social_v1_auth_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   8,
+			NumEnums:      1,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_social_v1_auth_proto_goTypes,
 		DependencyIndexes: file_social_v1_auth_proto_depIdxs,
+		EnumInfos:         file_social_v1_auth_proto_enumTypes,
 		MessageInfos:      file_social_v1_auth_proto_msgTypes,
 	}.Build()
 	File_social_v1_auth_proto = out.File

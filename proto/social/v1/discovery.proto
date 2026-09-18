@@ -10,6 +10,9 @@ option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
 service DiscoveryService {
   rpc GetHomeFeed(GetHomeFeedRequest) returns (GetHomeFeedResponse);
   rpc GetNearbyPlans(GetNearbyPlansRequest) returns (GetNearbyPlansResponse);
+  // DetectCity — flow.md §2.3's "ask location permission → show nearby
+  // plans": resolves a GPS point to the nearest launched city.
+  rpc DetectCity(DetectCityRequest) returns (DetectCityResponse);
 }
 
 enum FeedSection {
@@ -41,4 +44,13 @@ message GetNearbyPlansRequest {
 message GetNearbyPlansResponse {
   repeated string plan_ids = 1;
   PageResponse page = 2;
+}
+
+message DetectCityRequest {
+  GeoPoint location = 1;
+}
+
+message DetectCityResponse {
+  string city_id = 1;
+  string city_name = 2;
 }

@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
+	"github.com/hivemind/backend/pkg/grpcmiddleware"
 )
 
 // Handler implements socialv1.UserServiceServer — every RPC is fully
@@ -29,7 +30,11 @@ func (h *Handler) GetUser(ctx context.Context, req *socialv1.GetUserRequest) (*s
 }
 
 func (h *Handler) UpdateUser(ctx context.Context, req *socialv1.UpdateUserRequest) (*socialv1.User, error) {
-	u, err := h.svc.UpdateUser(ctx, req.GetUserId(), req.GetCityId())
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	u, err := h.svc.UpdateUser(ctx, userID, req.GetCityId())
 	if err != nil {
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -40,7 +45,11 @@ func (h *Handler) UpdateUser(ctx context.Context, req *socialv1.UpdateUserReques
 }
 
 func (h *Handler) DeleteAccount(ctx context.Context, req *socialv1.DeleteAccountRequest) (*socialv1.DeleteAccountResponse, error) {
-	if err := h.svc.DeleteAccount(ctx, req.GetUserId()); err != nil {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	if err := h.svc.DeleteAccount(ctx, userID); err != nil {
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
@@ -50,7 +59,11 @@ func (h *Handler) DeleteAccount(ctx context.Context, req *socialv1.DeleteAccount
 }
 
 func (h *Handler) RegisterDevice(ctx context.Context, req *socialv1.RegisterDeviceRequest) (*socialv1.RegisterDeviceResponse, error) {
-	err := h.svc.RegisterDevice(ctx, req.GetUserId(), req.GetDeviceId(), req.GetPushToken(), req.GetPlatform())
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	err := h.svc.RegisterDevice(ctx, userID, req.GetDeviceId(), req.GetPushToken(), req.GetPlatform())
 	if err != nil {
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -58,6 +71,24 @@ func (h *Handler) RegisterDevice(ctx context.Context, req *socialv1.RegisterDevi
 		return nil, status.Error(codes.Internal, "failed to register device")
 	}
 	return &socialv1.RegisterDeviceResponse{}, nil
+}
+
+func (h *Handler) UpdateLocation(ctx context.Context, req *socialv1.UpdateLocationRequest) (*socialv1.UpdateLocationResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	if req.GetLocation() == nil {
+		return nil, status.Error(codes.InvalidArgument, "location is required")
+	}
+	err := h.svc.UpdateLocation(ctx, userID, req.GetLocation().GetLatitude(), req.GetLocation().GetLongitude())
+	if err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to update location")
+	}
+	return &socialv1.UpdateLocationResponse{}, nil
 }
 
 func toProto(u *User) *socialv1.User {

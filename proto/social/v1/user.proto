@@ -12,6 +12,9 @@ service UserService {
   rpc UpdateUser(UpdateUserRequest) returns (User);
   rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
   rpc RegisterDevice(RegisterDeviceRequest) returns (RegisterDeviceResponse);
+  // UpdateLocation — flow.md §2.3/§9: the client pushes live GPS coordinates,
+  // stored as the user's last known location for NEAR_YOU discovery.
+  rpc UpdateLocation(UpdateLocationRequest) returns (UpdateLocationResponse);
 }
 
 message User {
@@ -45,3 +48,9 @@ message RegisterDeviceRequest {
 }
 
 message RegisterDeviceResponse {}
+
+message UpdateLocationRequest {
+  GeoPoint location = 1;
+}
+
+message UpdateLocationResponse {}

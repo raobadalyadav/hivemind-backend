@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	DiscoveryService_GetHomeFeed_FullMethodName    = "/social.v1.DiscoveryService/GetHomeFeed"
 	DiscoveryService_GetNearbyPlans_FullMethodName = "/social.v1.DiscoveryService/GetNearbyPlans"
+	DiscoveryService_DetectCity_FullMethodName     = "/social.v1.DiscoveryService/DetectCity"
 )
 
 // DiscoveryServiceClient is the client API for DiscoveryService service.
@@ -31,6 +32,9 @@ const (
 type DiscoveryServiceClient interface {
 	GetHomeFeed(ctx context.Context, in *GetHomeFeedRequest, opts ...grpc.CallOption) (*GetHomeFeedResponse, error)
 	GetNearbyPlans(ctx context.Context, in *GetNearbyPlansRequest, opts ...grpc.CallOption) (*GetNearbyPlansResponse, error)
+	// DetectCity — flow.md §2.3's "ask location permission → show nearby
+	// plans": resolves a GPS point to the nearest launched city.
+	DetectCity(ctx context.Context, in *DetectCityRequest, opts ...grpc.CallOption) (*DetectCityResponse, error)
 }
 
 type discoveryServiceClient struct {
@@ -61,6 +65,16 @@ func (c *discoveryServiceClient) GetNearbyPlans(ctx context.Context, in *GetNear
 	return out, nil
 }
 
+func (c *discoveryServiceClient) DetectCity(ctx context.Context, in *DetectCityRequest, opts ...grpc.CallOption) (*DetectCityResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DetectCityResponse)
+	err := c.cc.Invoke(ctx, DiscoveryService_DetectCity_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DiscoveryServiceServer is the server API for DiscoveryService service.
 // All implementations must embed UnimplementedDiscoveryServiceServer
 // for forward compatibility.
@@ -69,6 +83,9 @@ func (c *discoveryServiceClient) GetNearbyPlans(ctx context.Context, in *GetNear
 type DiscoveryServiceServer interface {
 	GetHomeFeed(context.Context, *GetHomeFeedRequest) (*GetHomeFeedResponse, error)
 	GetNearbyPlans(context.Context, *GetNearbyPlansRequest) (*GetNearbyPlansResponse, error)
+	// DetectCity — flow.md §2.3's "ask location permission → show nearby
+	// plans": resolves a GPS point to the nearest launched city.
+	DetectCity(context.Context, *DetectCityRequest) (*DetectCityResponse, error)
 	mustEmbedUnimplementedDiscoveryServiceServer()
 }
 
@@ -84,6 +101,9 @@ func (UnimplementedDiscoveryServiceServer) GetHomeFeed(context.Context, *GetHome
 }
 func (UnimplementedDiscoveryServiceServer) GetNearbyPlans(context.Context, *GetNearbyPlansRequest) (*GetNearbyPlansResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetNearbyPlans not implemented")
+}
+func (UnimplementedDiscoveryServiceServer) DetectCity(context.Context, *DetectCityRequest) (*DetectCityResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DetectCity not implemented")
 }
 func (UnimplementedDiscoveryServiceServer) mustEmbedUnimplementedDiscoveryServiceServer() {}
 func (UnimplementedDiscoveryServiceServer) testEmbeddedByValue()                          {}
@@ -142,6 +162,24 @@ func _DiscoveryService_GetNearbyPlans_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DiscoveryService_DetectCity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DetectCityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DiscoveryServiceServer).DetectCity(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DiscoveryService_DetectCity_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DiscoveryServiceServer).DetectCity(ctx, req.(*DetectCityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DiscoveryService_ServiceDesc is the grpc.ServiceDesc for DiscoveryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -156,6 +194,10 @@ var DiscoveryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetNearbyPlans",
 			Handler:    _DiscoveryService_GetNearbyPlans_Handler,
+		},
+		{
+			MethodName: "DetectCity",
+			Handler:    _DiscoveryService_DetectCity_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

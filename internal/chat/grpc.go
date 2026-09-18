@@ -8,6 +8,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
+	"github.com/hivemind/backend/pkg/grpcmiddleware"
 )
 
 // Handler implements socialv1.ChatServiceServer — every RPC is fully
@@ -33,7 +34,11 @@ func (h *Handler) CreateRoom(ctx context.Context, req *socialv1.CreateRoomReques
 }
 
 func (h *Handler) SendMessage(ctx context.Context, req *socialv1.SendMessageRequest) (*socialv1.Message, error) {
-	m := &Message{RoomID: req.GetRoomId(), SenderID: req.GetSenderId(), Body: req.GetBody()}
+	senderID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	m := &Message{RoomID: req.GetRoomId(), SenderID: senderID, Body: req.GetBody()}
 	sent, err := h.svc.SendMessage(ctx, m)
 	if err != nil {
 		switch err {
@@ -49,12 +54,20 @@ func (h *Handler) SendMessage(ctx context.Context, req *socialv1.SendMessageRequ
 }
 
 func (h *Handler) ListMessages(ctx context.Context, req *socialv1.ListMessagesRequest) (*socialv1.ListMessagesResponse, error) {
-	list, err := h.svc.ListMessages(ctx, req.GetRoomId())
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	list, err := h.svc.ListMessages(ctx, req.GetRoomId(), userID)
 	if err != nil {
-		if err == ErrInvalidInput {
+		switch err {
+		case ErrInvalidInput:
 			return nil, status.Error(codes.InvalidArgument, err.Error())
+		case ErrNotAMember:
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		default:
+			return nil, status.Error(codes.Internal, "failed to list messages")
 		}
-		return nil, status.Error(codes.Internal, "failed to list messages")
 	}
 	out := make([]*socialv1.Message, 0, len(list))
 	for _, m := range list {
@@ -64,7 +77,11 @@ func (h *Handler) ListMessages(ctx context.Context, req *socialv1.ListMessagesRe
 }
 
 func (h *Handler) ReportMessage(ctx context.Context, req *socialv1.ReportMessageRequest) (*socialv1.ReportMessageResponse, error) {
-	caseID, err := h.svc.ReportMessage(ctx, req.GetMessageId(), req.GetReporterId(), req.GetReason())
+	reporterID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	caseID, err := h.svc.ReportMessage(ctx, req.GetMessageId(), reporterID, req.GetReason())
 	if err != nil {
 		switch err {
 		case ErrInvalidInput:

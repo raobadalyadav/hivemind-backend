@@ -174,6 +174,20 @@ func (r *Repository) GetPlanPricing(ctx context.Context, planID string) (*PlanPr
 	return &p, nil
 }
 
+// GetPlanHostID is used by the service layer to authorize host-only actions
+// (CancelBooking, CheckIn) without pulling in internal/plans as a dependency.
+func (r *Repository) GetPlanHostID(ctx context.Context, planID string) (string, error) {
+	var hostID string
+	err := r.pool.QueryRow(ctx, `SELECT host_id::text FROM plans WHERE id = $1`, planID).Scan(&hostID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", ErrPlanNotFound
+		}
+		return "", err
+	}
+	return hostID, nil
+}
+
 // FindActiveBookingID looks up a user's confirmed booking for a plan — used
 // by LeavePlan, which only carries (plan_id, user_id), not a booking id.
 func (r *Repository) FindActiveBookingID(ctx context.Context, planID, userID string) (string, error) {

@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
+	"github.com/hivemind/backend/pkg/grpcmiddleware"
 )
 
 // Handler implements socialv1.ConnectionServiceServer. RequestConnection/
@@ -22,8 +23,12 @@ func NewHandler(svc *Service) *Handler {
 }
 
 func (h *Handler) RequestConnection(ctx context.Context, req *socialv1.RequestConnectionRequest) (*socialv1.Connection, error) {
+	requesterID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
 	c := &Connection{
-		RequesterID:  req.GetRequesterId(),
+		RequesterID:  requesterID,
 		RecipientID:  req.GetRecipientId(),
 		OriginPlanID: req.GetOriginPlanId(),
 	}
@@ -38,7 +43,11 @@ func (h *Handler) RequestConnection(ctx context.Context, req *socialv1.RequestCo
 }
 
 func (h *Handler) ListConnections(ctx context.Context, req *socialv1.ListConnectionsRequest) (*socialv1.ListConnectionsResponse, error) {
-	list, err := h.svc.ListConnections(ctx, req.GetUserId())
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	list, err := h.svc.ListConnections(ctx, userID)
 	if err != nil {
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())

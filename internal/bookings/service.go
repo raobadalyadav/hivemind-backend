@@ -7,7 +7,10 @@ import (
 	"github.com/hivemind/backend/pkg/idempotency"
 )
 
-var ErrInvalidInput = errors.New("bookings: invalid input")
+var (
+	ErrInvalidInput = errors.New("bookings: invalid input")
+	ErrForbidden    = errors.New("bookings: caller is not authorized for this booking")
+)
 
 // Service fee formula per PRD §25/§26: ~5% of price, capped at ₹49.
 const (
@@ -81,11 +84,50 @@ func (s *Service) CancelAllForPlan(ctx context.Context, planID, reason string) e
 	return nil
 }
 
+func isAdminRole(role string) bool {
+	return role == "admin" || role == "super_admin"
+}
+
+// authorizeForBooking checks the caller is the booking's own user, the
+// plan's host, or an admin — the shared gate GetBooking/CancelBookingAsUser/
+// CheckIn all apply before touching a booking that isn't a fresh Create.
+func (s *Service) authorizeForBooking(ctx context.Context, b *Booking, callerID, callerRole string) error {
+	if b.UserID == callerID || isAdminRole(callerRole) {
+		return nil
+	}
+	hostID, err := s.repo.GetPlanHostID(ctx, b.PlanID)
+	if err != nil {
+		return err
+	}
+	if hostID == callerID {
+		return nil
+	}
+	return ErrForbidden
+}
+
+// GetBooking is for internal/system callers that have already established
+// authorization elsewhere (there are currently none, but this stays
+// unauthenticated-by-default so a future internal caller doesn't need to
+// fabricate a caller identity). The gRPC handler uses GetBookingAsUser.
 func (s *Service) GetBooking(ctx context.Context, id string) (*Booking, error) {
 	if id == "" {
 		return nil, ErrInvalidInput
 	}
 	return s.repo.Get(ctx, id)
+}
+
+// GetBookingAsUser is what the gRPC handler calls — only the booking's own
+// user, the plan's host, or an admin may read it (booking price/status is
+// not public data).
+func (s *Service) GetBookingAsUser(ctx context.Context, id, callerID, callerRole string) (*Booking, error) {
+	b, err := s.GetBooking(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.authorizeForBooking(ctx, b, callerID, callerRole); err != nil {
+		return nil, err
+	}
+	return b, nil
 }
 
 func (s *Service) QuoteBooking(ctx context.Context, planID, userID string) (*Quote, error) {
@@ -118,10 +160,14 @@ func (s *Service) QuoteBooking(ctx context.Context, planID, userID string) (*Quo
 	}, nil
 }
 
-// CancelBooking always succeeds in transitioning the booking to cancelled —
-// whether a refund follows is a separate decision made downstream (see
-// cmd/worker's BOOKING_CANCELLED handler and its RefundWindowHours constant),
-// not something this method gates.
+// CancelBooking is the unauthenticated core used by internal callers that
+// already established authorization upstream: CancelBookingForPlan (the
+// caller left their own plan — plans.Service already sourced that userID
+// from the JWT) and CancelAllForPlan (the system fanning out a cancellation
+// plans.Service already authorized as a host/admin action). It always
+// succeeds in transitioning the booking to cancelled — whether a refund
+// follows is a separate decision made downstream (cmd/worker's
+// BOOKING_CANCELLED handler), not something this method gates.
 func (s *Service) CancelBooking(ctx context.Context, bookingID, reason string) (*Booking, error) {
 	if bookingID == "" {
 		return nil, ErrInvalidInput
@@ -129,9 +175,41 @@ func (s *Service) CancelBooking(ctx context.Context, bookingID, reason string) (
 	return s.repo.Cancel(ctx, bookingID, reason)
 }
 
-func (s *Service) CheckIn(ctx context.Context, bookingID, checkedInBy string) (*Booking, error) {
-	if bookingID == "" {
+// CancelBookingAsUser is what the gRPC handler calls — only the booking's
+// own user, the plan's host, or an admin may cancel it.
+func (s *Service) CancelBookingAsUser(ctx context.Context, bookingID, callerID, callerRole, reason string) (*Booking, error) {
+	if bookingID == "" || callerID == "" {
 		return nil, ErrInvalidInput
 	}
-	return s.repo.CheckIn(ctx, bookingID, checkedInBy)
+	b, err := s.GetBooking(ctx, bookingID)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.authorizeForBooking(ctx, b, callerID, callerRole); err != nil {
+		return nil, err
+	}
+	return s.CancelBooking(ctx, bookingID, reason)
+}
+
+// CheckIn requires the caller to be the plan's host or an admin — the
+// person scanning a QR code at the door, not the attendee themselves (see
+// flow.md §34: "Host scans → Check-in successful").
+func (s *Service) CheckIn(ctx context.Context, bookingID, callerID, callerRole string) (*Booking, error) {
+	if bookingID == "" || callerID == "" {
+		return nil, ErrInvalidInput
+	}
+	b, err := s.GetBooking(ctx, bookingID)
+	if err != nil {
+		return nil, err
+	}
+	if !isAdminRole(callerRole) {
+		hostID, err := s.repo.GetPlanHostID(ctx, b.PlanID)
+		if err != nil {
+			return nil, err
+		}
+		if hostID != callerID {
+			return nil, ErrForbidden
+		}
+	}
+	return s.repo.CheckIn(ctx, bookingID, callerID)
 }

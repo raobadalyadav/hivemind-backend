@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
+	"github.com/hivemind/backend/pkg/grpcmiddleware"
 )
 
 // Handler implements socialv1.DiscoveryServiceServer — every RPC is fully
@@ -43,8 +44,12 @@ var feedSectionNames = map[socialv1.FeedSection]string{
 }
 
 func (h *Handler) GetHomeFeed(ctx context.Context, req *socialv1.GetHomeFeedRequest) (*socialv1.GetHomeFeedResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
 	section := feedSectionNames[req.GetSection()]
-	ids, err := h.svc.GetHomeFeed(ctx, req.GetUserId(), section)
+	ids, err := h.svc.GetHomeFeed(ctx, userID, section)
 	if err != nil {
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -52,4 +57,18 @@ func (h *Handler) GetHomeFeed(ctx context.Context, req *socialv1.GetHomeFeedRequ
 		return nil, status.Error(codes.Internal, "failed to load home feed")
 	}
 	return &socialv1.GetHomeFeedResponse{PlanIds: ids}, nil
+}
+
+func (h *Handler) DetectCity(ctx context.Context, req *socialv1.DetectCityRequest) (*socialv1.DetectCityResponse, error) {
+	if req.GetLocation() == nil {
+		return nil, status.Error(codes.InvalidArgument, "location is required")
+	}
+	id, name, err := h.svc.DetectCity(ctx, req.GetLocation().GetLatitude(), req.GetLocation().GetLongitude())
+	if err != nil {
+		if err == ErrCityNotFound {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to detect city")
+	}
+	return &socialv1.DetectCityResponse{CityId: id, CityName: name}, nil
 }

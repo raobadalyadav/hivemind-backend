@@ -8,6 +8,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
+	"github.com/hivemind/backend/pkg/grpcmiddleware"
 )
 
 // Handler implements socialv1.PlanServiceServer — every RPC is fully
@@ -82,7 +83,11 @@ func (h *Handler) SearchPlans(ctx context.Context, req *socialv1.SearchPlansRequ
 }
 
 func (h *Handler) JoinPlan(ctx context.Context, req *socialv1.JoinPlanRequest) (*socialv1.JoinPlanResponse, error) {
-	bookingID, err := h.svc.JoinPlan(ctx, req.GetPlanId(), req.GetUserId(), req.GetIdempotencyKey())
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	bookingID, err := h.svc.JoinPlan(ctx, req.GetPlanId(), userID, req.GetIdempotencyKey())
 	if err != nil {
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -93,7 +98,11 @@ func (h *Handler) JoinPlan(ctx context.Context, req *socialv1.JoinPlanRequest) (
 }
 
 func (h *Handler) LeavePlan(ctx context.Context, req *socialv1.LeavePlanRequest) (*socialv1.LeavePlanResponse, error) {
-	if err := h.svc.LeavePlan(ctx, req.GetPlanId(), req.GetUserId()); err != nil {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	if err := h.svc.LeavePlan(ctx, req.GetPlanId(), userID); err != nil {
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
@@ -103,12 +112,23 @@ func (h *Handler) LeavePlan(ctx context.Context, req *socialv1.LeavePlanRequest)
 }
 
 func (h *Handler) CancelPlan(ctx context.Context, req *socialv1.CancelPlanRequest) (*socialv1.Plan, error) {
-	p, err := h.svc.CancelPlan(ctx, req.GetPlanId(), req.GetReason())
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	role, _ := grpcmiddleware.RoleFromContext(ctx)
+	p, err := h.svc.CancelPlan(ctx, req.GetPlanId(), userID, role, req.GetReason())
 	if err != nil {
-		if err == ErrInvalidInput {
+		switch err {
+		case ErrInvalidInput:
 			return nil, status.Error(codes.InvalidArgument, err.Error())
+		case ErrForbidden:
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		case ErrPlanNotFound:
+			return nil, status.Error(codes.NotFound, err.Error())
+		default:
+			return nil, status.Error(codes.Internal, "failed to cancel plan")
 		}
-		return nil, status.Error(codes.Internal, "failed to cancel plan")
 	}
 	return toProto(p), nil
 }

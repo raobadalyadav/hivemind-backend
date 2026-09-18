@@ -7,12 +7,16 @@ package plans
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/hivemind/backend/pkg/eventbus"
 )
+
+var ErrPlanNotFound = errors.New("plans: plan not found")
 
 type Plan struct {
 	ID             string
@@ -81,6 +85,9 @@ func (r *Repository) Get(ctx context.Context, id string) (*Plan, error) {
 		&p.CityID, &p.VenueID, &p.StartsAt, &p.EndsAt, &p.Capacity, &p.ConfirmedCount,
 		&p.PriceMinor, &p.Currency, &p.Status, &p.Latitude, &p.Longitude,
 		&p.CreatedAt, &p.UpdatedAt); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrPlanNotFound
+		}
 		return nil, err
 	}
 	return &p, nil

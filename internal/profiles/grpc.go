@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
+	"github.com/hivemind/backend/pkg/grpcmiddleware"
 )
 
 // Handler implements socialv1.ProfileServiceServer — every RPC is fully
@@ -21,8 +22,12 @@ func NewHandler(svc *Service) *Handler {
 }
 
 func (h *Handler) CreateProfile(ctx context.Context, req *socialv1.CreateProfileRequest) (*socialv1.Profile, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
 	p := &Profile{
-		UserID:      req.GetUserId(),
+		UserID:      userID,
 		DisplayName: req.GetDisplayName(),
 		Interests:   req.GetInterests(),
 	}
@@ -45,8 +50,12 @@ func (h *Handler) GetProfile(ctx context.Context, req *socialv1.GetProfileReques
 }
 
 func (h *Handler) UpdateProfile(ctx context.Context, req *socialv1.UpdateProfileRequest) (*socialv1.Profile, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
 	p := &Profile{
-		UserID:     req.GetUserId(),
+		UserID:     userID,
 		Bio:        req.GetBio(),
 		Interests:  req.GetInterests(),
 		Languages:  req.GetLanguages(),
@@ -63,7 +72,11 @@ func (h *Handler) UpdateProfile(ctx context.Context, req *socialv1.UpdateProfile
 }
 
 func (h *Handler) SetPrivacy(ctx context.Context, req *socialv1.SetPrivacyRequest) (*socialv1.Profile, error) {
-	p, err := h.svc.SetPrivacy(ctx, req.GetUserId(), req.GetShowInParticipantPreviews())
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	p, err := h.svc.SetPrivacy(ctx, userID, req.GetShowInParticipantPreviews())
 	if err != nil {
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())

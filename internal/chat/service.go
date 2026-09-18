@@ -66,9 +66,16 @@ func (s *Service) SendMessage(ctx context.Context, m *Message) (*Message, error)
 	return s.repo.SendMessage(ctx, m)
 }
 
-func (s *Service) ListMessages(ctx context.Context, roomID string) ([]*Message, error) {
-	if roomID == "" {
+func (s *Service) ListMessages(ctx context.Context, roomID, callerID string) ([]*Message, error) {
+	if roomID == "" || callerID == "" {
 		return nil, ErrInvalidInput
+	}
+	isMember, err := s.repo.IsMember(ctx, roomID, callerID)
+	if err != nil {
+		return nil, err
+	}
+	if !isMember {
+		return nil, ErrNotAMember
 	}
 	return s.repo.ListMessages(ctx, roomID, defaultMessagePageSize)
 }

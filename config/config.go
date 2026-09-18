@@ -21,6 +21,12 @@ type Config struct {
 	MinIOUseSSL    bool
 	JWTSecret      string
 	JWTTTL         time.Duration
+	// GoogleClientID/AppleBundleID: empty disables that sign-in provider
+	// (SignInWithGoogle/SignInWithApple return Unimplemented) rather than
+	// failing server startup — matches how the payments gateway is stubbed:
+	// optional external config, not a hard dependency for local dev.
+	GoogleClientID string
+	AppleBundleID  string
 }
 
 func Load() Config {
@@ -36,6 +42,8 @@ func Load() Config {
 		MinIOUseSSL:    getEnvBool("MINIO_USE_SSL", false),
 		JWTSecret:      getEnv("JWT_SECRET", "dev-secret-change-in-production"),
 		JWTTTL:         getEnvDuration("JWT_TTL", time.Hour),
+		GoogleClientID: getEnv("GOOGLE_CLIENT_ID", ""),
+		AppleBundleID:  getEnv("APPLE_BUNDLE_ID", ""),
 	}
 }
 

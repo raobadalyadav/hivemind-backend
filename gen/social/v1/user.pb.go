@@ -377,6 +377,86 @@ func (*RegisterDeviceResponse) Descriptor() ([]byte, []int) {
 	return file_social_v1_user_proto_rawDescGZIP(), []int{6}
 }
 
+type UpdateLocationRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Location      *GeoPoint              `protobuf:"bytes,1,opt,name=location,proto3" json:"location,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateLocationRequest) Reset() {
+	*x = UpdateLocationRequest{}
+	mi := &file_social_v1_user_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateLocationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateLocationRequest) ProtoMessage() {}
+
+func (x *UpdateLocationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_user_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateLocationRequest.ProtoReflect.Descriptor instead.
+func (*UpdateLocationRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_user_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *UpdateLocationRequest) GetLocation() *GeoPoint {
+	if x != nil {
+		return x.Location
+	}
+	return nil
+}
+
+type UpdateLocationResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateLocationResponse) Reset() {
+	*x = UpdateLocationResponse{}
+	mi := &file_social_v1_user_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateLocationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateLocationResponse) ProtoMessage() {}
+
+func (x *UpdateLocationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_user_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateLocationResponse.ProtoReflect.Descriptor instead.
+func (*UpdateLocationResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_user_proto_rawDescGZIP(), []int{8}
+}
+
 var File_social_v1_user_proto protoreflect.FileDescriptor
 
 const file_social_v1_user_proto_rawDesc = "" +
@@ -402,13 +482,17 @@ const file_social_v1_user_proto_rawDesc = "" +
 	"\n" +
 	"push_token\x18\x03 \x01(\tR\tpushToken\x12\x1a\n" +
 	"\bplatform\x18\x04 \x01(\tR\bplatform\"\x18\n" +
-	"\x16RegisterDeviceResponse2\xac\x02\n" +
+	"\x16RegisterDeviceResponse\"H\n" +
+	"\x15UpdateLocationRequest\x12/\n" +
+	"\blocation\x18\x01 \x01(\v2\x13.social.v1.GeoPointR\blocation\"\x18\n" +
+	"\x16UpdateLocationResponse2\x83\x03\n" +
 	"\vUserService\x125\n" +
 	"\aGetUser\x12\x19.social.v1.GetUserRequest\x1a\x0f.social.v1.User\x12;\n" +
 	"\n" +
 	"UpdateUser\x12\x1c.social.v1.UpdateUserRequest\x1a\x0f.social.v1.User\x12R\n" +
 	"\rDeleteAccount\x12\x1f.social.v1.DeleteAccountRequest\x1a .social.v1.DeleteAccountResponse\x12U\n" +
-	"\x0eRegisterDevice\x12 .social.v1.RegisterDeviceRequest\x1a!.social.v1.RegisterDeviceResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
+	"\x0eRegisterDevice\x12 .social.v1.RegisterDeviceRequest\x1a!.social.v1.RegisterDeviceResponse\x12U\n" +
+	"\x0eUpdateLocation\x12 .social.v1.UpdateLocationRequest\x1a!.social.v1.UpdateLocationResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
 var (
 	file_social_v1_user_proto_rawDescOnce sync.Once
@@ -422,7 +506,7 @@ func file_social_v1_user_proto_rawDescGZIP() []byte {
 	return file_social_v1_user_proto_rawDescData
 }
 
-var file_social_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_social_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_social_v1_user_proto_goTypes = []any{
 	(*User)(nil),                   // 0: social.v1.User
 	(*GetUserRequest)(nil),         // 1: social.v1.GetUserRequest
@@ -431,23 +515,29 @@ var file_social_v1_user_proto_goTypes = []any{
 	(*DeleteAccountResponse)(nil),  // 4: social.v1.DeleteAccountResponse
 	(*RegisterDeviceRequest)(nil),  // 5: social.v1.RegisterDeviceRequest
 	(*RegisterDeviceResponse)(nil), // 6: social.v1.RegisterDeviceResponse
-	(*Audit)(nil),                  // 7: social.v1.Audit
+	(*UpdateLocationRequest)(nil),  // 7: social.v1.UpdateLocationRequest
+	(*UpdateLocationResponse)(nil), // 8: social.v1.UpdateLocationResponse
+	(*Audit)(nil),                  // 9: social.v1.Audit
+	(*GeoPoint)(nil),               // 10: social.v1.GeoPoint
 }
 var file_social_v1_user_proto_depIdxs = []int32{
-	7, // 0: social.v1.User.audit:type_name -> social.v1.Audit
-	1, // 1: social.v1.UserService.GetUser:input_type -> social.v1.GetUserRequest
-	2, // 2: social.v1.UserService.UpdateUser:input_type -> social.v1.UpdateUserRequest
-	3, // 3: social.v1.UserService.DeleteAccount:input_type -> social.v1.DeleteAccountRequest
-	5, // 4: social.v1.UserService.RegisterDevice:input_type -> social.v1.RegisterDeviceRequest
-	0, // 5: social.v1.UserService.GetUser:output_type -> social.v1.User
-	0, // 6: social.v1.UserService.UpdateUser:output_type -> social.v1.User
-	4, // 7: social.v1.UserService.DeleteAccount:output_type -> social.v1.DeleteAccountResponse
-	6, // 8: social.v1.UserService.RegisterDevice:output_type -> social.v1.RegisterDeviceResponse
-	5, // [5:9] is the sub-list for method output_type
-	1, // [1:5] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	9,  // 0: social.v1.User.audit:type_name -> social.v1.Audit
+	10, // 1: social.v1.UpdateLocationRequest.location:type_name -> social.v1.GeoPoint
+	1,  // 2: social.v1.UserService.GetUser:input_type -> social.v1.GetUserRequest
+	2,  // 3: social.v1.UserService.UpdateUser:input_type -> social.v1.UpdateUserRequest
+	3,  // 4: social.v1.UserService.DeleteAccount:input_type -> social.v1.DeleteAccountRequest
+	5,  // 5: social.v1.UserService.RegisterDevice:input_type -> social.v1.RegisterDeviceRequest
+	7,  // 6: social.v1.UserService.UpdateLocation:input_type -> social.v1.UpdateLocationRequest
+	0,  // 7: social.v1.UserService.GetUser:output_type -> social.v1.User
+	0,  // 8: social.v1.UserService.UpdateUser:output_type -> social.v1.User
+	4,  // 9: social.v1.UserService.DeleteAccount:output_type -> social.v1.DeleteAccountResponse
+	6,  // 10: social.v1.UserService.RegisterDevice:output_type -> social.v1.RegisterDeviceResponse
+	8,  // 11: social.v1.UserService.UpdateLocation:output_type -> social.v1.UpdateLocationResponse
+	7,  // [7:12] is the sub-list for method output_type
+	2,  // [2:7] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_user_proto_init() }
@@ -462,7 +552,7 @@ func file_social_v1_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_user_proto_rawDesc), len(file_social_v1_user_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
+	"github.com/hivemind/backend/pkg/grpcmiddleware"
 )
 
 // Handler implements socialv1.AdminServiceServer — every RPC is fully
@@ -31,7 +32,10 @@ func (h *Handler) ListUsers(ctx context.Context, req *socialv1.ListUsersRequest)
 }
 
 func (h *Handler) SuspendUser(ctx context.Context, req *socialv1.SuspendUserRequest) (*socialv1.SuspendUserResponse, error) {
-	err := h.svc.SuspendUser(ctx, req.GetUserId(), req.GetReason(), req.GetActorId())
+	// actor_id comes from the authenticated admin's own token, not the
+	// request — otherwise one admin could frame another in the audit log.
+	actorID, _ := grpcmiddleware.UserIDFromContext(ctx)
+	err := h.svc.SuspendUser(ctx, req.GetUserId(), req.GetReason(), actorID)
 	if err != nil {
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -50,7 +54,8 @@ func (h *Handler) ListReports(ctx context.Context, req *socialv1.ListReportsRequ
 }
 
 func (h *Handler) OverrideBookingStatus(ctx context.Context, req *socialv1.OverrideBookingStatusRequest) (*socialv1.OverrideBookingStatusResponse, error) {
-	err := h.svc.OverrideBookingStatus(ctx, req.GetBookingId(), req.GetNewStatus(), req.GetReason(), req.GetActorId())
+	actorID, _ := grpcmiddleware.UserIDFromContext(ctx)
+	err := h.svc.OverrideBookingStatus(ctx, req.GetBookingId(), req.GetNewStatus(), req.GetReason(), actorID)
 	if err != nil {
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())

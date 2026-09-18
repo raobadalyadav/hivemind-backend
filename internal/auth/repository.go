@@ -1,7 +1,7 @@
-// Package auth implements PRD §13.1 Authentication & Account. SignUp/SignIn/
-// RefreshToken/SignOut/RequestPasswordReset are all fully implemented, backed
-// by real refresh-token rotation (refresh_tokens table) and device/session
-// tracking (devices table) — see migrations 0015/0018.
+// Package auth implements PRD §13.1 Authentication & Account, per flow.md
+// §2.1: Google/Apple OAuth only, no password. Account recovery is a
+// verified recovery email (see migration 0019) that lets a user re-link a
+// new OAuth identity if they lose access to Google/Apple.
 package auth
 
 import (
@@ -17,16 +17,16 @@ import (
 const pgUniqueViolation = "23505"
 
 var (
-	ErrUserExists          = errors.New("auth: email already registered")
-	ErrInvalidCredentials  = errors.New("auth: invalid credentials")
+	ErrUserNotFound        = errors.New("auth: user not found")
 	ErrRefreshTokenInvalid = errors.New("auth: refresh token invalid or expired")
+	ErrRecoveryCodeInvalid = errors.New("auth: recovery code invalid, expired, or already used")
+	ErrEmailAlreadyUsed    = errors.New("auth: email already in use as a recovery email")
 )
 
 type userRow struct {
-	ID           string
-	PasswordHash string
-	Role         string
-	Status       string
+	ID     string
+	Role   string
+	Status string
 }
 
 type refreshTokenRow struct {
@@ -44,9 +44,28 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
 
-// CreateUser inserts the account and its (initially empty) profile in one
-// transaction, so a user never exists without a profile row.
-func (r *Repository) CreateUser(ctx context.Context, email, passwordHash string, ageVerified bool) (string, error) {
+func (r *Repository) FindByProviderIdentity(ctx context.Context, provider, providerUserID string) (*userRow, error) {
+	var u userRow
+	err := r.pool.QueryRow(ctx, `
+		SELECT u.id, u.role::text, u.status
+		FROM users u
+		JOIN oauth_identities oi ON oi.user_id = u.id
+		WHERE oi.provider = $1::oauth_provider AND oi.provider_user_id = $2`,
+		provider, providerUserID,
+	).Scan(&u.ID, &u.Role, &u.Status)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+	return &u, nil
+}
+
+// CreateUserFromOAuth inserts the account, its (initially empty) profile,
+// and the OAuth identity that created it, all in one transaction — a user
+// never exists without a profile row or a way to sign back in.
+func (r *Repository) CreateUserFromOAuth(ctx context.Context, email string, ageVerified bool, provider, providerUserID, providerEmail string) (string, error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return "", err
@@ -54,19 +73,23 @@ func (r *Repository) CreateUser(ctx context.Context, email, passwordHash string,
 	defer tx.Rollback(ctx)
 
 	var userID string
-	err = tx.QueryRow(ctx,
-		`INSERT INTO users (email, password_hash, age_verified) VALUES ($1, $2, $3) RETURNING id`,
-		email, passwordHash, ageVerified,
-	).Scan(&userID)
-	if err != nil {
-		if isUniqueViolation(err) {
-			return "", ErrUserExists
-		}
+	if err := tx.QueryRow(ctx,
+		`INSERT INTO users (email, age_verified) VALUES ($1, $2) RETURNING id`,
+		email, ageVerified,
+	).Scan(&userID); err != nil {
 		return "", err
 	}
 
 	if _, err := tx.Exec(ctx,
 		`INSERT INTO user_profiles (user_id, display_name) VALUES ($1, '')`, userID,
+	); err != nil {
+		return "", err
+	}
+
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO oauth_identities (user_id, provider, provider_user_id, email)
+		VALUES ($1, $2::oauth_provider, $3, $4)`,
+		userID, provider, providerUserID, providerEmail,
 	); err != nil {
 		return "", err
 	}
@@ -77,38 +100,36 @@ func (r *Repository) CreateUser(ctx context.Context, email, passwordHash string,
 	return userID, nil
 }
 
-func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*userRow, error) {
-	var u userRow
-	err := r.pool.QueryRow(ctx,
-		`SELECT id, password_hash, role::text, status FROM users WHERE email = $1`, email,
-	).Scan(&u.ID, &u.PasswordHash, &u.Role, &u.Status)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrInvalidCredentials
-		}
-		return nil, err
-	}
-	return &u, nil
+// LinkOAuthIdentity attaches a new provider identity to an existing user —
+// used both when a signed-in user links a second provider and by
+// RecoverAccount when re-linking after losing access to the original one.
+func (r *Repository) LinkOAuthIdentity(ctx context.Context, userID, provider, providerUserID, email string) error {
+	_, err := r.pool.Exec(ctx, `
+		INSERT INTO oauth_identities (user_id, provider, provider_user_id, email)
+		VALUES ($1, $2::oauth_provider, $3, $4)
+		ON CONFLICT (provider, provider_user_id) DO UPDATE SET user_id = EXCLUDED.user_id`,
+		userID, provider, providerUserID, email,
+	)
+	return err
 }
 
 func (r *Repository) GetUserByID(ctx context.Context, userID string) (*userRow, error) {
 	var u userRow
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, password_hash, role::text, status FROM users WHERE id = $1`, userID,
-	).Scan(&u.ID, &u.PasswordHash, &u.Role, &u.Status)
+		`SELECT id, role::text, status FROM users WHERE id = $1`, userID,
+	).Scan(&u.ID, &u.Role, &u.Status)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrInvalidCredentials
+			return nil, ErrUserNotFound
 		}
 		return nil, err
 	}
 	return &u, nil
 }
 
-// UpsertDevice records/updates the caller's device (push token, platform) and
-// returns its internal id, used to scope refresh tokens per PRD §13.1
-// "session/device management". A blank deviceID means the caller didn't
-// supply one — refresh tokens are then not tied to any device row.
+// UpsertDevice records/updates the caller's device (platform) and returns
+// its internal id, used to scope refresh tokens per PRD §13.1 "session/
+// device management". A blank deviceID means the caller didn't supply one.
 func (r *Repository) UpsertDevice(ctx context.Context, userID, deviceID, platform string) (string, error) {
 	if deviceID == "" {
 		return "", nil
@@ -153,12 +174,12 @@ func (r *Repository) ConsumeRefreshToken(ctx context.Context, tokenHash string) 
 	return &row, nil
 }
 
-// RevokeDeviceTokens revokes every live refresh token for the user's device —
-// SignOut for that device. deviceID here is the client-supplied
-// devices.device_id string (what SignOutRequest carries), not the internal
-// devices.id UUID that refresh_tokens.device_id actually stores — the join
-// resolves one to the other. If no matching device row exists, this is a
-// no-op rather than an error: SignOut should be idempotent.
+// RevokeDeviceTokens revokes every live refresh token for the user's device
+// — SignOut for that device. deviceID is the client-supplied
+// devices.device_id string, not the internal devices.id UUID that
+// refresh_tokens.device_id actually stores — the join resolves one to the
+// other. No matching device row is a no-op, not an error: SignOut should be
+// idempotent.
 func (r *Repository) RevokeDeviceTokens(ctx context.Context, userID, deviceID string) error {
 	_, err := r.pool.Exec(ctx, `
 		UPDATE refresh_tokens SET revoked_at = now()
@@ -169,12 +190,71 @@ func (r *Repository) RevokeDeviceTokens(ctx context.Context, userID, deviceID st
 	return err
 }
 
-func (r *Repository) CreatePasswordResetToken(ctx context.Context, userID, tokenHash string, expiresAt time.Time) error {
+// SetPendingRecoveryEmail claims users.recovery_email immediately
+// (unverified — recovery_email_verified_at stays NULL until
+// VerifyRecoveryEmail). ponytail: this means two accounts can briefly race
+// for the same email before one verifies; acceptable for pre-launch scope,
+// revisit with a partial-unique-index-on-verified approach if abuse shows up.
+func (r *Repository) SetPendingRecoveryEmail(ctx context.Context, userID, email string) error {
 	_, err := r.pool.Exec(ctx,
-		`INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)`,
-		userID, tokenHash, expiresAt,
+		`UPDATE users SET recovery_email = $2, recovery_email_verified_at = NULL, updated_at = now() WHERE id = $1`,
+		userID, email,
+	)
+	if isUniqueViolation(err) {
+		return ErrEmailAlreadyUsed
+	}
+	return err
+}
+
+func (r *Repository) MarkRecoveryEmailVerified(ctx context.Context, userID string) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE users SET recovery_email_verified_at = now(), updated_at = now() WHERE id = $1`, userID,
 	)
 	return err
+}
+
+func (r *Repository) CreateRecoveryCode(ctx context.Context, userID, codeHash, purpose string, expiresAt time.Time) error {
+	_, err := r.pool.Exec(ctx,
+		`INSERT INTO recovery_codes (user_id, code_hash, purpose, expires_at) VALUES ($1, $2, $3, $4)`,
+		userID, codeHash, purpose, expiresAt,
+	)
+	return err
+}
+
+// ConsumeRecoveryCode looks up a non-expired, unused code for the given
+// purpose and marks it used in the same statement (single-use, like refresh
+// tokens). Returns the owning user id.
+func (r *Repository) ConsumeRecoveryCode(ctx context.Context, codeHash, purpose string) (string, error) {
+	var userID string
+	err := r.pool.QueryRow(ctx, `
+		UPDATE recovery_codes SET used_at = now()
+		WHERE code_hash = $1 AND purpose = $2 AND used_at IS NULL AND expires_at > now()
+		RETURNING user_id`,
+		codeHash, purpose,
+	).Scan(&userID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", ErrRecoveryCodeInvalid
+		}
+		return "", err
+	}
+	return userID, nil
+}
+
+func (r *Repository) FindByVerifiedRecoveryEmail(ctx context.Context, email string) (*userRow, error) {
+	var u userRow
+	err := r.pool.QueryRow(ctx,
+		`SELECT id, role::text, status FROM users
+		 WHERE recovery_email = $1 AND recovery_email_verified_at IS NOT NULL`,
+		email,
+	).Scan(&u.ID, &u.Role, &u.Status)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+	return &u, nil
 }
 
 func isUniqueViolation(err error) bool {

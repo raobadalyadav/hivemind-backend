@@ -42,3 +42,10 @@ func (s *Service) RegisterDevice(ctx context.Context, userID, deviceID, pushToke
 	}
 	return s.repo.UpsertDevice(ctx, userID, deviceID, pushToken, platform)
 }
+
+func (s *Service) UpdateLocation(ctx context.Context, userID string, lat, lng float64) error {
+	if userID == "" {
+		return ErrInvalidInput
+	}
+	return s.repo.UpdateLocation(ctx, userID, lat, lng)
+}

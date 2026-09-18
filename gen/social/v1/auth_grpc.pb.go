@@ -19,24 +19,38 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_SignUp_FullMethodName               = "/social.v1.AuthService/SignUp"
-	AuthService_SignIn_FullMethodName               = "/social.v1.AuthService/SignIn"
-	AuthService_RefreshToken_FullMethodName         = "/social.v1.AuthService/RefreshToken"
-	AuthService_SignOut_FullMethodName              = "/social.v1.AuthService/SignOut"
-	AuthService_RequestPasswordReset_FullMethodName = "/social.v1.AuthService/RequestPasswordReset"
+	AuthService_SignInWithGoogle_FullMethodName       = "/social.v1.AuthService/SignInWithGoogle"
+	AuthService_SignInWithApple_FullMethodName        = "/social.v1.AuthService/SignInWithApple"
+	AuthService_RefreshToken_FullMethodName           = "/social.v1.AuthService/RefreshToken"
+	AuthService_SignOut_FullMethodName                = "/social.v1.AuthService/SignOut"
+	AuthService_AddRecoveryEmail_FullMethodName       = "/social.v1.AuthService/AddRecoveryEmail"
+	AuthService_VerifyRecoveryEmail_FullMethodName    = "/social.v1.AuthService/VerifyRecoveryEmail"
+	AuthService_RequestAccountRecovery_FullMethodName = "/social.v1.AuthService/RequestAccountRecovery"
+	AuthService_RecoverAccount_FullMethodName         = "/social.v1.AuthService/RecoverAccount"
 )
 
 // AuthServiceClient is the client API for AuthService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// AuthService — PRD §13.1 Authentication & Account.
+// AuthService — PRD §13.1 Authentication & Account, per flow.md §2.1:
+// registration is Google/Apple OAuth only, no email+password. Account
+// recovery (no password to reset) is a verified recovery email that lets a
+// user re-link a new OAuth identity if they lose access to Google/Apple.
 type AuthServiceClient interface {
-	SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*AuthTokens, error)
-	SignIn(ctx context.Context, in *SignInRequest, opts ...grpc.CallOption) (*AuthTokens, error)
+	SignInWithGoogle(ctx context.Context, in *OAuthSignInRequest, opts ...grpc.CallOption) (*AuthTokens, error)
+	SignInWithApple(ctx context.Context, in *OAuthSignInRequest, opts ...grpc.CallOption) (*AuthTokens, error)
 	RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*AuthTokens, error)
 	SignOut(ctx context.Context, in *SignOutRequest, opts ...grpc.CallOption) (*SignOutResponse, error)
-	RequestPasswordReset(ctx context.Context, in *RequestPasswordResetRequest, opts ...grpc.CallOption) (*RequestPasswordResetResponse, error)
+	// AddRecoveryEmail/VerifyRecoveryEmail: authenticated — the user attaches
+	// and confirms a recovery email to their existing account.
+	AddRecoveryEmail(ctx context.Context, in *AddRecoveryEmailRequest, opts ...grpc.CallOption) (*AddRecoveryEmailResponse, error)
+	VerifyRecoveryEmail(ctx context.Context, in *VerifyRecoveryEmailRequest, opts ...grpc.CallOption) (*VerifyRecoveryEmailResponse, error)
+	// RequestAccountRecovery/RecoverAccount: unauthenticated — the user has no
+	// session (lost access to their OAuth provider) and is proving identity
+	// via the verified recovery email instead.
+	RequestAccountRecovery(ctx context.Context, in *RequestAccountRecoveryRequest, opts ...grpc.CallOption) (*RequestAccountRecoveryResponse, error)
+	RecoverAccount(ctx context.Context, in *RecoverAccountRequest, opts ...grpc.CallOption) (*AuthTokens, error)
 }
 
 type authServiceClient struct {
@@ -47,20 +61,20 @@ func NewAuthServiceClient(cc grpc.ClientConnInterface) AuthServiceClient {
 	return &authServiceClient{cc}
 }
 
-func (c *authServiceClient) SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*AuthTokens, error) {
+func (c *authServiceClient) SignInWithGoogle(ctx context.Context, in *OAuthSignInRequest, opts ...grpc.CallOption) (*AuthTokens, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AuthTokens)
-	err := c.cc.Invoke(ctx, AuthService_SignUp_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, AuthService_SignInWithGoogle_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authServiceClient) SignIn(ctx context.Context, in *SignInRequest, opts ...grpc.CallOption) (*AuthTokens, error) {
+func (c *authServiceClient) SignInWithApple(ctx context.Context, in *OAuthSignInRequest, opts ...grpc.CallOption) (*AuthTokens, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AuthTokens)
-	err := c.cc.Invoke(ctx, AuthService_SignIn_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, AuthService_SignInWithApple_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -87,10 +101,40 @@ func (c *authServiceClient) SignOut(ctx context.Context, in *SignOutRequest, opt
 	return out, nil
 }
 
-func (c *authServiceClient) RequestPasswordReset(ctx context.Context, in *RequestPasswordResetRequest, opts ...grpc.CallOption) (*RequestPasswordResetResponse, error) {
+func (c *authServiceClient) AddRecoveryEmail(ctx context.Context, in *AddRecoveryEmailRequest, opts ...grpc.CallOption) (*AddRecoveryEmailResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RequestPasswordResetResponse)
-	err := c.cc.Invoke(ctx, AuthService_RequestPasswordReset_FullMethodName, in, out, cOpts...)
+	out := new(AddRecoveryEmailResponse)
+	err := c.cc.Invoke(ctx, AuthService_AddRecoveryEmail_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) VerifyRecoveryEmail(ctx context.Context, in *VerifyRecoveryEmailRequest, opts ...grpc.CallOption) (*VerifyRecoveryEmailResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(VerifyRecoveryEmailResponse)
+	err := c.cc.Invoke(ctx, AuthService_VerifyRecoveryEmail_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) RequestAccountRecovery(ctx context.Context, in *RequestAccountRecoveryRequest, opts ...grpc.CallOption) (*RequestAccountRecoveryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RequestAccountRecoveryResponse)
+	err := c.cc.Invoke(ctx, AuthService_RequestAccountRecovery_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) RecoverAccount(ctx context.Context, in *RecoverAccountRequest, opts ...grpc.CallOption) (*AuthTokens, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AuthTokens)
+	err := c.cc.Invoke(ctx, AuthService_RecoverAccount_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -101,13 +145,24 @@ func (c *authServiceClient) RequestPasswordReset(ctx context.Context, in *Reques
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
 //
-// AuthService — PRD §13.1 Authentication & Account.
+// AuthService — PRD §13.1 Authentication & Account, per flow.md §2.1:
+// registration is Google/Apple OAuth only, no email+password. Account
+// recovery (no password to reset) is a verified recovery email that lets a
+// user re-link a new OAuth identity if they lose access to Google/Apple.
 type AuthServiceServer interface {
-	SignUp(context.Context, *SignUpRequest) (*AuthTokens, error)
-	SignIn(context.Context, *SignInRequest) (*AuthTokens, error)
+	SignInWithGoogle(context.Context, *OAuthSignInRequest) (*AuthTokens, error)
+	SignInWithApple(context.Context, *OAuthSignInRequest) (*AuthTokens, error)
 	RefreshToken(context.Context, *RefreshTokenRequest) (*AuthTokens, error)
 	SignOut(context.Context, *SignOutRequest) (*SignOutResponse, error)
-	RequestPasswordReset(context.Context, *RequestPasswordResetRequest) (*RequestPasswordResetResponse, error)
+	// AddRecoveryEmail/VerifyRecoveryEmail: authenticated — the user attaches
+	// and confirms a recovery email to their existing account.
+	AddRecoveryEmail(context.Context, *AddRecoveryEmailRequest) (*AddRecoveryEmailResponse, error)
+	VerifyRecoveryEmail(context.Context, *VerifyRecoveryEmailRequest) (*VerifyRecoveryEmailResponse, error)
+	// RequestAccountRecovery/RecoverAccount: unauthenticated — the user has no
+	// session (lost access to their OAuth provider) and is proving identity
+	// via the verified recovery email instead.
+	RequestAccountRecovery(context.Context, *RequestAccountRecoveryRequest) (*RequestAccountRecoveryResponse, error)
+	RecoverAccount(context.Context, *RecoverAccountRequest) (*AuthTokens, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -118,11 +173,11 @@ type AuthServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAuthServiceServer struct{}
 
-func (UnimplementedAuthServiceServer) SignUp(context.Context, *SignUpRequest) (*AuthTokens, error) {
-	return nil, status.Error(codes.Unimplemented, "method SignUp not implemented")
+func (UnimplementedAuthServiceServer) SignInWithGoogle(context.Context, *OAuthSignInRequest) (*AuthTokens, error) {
+	return nil, status.Error(codes.Unimplemented, "method SignInWithGoogle not implemented")
 }
-func (UnimplementedAuthServiceServer) SignIn(context.Context, *SignInRequest) (*AuthTokens, error) {
-	return nil, status.Error(codes.Unimplemented, "method SignIn not implemented")
+func (UnimplementedAuthServiceServer) SignInWithApple(context.Context, *OAuthSignInRequest) (*AuthTokens, error) {
+	return nil, status.Error(codes.Unimplemented, "method SignInWithApple not implemented")
 }
 func (UnimplementedAuthServiceServer) RefreshToken(context.Context, *RefreshTokenRequest) (*AuthTokens, error) {
 	return nil, status.Error(codes.Unimplemented, "method RefreshToken not implemented")
@@ -130,8 +185,17 @@ func (UnimplementedAuthServiceServer) RefreshToken(context.Context, *RefreshToke
 func (UnimplementedAuthServiceServer) SignOut(context.Context, *SignOutRequest) (*SignOutResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SignOut not implemented")
 }
-func (UnimplementedAuthServiceServer) RequestPasswordReset(context.Context, *RequestPasswordResetRequest) (*RequestPasswordResetResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RequestPasswordReset not implemented")
+func (UnimplementedAuthServiceServer) AddRecoveryEmail(context.Context, *AddRecoveryEmailRequest) (*AddRecoveryEmailResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddRecoveryEmail not implemented")
+}
+func (UnimplementedAuthServiceServer) VerifyRecoveryEmail(context.Context, *VerifyRecoveryEmailRequest) (*VerifyRecoveryEmailResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method VerifyRecoveryEmail not implemented")
+}
+func (UnimplementedAuthServiceServer) RequestAccountRecovery(context.Context, *RequestAccountRecoveryRequest) (*RequestAccountRecoveryResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RequestAccountRecovery not implemented")
+}
+func (UnimplementedAuthServiceServer) RecoverAccount(context.Context, *RecoverAccountRequest) (*AuthTokens, error) {
+	return nil, status.Error(codes.Unimplemented, "method RecoverAccount not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -154,38 +218,38 @@ func RegisterAuthServiceServer(s grpc.ServiceRegistrar, srv AuthServiceServer) {
 	s.RegisterService(&AuthService_ServiceDesc, srv)
 }
 
-func _AuthService_SignUp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SignUpRequest)
+func _AuthService_SignInWithGoogle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OAuthSignInRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).SignUp(ctx, in)
+		return srv.(AuthServiceServer).SignInWithGoogle(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_SignUp_FullMethodName,
+		FullMethod: AuthService_SignInWithGoogle_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).SignUp(ctx, req.(*SignUpRequest))
+		return srv.(AuthServiceServer).SignInWithGoogle(ctx, req.(*OAuthSignInRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_SignIn_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SignInRequest)
+func _AuthService_SignInWithApple_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OAuthSignInRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).SignIn(ctx, in)
+		return srv.(AuthServiceServer).SignInWithApple(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_SignIn_FullMethodName,
+		FullMethod: AuthService_SignInWithApple_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).SignIn(ctx, req.(*SignInRequest))
+		return srv.(AuthServiceServer).SignInWithApple(ctx, req.(*OAuthSignInRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -226,20 +290,74 @@ func _AuthService_SignOut_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthService_RequestPasswordReset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RequestPasswordResetRequest)
+func _AuthService_AddRecoveryEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddRecoveryEmailRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthServiceServer).RequestPasswordReset(ctx, in)
+		return srv.(AuthServiceServer).AddRecoveryEmail(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthService_RequestPasswordReset_FullMethodName,
+		FullMethod: AuthService_AddRecoveryEmail_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).RequestPasswordReset(ctx, req.(*RequestPasswordResetRequest))
+		return srv.(AuthServiceServer).AddRecoveryEmail(ctx, req.(*AddRecoveryEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_VerifyRecoveryEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyRecoveryEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).VerifyRecoveryEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_VerifyRecoveryEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).VerifyRecoveryEmail(ctx, req.(*VerifyRecoveryEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_RequestAccountRecovery_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestAccountRecoveryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).RequestAccountRecovery(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_RequestAccountRecovery_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).RequestAccountRecovery(ctx, req.(*RequestAccountRecoveryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_RecoverAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RecoverAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).RecoverAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_RecoverAccount_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).RecoverAccount(ctx, req.(*RecoverAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -252,12 +370,12 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AuthServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "SignUp",
-			Handler:    _AuthService_SignUp_Handler,
+			MethodName: "SignInWithGoogle",
+			Handler:    _AuthService_SignInWithGoogle_Handler,
 		},
 		{
-			MethodName: "SignIn",
-			Handler:    _AuthService_SignIn_Handler,
+			MethodName: "SignInWithApple",
+			Handler:    _AuthService_SignInWithApple_Handler,
 		},
 		{
 			MethodName: "RefreshToken",
@@ -268,8 +386,20 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AuthService_SignOut_Handler,
 		},
 		{
-			MethodName: "RequestPasswordReset",
-			Handler:    _AuthService_RequestPasswordReset_Handler,
+			MethodName: "AddRecoveryEmail",
+			Handler:    _AuthService_AddRecoveryEmail_Handler,
+		},
+		{
+			MethodName: "VerifyRecoveryEmail",
+			Handler:    _AuthService_VerifyRecoveryEmail_Handler,
+		},
+		{
+			MethodName: "RequestAccountRecovery",
+			Handler:    _AuthService_RequestAccountRecovery_Handler,
+		},
+		{
+			MethodName: "RecoverAccount",
+			Handler:    _AuthService_RecoverAccount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

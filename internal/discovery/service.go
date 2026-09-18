@@ -30,3 +30,7 @@ func (s *Service) GetHomeFeed(ctx context.Context, userID, section string) ([]st
 	}
 	return s.repo.HomeFeedPlanIDs(ctx, userID, section, defaultPageSize)
 }
+
+func (s *Service) DetectCity(ctx context.Context, lat, lng float64) (id, name string, err error) {
+	return s.repo.DetectCity(ctx, lat, lng)
+}

@@ -68,3 +68,15 @@ func (r *Repository) UpsertDevice(ctx context.Context, userID, deviceID, pushTok
 	)
 	return err
 }
+
+// UpdateLocation records the user's last known device location (flow.md
+// §2.3/§9) for NEAR_YOU discovery — see internal/discovery's HomeFeedPlanIDs.
+func (r *Repository) UpdateLocation(ctx context.Context, userID string, lat, lng float64) error {
+	_, err := r.pool.Exec(ctx, `
+		UPDATE users SET last_location = ST_SetSRID(ST_MakePoint($3, $2), 4326)::geography,
+			last_location_at = now(), updated_at = now()
+		WHERE id = $1`,
+		userID, lat, lng,
+	)
+	return err
+}

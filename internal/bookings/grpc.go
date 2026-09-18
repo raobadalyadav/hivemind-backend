@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
+	"github.com/hivemind/backend/pkg/grpcmiddleware"
 	"github.com/hivemind/backend/pkg/idempotency"
 )
 
@@ -22,9 +23,13 @@ func NewHandler(svc *Service) *Handler {
 }
 
 func (h *Handler) CreateBooking(ctx context.Context, req *socialv1.CreateBookingRequest) (*socialv1.Booking, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
 	b := &Booking{
 		PlanID:         req.GetPlanId(),
-		UserID:         req.GetUserId(),
+		UserID:         userID,
 		IdempotencyKey: req.GetIdempotencyKey(),
 	}
 	created, err := h.svc.CreateBooking(ctx, b)
@@ -47,15 +52,27 @@ func (h *Handler) CreateBooking(ctx context.Context, req *socialv1.CreateBooking
 }
 
 func (h *Handler) GetBooking(ctx context.Context, req *socialv1.GetBookingRequest) (*socialv1.Booking, error) {
-	b, err := h.svc.GetBooking(ctx, req.GetId())
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	role, _ := grpcmiddleware.RoleFromContext(ctx)
+	b, err := h.svc.GetBookingAsUser(ctx, req.GetId(), userID, role)
 	if err != nil {
+		if err == ErrForbidden {
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
 		return nil, status.Error(codes.NotFound, "booking not found")
 	}
 	return toProto(b), nil
 }
 
 func (h *Handler) QuoteBooking(ctx context.Context, req *socialv1.QuoteBookingRequest) (*socialv1.BookingQuote, error) {
-	q, err := h.svc.QuoteBooking(ctx, req.GetPlanId(), req.GetUserId())
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	q, err := h.svc.QuoteBooking(ctx, req.GetPlanId(), userID)
 	if err != nil {
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -71,23 +88,41 @@ func (h *Handler) QuoteBooking(ctx context.Context, req *socialv1.QuoteBookingRe
 }
 
 func (h *Handler) CancelBooking(ctx context.Context, req *socialv1.CancelBookingRequest) (*socialv1.Booking, error) {
-	b, err := h.svc.CancelBooking(ctx, req.GetId(), req.GetReason())
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	role, _ := grpcmiddleware.RoleFromContext(ctx)
+	b, err := h.svc.CancelBookingAsUser(ctx, req.GetId(), userID, role, req.GetReason())
 	if err != nil {
-		if err == ErrInvalidInput {
+		switch err {
+		case ErrInvalidInput:
 			return nil, status.Error(codes.InvalidArgument, err.Error())
+		case ErrForbidden:
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		default:
+			return nil, status.Error(codes.NotFound, "booking not found or not cancellable")
 		}
-		return nil, status.Error(codes.NotFound, "booking not found or not cancellable")
 	}
 	return toProto(b), nil
 }
 
 func (h *Handler) CheckIn(ctx context.Context, req *socialv1.CheckInRequest) (*socialv1.CheckInResult, error) {
-	b, err := h.svc.CheckIn(ctx, req.GetBookingId(), req.GetCheckedInBy())
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	role, _ := grpcmiddleware.RoleFromContext(ctx)
+	b, err := h.svc.CheckIn(ctx, req.GetBookingId(), userID, role)
 	if err != nil {
-		if err == ErrInvalidInput {
+		switch err {
+		case ErrInvalidInput:
 			return nil, status.Error(codes.InvalidArgument, err.Error())
+		case ErrForbidden:
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		default:
+			return nil, status.Error(codes.NotFound, "booking not found or not checkable-in")
 		}
-		return nil, status.Error(codes.NotFound, "booking not found or not checkable-in")
 	}
 	return &socialv1.CheckInResult{Booking: toProto(b)}, nil
 }

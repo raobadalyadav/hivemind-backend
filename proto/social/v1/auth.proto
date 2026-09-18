@@ -4,26 +4,40 @@ package social.v1;
 
 option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
 
-// AuthService — PRD §13.1 Authentication & Account.
+// AuthService — PRD §13.1 Authentication & Account, per flow.md §2.1:
+// registration is Google/Apple OAuth only, no email+password. Account
+// recovery (no password to reset) is a verified recovery email that lets a
+// user re-link a new OAuth identity if they lose access to Google/Apple.
 service AuthService {
-  rpc SignUp(SignUpRequest) returns (AuthTokens);
-  rpc SignIn(SignInRequest) returns (AuthTokens);
+  rpc SignInWithGoogle(OAuthSignInRequest) returns (AuthTokens);
+  rpc SignInWithApple(OAuthSignInRequest) returns (AuthTokens);
   rpc RefreshToken(RefreshTokenRequest) returns (AuthTokens);
   rpc SignOut(SignOutRequest) returns (SignOutResponse);
-  rpc RequestPasswordReset(RequestPasswordResetRequest) returns (RequestPasswordResetResponse);
+
+  // AddRecoveryEmail/VerifyRecoveryEmail: authenticated — the user attaches
+  // and confirms a recovery email to their existing account.
+  rpc AddRecoveryEmail(AddRecoveryEmailRequest) returns (AddRecoveryEmailResponse);
+  rpc VerifyRecoveryEmail(VerifyRecoveryEmailRequest) returns (VerifyRecoveryEmailResponse);
+
+  // RequestAccountRecovery/RecoverAccount: unauthenticated — the user has no
+  // session (lost access to their OAuth provider) and is proving identity
+  // via the verified recovery email instead.
+  rpc RequestAccountRecovery(RequestAccountRecoveryRequest) returns (RequestAccountRecoveryResponse);
+  rpc RecoverAccount(RecoverAccountRequest) returns (AuthTokens);
 }
 
-message SignUpRequest {
-  string email = 1;
-  string password = 2;
-  string date_of_birth = 3; // ISO 8601 date, used for 18+ age gate
-  string device_id = 4;
+enum OAuthProvider {
+  OAUTH_PROVIDER_UNSPECIFIED = 0;
+  OAUTH_PROVIDER_GOOGLE = 1;
+  OAUTH_PROVIDER_APPLE = 2;
 }
 
-message SignInRequest {
-  string email = 1;
-  string password = 2;
-  string device_id = 3;
+message OAuthSignInRequest {
+  string id_token = 1;
+  string device_id = 2;
+  // Only required on first sign-in for a brand-new account — the 18+ age
+  // gate needs it since OAuth providers don't reliably supply a birthdate.
+  string date_of_birth = 3;
 }
 
 message RefreshTokenRequest {
@@ -36,11 +50,31 @@ message SignOutRequest {
 
 message SignOutResponse {}
 
-message RequestPasswordResetRequest {
+message AddRecoveryEmailRequest {
   string email = 1;
 }
 
-message RequestPasswordResetResponse {}
+message AddRecoveryEmailResponse {}
+
+message VerifyRecoveryEmailRequest {
+  string code = 1;
+}
+
+message VerifyRecoveryEmailResponse {}
+
+message RequestAccountRecoveryRequest {
+  string recovery_email = 1;
+}
+
+message RequestAccountRecoveryResponse {}
+
+message RecoverAccountRequest {
+  string recovery_email = 1;
+  string code = 2;
+  OAuthProvider provider = 3;
+  string id_token = 4;
+  string device_id = 5;
+}
 
 message AuthTokens {
   string user_id = 1;

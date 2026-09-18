@@ -32,7 +32,7 @@ func TestRepository_CreateAndGet(t *testing.T) {
 
 	var hostID string
 	err := pool.QueryRow(ctx,
-		`INSERT INTO users (email, password_hash) VALUES ($1, 'x') RETURNING id`,
+		`INSERT INTO users (email) VALUES ($1) RETURNING id`,
 		"repo-test-"+time.Now().Format("150405.000000")+"@example.com",
 	).Scan(&hostID)
 	if err != nil {

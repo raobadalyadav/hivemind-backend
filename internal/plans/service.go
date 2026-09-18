@@ -8,6 +8,7 @@ import (
 
 var (
 	ErrInvalidInput = errors.New("plans: invalid input")
+	ErrForbidden    = errors.New("plans: caller is not the host of this plan")
 )
 
 const defaultSearchLimit = 20
@@ -71,9 +72,25 @@ func (s *Service) LeavePlan(ctx context.Context, planID, userID string) error {
 	return s.canceller.CancelBookingForPlan(ctx, planID, userID)
 }
 
-func (s *Service) CancelPlan(ctx context.Context, planID, reason string) (*Plan, error) {
-	if planID == "" {
+func isAdminRole(role string) bool {
+	return role == "admin" || role == "super_admin"
+}
+
+// CancelPlan requires the caller to be the plan's host or an admin — a
+// plan-cancellation call from anyone else is rejected before any write
+// happens (see pkg/grpcmiddleware's identical isAdminRole check; duplicated
+// here rather than imported, since it's two lines and importing a
+// middleware package into a service layer would be the wrong direction).
+func (s *Service) CancelPlan(ctx context.Context, planID, callerID, callerRole, reason string) (*Plan, error) {
+	if planID == "" || callerID == "" {
 		return nil, ErrInvalidInput
+	}
+	plan, err := s.repo.Get(ctx, planID)
+	if err != nil {
+		return nil, err
+	}
+	if plan.HostID != callerID && !isAdminRole(callerRole) {
+		return nil, ErrForbidden
 	}
 	return s.repo.Cancel(ctx, planID, reason)
 }

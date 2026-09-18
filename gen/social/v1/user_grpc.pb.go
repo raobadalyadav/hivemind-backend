@@ -23,6 +23,7 @@ const (
 	UserService_UpdateUser_FullMethodName     = "/social.v1.UserService/UpdateUser"
 	UserService_DeleteAccount_FullMethodName  = "/social.v1.UserService/DeleteAccount"
 	UserService_RegisterDevice_FullMethodName = "/social.v1.UserService/RegisterDevice"
+	UserService_UpdateLocation_FullMethodName = "/social.v1.UserService/UpdateLocation"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -35,6 +36,9 @@ type UserServiceClient interface {
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*User, error)
 	DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error)
 	RegisterDevice(ctx context.Context, in *RegisterDeviceRequest, opts ...grpc.CallOption) (*RegisterDeviceResponse, error)
+	// UpdateLocation — flow.md §2.3/§9: the client pushes live GPS coordinates,
+	// stored as the user's last known location for NEAR_YOU discovery.
+	UpdateLocation(ctx context.Context, in *UpdateLocationRequest, opts ...grpc.CallOption) (*UpdateLocationResponse, error)
 }
 
 type userServiceClient struct {
@@ -85,6 +89,16 @@ func (c *userServiceClient) RegisterDevice(ctx context.Context, in *RegisterDevi
 	return out, nil
 }
 
+func (c *userServiceClient) UpdateLocation(ctx context.Context, in *UpdateLocationRequest, opts ...grpc.CallOption) (*UpdateLocationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateLocationResponse)
+	err := c.cc.Invoke(ctx, UserService_UpdateLocation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
@@ -95,6 +109,9 @@ type UserServiceServer interface {
 	UpdateUser(context.Context, *UpdateUserRequest) (*User, error)
 	DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error)
 	RegisterDevice(context.Context, *RegisterDeviceRequest) (*RegisterDeviceResponse, error)
+	// UpdateLocation — flow.md §2.3/§9: the client pushes live GPS coordinates,
+	// stored as the user's last known location for NEAR_YOU discovery.
+	UpdateLocation(context.Context, *UpdateLocationRequest) (*UpdateLocationResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -116,6 +133,9 @@ func (UnimplementedUserServiceServer) DeleteAccount(context.Context, *DeleteAcco
 }
 func (UnimplementedUserServiceServer) RegisterDevice(context.Context, *RegisterDeviceRequest) (*RegisterDeviceResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RegisterDevice not implemented")
+}
+func (UnimplementedUserServiceServer) UpdateLocation(context.Context, *UpdateLocationRequest) (*UpdateLocationResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateLocation not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -210,6 +230,24 @@ func _UserService_RegisterDevice_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_UpdateLocation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateLocationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).UpdateLocation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_UpdateLocation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).UpdateLocation(ctx, req.(*UpdateLocationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -232,6 +270,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RegisterDevice",
 			Handler:    _UserService_RegisterDevice_Handler,
+		},
+		{
+			MethodName: "UpdateLocation",
+			Handler:    _UserService_UpdateLocation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

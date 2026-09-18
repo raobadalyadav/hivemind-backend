@@ -40,6 +40,7 @@ import (
 	"github.com/hivemind/backend/internal/users"
 	"github.com/hivemind/backend/pkg/grpcmiddleware"
 	"github.com/hivemind/backend/pkg/idempotency"
+	"github.com/hivemind/backend/pkg/oauth"
 	"github.com/hivemind/backend/pkg/observability"
 	"github.com/hivemind/backend/pkg/security"
 )
@@ -82,7 +83,25 @@ func main() {
 	bookingsSvc := bookings.NewService(bookings.NewRepository(pool), guard)
 	moderationSvc := moderation.NewService(moderation.NewRepository(pool))
 
-	socialv1.RegisterAuthServiceServer(srv, auth.NewHandler(auth.NewService(auth.NewRepository(pool), issuer)))
+	var googleVerifier, appleVerifier *oauth.Verifier
+	if cfg.GoogleClientID != "" {
+		v, err := oauth.NewGoogleVerifier(ctx, cfg.GoogleClientID)
+		if err != nil {
+			logger.Error("google oauth verifier setup failed, Google sign-in disabled", "error", err)
+		} else {
+			googleVerifier = v
+		}
+	}
+	if cfg.AppleBundleID != "" {
+		v, err := oauth.NewAppleVerifier(ctx, cfg.AppleBundleID)
+		if err != nil {
+			logger.Error("apple oauth verifier setup failed, Apple sign-in disabled", "error", err)
+		} else {
+			appleVerifier = v
+		}
+	}
+
+	socialv1.RegisterAuthServiceServer(srv, auth.NewHandler(auth.NewService(auth.NewRepository(pool), issuer, googleVerifier, appleVerifier)))
 	socialv1.RegisterUserServiceServer(srv, users.NewHandler(users.NewService(users.NewRepository(pool))))
 	socialv1.RegisterProfileServiceServer(srv, profiles.NewHandler(profiles.NewService(profiles.NewRepository(pool))))
 	socialv1.RegisterDiscoveryServiceServer(srv, discovery.NewHandler(discovery.NewService(discovery.NewRepository(pool))))

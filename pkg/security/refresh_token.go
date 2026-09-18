@@ -21,8 +21,7 @@ func GenerateOpaqueToken() (string, error) {
 
 // HashToken returns a SHA-256 hex digest for storage/lookup. The token
 // itself is already high-entropy random (not a low-entropy secret an
-// attacker could brute-force offline), so a fast hash is appropriate here —
-// unlike HashPassword, which deliberately uses slow bcrypt.
+// attacker could brute-force offline), so a fast hash is appropriate here.
 func HashToken(token string) string {
 	sum := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(sum[:])

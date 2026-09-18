@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
+	"github.com/hivemind/backend/pkg/grpcmiddleware"
 )
 
 // Handler implements socialv1.SocialServiceServer. CreatePost/GetPost are
@@ -22,8 +23,12 @@ func NewHandler(svc *Service) *Handler {
 }
 
 func (h *Handler) CreatePost(ctx context.Context, req *socialv1.CreatePostRequest) (*socialv1.Post, error) {
+	authorID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
 	p := &Post{
-		AuthorID:   req.GetAuthorId(),
+		AuthorID:   authorID,
 		PlanID:     req.GetPlanId(),
 		Body:       req.GetBody(),
 		MediaURLs:  req.GetMediaUrls(),

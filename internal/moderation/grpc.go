@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
+	"github.com/hivemind/backend/pkg/grpcmiddleware"
 )
 
 // Handler implements socialv1.ModerationServiceServer — every RPC is fully
@@ -21,8 +22,12 @@ func NewHandler(svc *Service) *Handler {
 }
 
 func (h *Handler) SubmitReport(ctx context.Context, req *socialv1.SubmitReportRequest) (*socialv1.ModerationCase, error) {
+	reporterID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
 	c := &Case{
-		ReporterID:  req.GetReporterId(),
+		ReporterID:  reporterID,
 		SubjectType: req.GetSubjectType(),
 		SubjectID:   req.GetSubjectId(),
 		Reason:      req.GetReason(),
@@ -45,6 +50,9 @@ func (h *Handler) GetCase(ctx context.Context, req *socialv1.GetCaseRequest) (*s
 	return toProto(c), nil
 }
 
+// ResolveCase is gated to admin/moderator roles via pkg/grpcmiddleware's
+// adminMethods — it's not self-referential (acts on someone else's report)
+// and has no other authorization check.
 func (h *Handler) ResolveCase(ctx context.Context, req *socialv1.ResolveCaseRequest) (*socialv1.ModerationCase, error) {
 	c, err := h.svc.ResolveCase(ctx, req.GetCaseId(), req.GetResolution())
 	if err != nil {
@@ -57,7 +65,11 @@ func (h *Handler) ResolveCase(ctx context.Context, req *socialv1.ResolveCaseRequ
 }
 
 func (h *Handler) BlockUser(ctx context.Context, req *socialv1.BlockUserRequest) (*socialv1.BlockUserResponse, error) {
-	if err := h.svc.BlockUser(ctx, req.GetUserId(), req.GetBlockedUserId()); err != nil {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	if err := h.svc.BlockUser(ctx, userID, req.GetBlockedUserId()); err != nil {
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}

@@ -31,7 +31,7 @@ func seedUserAndPlan(t *testing.T, pool *pgxpool.Pool, capacity int32) (userID, 
 	suffix := time.Now().Format("150405.000000")
 
 	if err := pool.QueryRow(ctx,
-		`INSERT INTO users (email, password_hash) VALUES ($1, 'x') RETURNING id`,
+		`INSERT INTO users (email) VALUES ($1) RETURNING id`,
 		"booking-test-"+suffix+"@example.com",
 	).Scan(&userID); err != nil {
 		t.Fatalf("seed user: %v", err)

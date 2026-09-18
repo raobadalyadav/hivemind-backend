@@ -23,22 +23,28 @@ const (
 
 // publicMethods lists full gRPC method names (service/Method) that don't require a token.
 var publicMethods = map[string]bool{
-	"/social.v1.AuthService/SignUp":               true,
-	"/social.v1.AuthService/SignIn":               true,
-	"/social.v1.AuthService/RefreshToken":         true,
-	"/social.v1.AuthService/RequestPasswordReset": true,
-	"/grpc.health.v1.Health/Check":                true,
-	"/grpc.health.v1.Health/Watch":                true,
+	"/social.v1.AuthService/SignInWithGoogle":       true,
+	"/social.v1.AuthService/SignInWithApple":        true,
+	"/social.v1.AuthService/RefreshToken":           true,
+	"/social.v1.AuthService/RequestAccountRecovery": true,
+	"/social.v1.AuthService/RecoverAccount":         true,
+	"/grpc.health.v1.Health/Check":                  true,
+	"/grpc.health.v1.Health/Watch":                  true,
 }
 
 // adminMethods lists full gRPC method names restricted to admin/super_admin
-// roles — the RBAC gate PRD §23 calls for on the admin surface.
+// roles — the RBAC gate PRD §23 calls for on the admin surface, plus any
+// other RPC that isn't self-referential (acts on/sends to someone other than
+// the caller) and would otherwise let any authenticated user act as an
+// admin without being one.
 var adminMethods = map[string]bool{
-	"/social.v1.AdminService/ListUsers":             true,
-	"/social.v1.AdminService/SuspendUser":           true,
-	"/social.v1.AdminService/ListReports":           true,
-	"/social.v1.AdminService/OverrideBookingStatus": true,
-	"/social.v1.AdminService/GetDashboardStats":     true,
+	"/social.v1.AdminService/ListUsers":               true,
+	"/social.v1.AdminService/SuspendUser":             true,
+	"/social.v1.AdminService/ListReports":             true,
+	"/social.v1.AdminService/OverrideBookingStatus":   true,
+	"/social.v1.AdminService/GetDashboardStats":       true,
+	"/social.v1.NotificationService/SendNotification": true,
+	"/social.v1.ModerationService/ResolveCase":        true,
 }
 
 func isAdminRole(role string) bool {
