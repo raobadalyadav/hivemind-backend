@@ -72,3 +72,27 @@ func (h *Handler) DetectCity(ctx context.Context, req *socialv1.DetectCityReques
 	}
 	return &socialv1.DetectCityResponse{CityId: id, CityName: name}, nil
 }
+
+func (h *Handler) ListCategories(ctx context.Context, _ *socialv1.ListCategoriesRequest) (*socialv1.ListCategoriesResponse, error) {
+	list, err := h.svc.Categories(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list categories")
+	}
+	out := &socialv1.ListCategoriesResponse{}
+	for _, c := range list {
+		out.Categories = append(out.Categories, &socialv1.Category{Id: c.ID, Name: c.Name})
+	}
+	return out, nil
+}
+
+func (h *Handler) ListCities(ctx context.Context, _ *socialv1.ListCitiesRequest) (*socialv1.ListCitiesResponse, error) {
+	list, err := h.svc.Cities(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list cities")
+	}
+	out := &socialv1.ListCitiesResponse{}
+	for _, c := range list {
+		out.Cities = append(out.Cities, &socialv1.CityInfo{Id: c.ID, Name: c.Name})
+	}
+	return out, nil
+}

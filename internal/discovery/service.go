@@ -34,3 +34,6 @@ func (s *Service) GetHomeFeed(ctx context.Context, userID, section, travelCityID
 func (s *Service) DetectCity(ctx context.Context, lat, lng float64) (id, name string, err error) {
 	return s.repo.DetectCity(ctx, lat, lng)
 }
+
+func (s *Service) Categories(ctx context.Context) ([]NamedID, error) { return s.repo.Categories(ctx) }
+func (s *Service) Cities(ctx context.Context) ([]NamedID, error)     { return s.repo.ActiveCities(ctx) }

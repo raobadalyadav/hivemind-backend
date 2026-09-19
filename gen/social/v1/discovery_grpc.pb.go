@@ -22,6 +22,8 @@ const (
 	DiscoveryService_GetHomeFeed_FullMethodName    = "/social.v1.DiscoveryService/GetHomeFeed"
 	DiscoveryService_GetNearbyPlans_FullMethodName = "/social.v1.DiscoveryService/GetNearbyPlans"
 	DiscoveryService_DetectCity_FullMethodName     = "/social.v1.DiscoveryService/DetectCity"
+	DiscoveryService_ListCategories_FullMethodName = "/social.v1.DiscoveryService/ListCategories"
+	DiscoveryService_ListCities_FullMethodName     = "/social.v1.DiscoveryService/ListCities"
 )
 
 // DiscoveryServiceClient is the client API for DiscoveryService service.
@@ -35,6 +37,10 @@ type DiscoveryServiceClient interface {
 	// DetectCity — flow.md §2.3's "ask location permission → show nearby
 	// plans": resolves a GPS point to the nearest launched city.
 	DetectCity(ctx context.Context, in *DetectCityRequest, opts ...grpc.CallOption) (*DetectCityResponse, error)
+	// ListCategories returns plan categories with ids (CreatePlan needs a
+	// category_id; the interest catalog only has names) and active cities.
+	ListCategories(ctx context.Context, in *ListCategoriesRequest, opts ...grpc.CallOption) (*ListCategoriesResponse, error)
+	ListCities(ctx context.Context, in *ListCitiesRequest, opts ...grpc.CallOption) (*ListCitiesResponse, error)
 }
 
 type discoveryServiceClient struct {
@@ -75,6 +81,26 @@ func (c *discoveryServiceClient) DetectCity(ctx context.Context, in *DetectCityR
 	return out, nil
 }
 
+func (c *discoveryServiceClient) ListCategories(ctx context.Context, in *ListCategoriesRequest, opts ...grpc.CallOption) (*ListCategoriesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListCategoriesResponse)
+	err := c.cc.Invoke(ctx, DiscoveryService_ListCategories_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *discoveryServiceClient) ListCities(ctx context.Context, in *ListCitiesRequest, opts ...grpc.CallOption) (*ListCitiesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListCitiesResponse)
+	err := c.cc.Invoke(ctx, DiscoveryService_ListCities_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DiscoveryServiceServer is the server API for DiscoveryService service.
 // All implementations must embed UnimplementedDiscoveryServiceServer
 // for forward compatibility.
@@ -86,6 +112,10 @@ type DiscoveryServiceServer interface {
 	// DetectCity — flow.md §2.3's "ask location permission → show nearby
 	// plans": resolves a GPS point to the nearest launched city.
 	DetectCity(context.Context, *DetectCityRequest) (*DetectCityResponse, error)
+	// ListCategories returns plan categories with ids (CreatePlan needs a
+	// category_id; the interest catalog only has names) and active cities.
+	ListCategories(context.Context, *ListCategoriesRequest) (*ListCategoriesResponse, error)
+	ListCities(context.Context, *ListCitiesRequest) (*ListCitiesResponse, error)
 	mustEmbedUnimplementedDiscoveryServiceServer()
 }
 
@@ -104,6 +134,12 @@ func (UnimplementedDiscoveryServiceServer) GetNearbyPlans(context.Context, *GetN
 }
 func (UnimplementedDiscoveryServiceServer) DetectCity(context.Context, *DetectCityRequest) (*DetectCityResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DetectCity not implemented")
+}
+func (UnimplementedDiscoveryServiceServer) ListCategories(context.Context, *ListCategoriesRequest) (*ListCategoriesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListCategories not implemented")
+}
+func (UnimplementedDiscoveryServiceServer) ListCities(context.Context, *ListCitiesRequest) (*ListCitiesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListCities not implemented")
 }
 func (UnimplementedDiscoveryServiceServer) mustEmbedUnimplementedDiscoveryServiceServer() {}
 func (UnimplementedDiscoveryServiceServer) testEmbeddedByValue()                          {}
@@ -180,6 +216,42 @@ func _DiscoveryService_DetectCity_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DiscoveryService_ListCategories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCategoriesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DiscoveryServiceServer).ListCategories(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DiscoveryService_ListCategories_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DiscoveryServiceServer).ListCategories(ctx, req.(*ListCategoriesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DiscoveryService_ListCities_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCitiesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DiscoveryServiceServer).ListCities(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DiscoveryService_ListCities_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DiscoveryServiceServer).ListCities(ctx, req.(*ListCitiesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DiscoveryService_ServiceDesc is the grpc.ServiceDesc for DiscoveryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -198,6 +270,14 @@ var DiscoveryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DetectCity",
 			Handler:    _DiscoveryService_DetectCity_Handler,
+		},
+		{
+			MethodName: "ListCategories",
+			Handler:    _DiscoveryService_ListCategories_Handler,
+		},
+		{
+			MethodName: "ListCities",
+			Handler:    _DiscoveryService_ListCities_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

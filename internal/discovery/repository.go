@@ -176,3 +176,30 @@ func (r *Repository) nearYouPlanIDs(ctx context.Context, userID string, limit in
 	}
 	return ids, true, rows.Err()
 }
+
+type NamedID struct{ ID, Name string }
+
+func (r *Repository) list(ctx context.Context, sql string) ([]NamedID, error) {
+	rows, err := r.pool.Query(ctx, sql)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []NamedID
+	for rows.Next() {
+		var n NamedID
+		if err := rows.Scan(&n.ID, &n.Name); err != nil {
+			return nil, err
+		}
+		out = append(out, n)
+	}
+	return out, rows.Err()
+}
+
+func (r *Repository) Categories(ctx context.Context) ([]NamedID, error) {
+	return r.list(ctx, `SELECT id::text, name FROM categories ORDER BY name`)
+}
+
+func (r *Repository) ActiveCities(ctx context.Context) ([]NamedID, error) {
+	return r.list(ctx, `SELECT id::text, name FROM cities WHERE active ORDER BY name`)
+}

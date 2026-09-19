@@ -410,6 +410,270 @@ func (x *DetectCityResponse) GetCityName() string {
 	return ""
 }
 
+type Category struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Category) Reset() {
+	*x = Category{}
+	mi := &file_social_v1_discovery_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Category) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Category) ProtoMessage() {}
+
+func (x *Category) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_discovery_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Category.ProtoReflect.Descriptor instead.
+func (*Category) Descriptor() ([]byte, []int) {
+	return file_social_v1_discovery_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *Category) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Category) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type ListCategoriesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCategoriesRequest) Reset() {
+	*x = ListCategoriesRequest{}
+	mi := &file_social_v1_discovery_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCategoriesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCategoriesRequest) ProtoMessage() {}
+
+func (x *ListCategoriesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_discovery_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCategoriesRequest.ProtoReflect.Descriptor instead.
+func (*ListCategoriesRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_discovery_proto_rawDescGZIP(), []int{7}
+}
+
+type ListCategoriesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Categories    []*Category            `protobuf:"bytes,1,rep,name=categories,proto3" json:"categories,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCategoriesResponse) Reset() {
+	*x = ListCategoriesResponse{}
+	mi := &file_social_v1_discovery_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCategoriesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCategoriesResponse) ProtoMessage() {}
+
+func (x *ListCategoriesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_discovery_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCategoriesResponse.ProtoReflect.Descriptor instead.
+func (*ListCategoriesResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_discovery_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ListCategoriesResponse) GetCategories() []*Category {
+	if x != nil {
+		return x.Categories
+	}
+	return nil
+}
+
+type CityInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CityInfo) Reset() {
+	*x = CityInfo{}
+	mi := &file_social_v1_discovery_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CityInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CityInfo) ProtoMessage() {}
+
+func (x *CityInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_discovery_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CityInfo.ProtoReflect.Descriptor instead.
+func (*CityInfo) Descriptor() ([]byte, []int) {
+	return file_social_v1_discovery_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *CityInfo) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *CityInfo) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type ListCitiesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCitiesRequest) Reset() {
+	*x = ListCitiesRequest{}
+	mi := &file_social_v1_discovery_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCitiesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCitiesRequest) ProtoMessage() {}
+
+func (x *ListCitiesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_discovery_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCitiesRequest.ProtoReflect.Descriptor instead.
+func (*ListCitiesRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_discovery_proto_rawDescGZIP(), []int{10}
+}
+
+type ListCitiesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Cities        []*CityInfo            `protobuf:"bytes,1,rep,name=cities,proto3" json:"cities,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCitiesResponse) Reset() {
+	*x = ListCitiesResponse{}
+	mi := &file_social_v1_discovery_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCitiesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCitiesResponse) ProtoMessage() {}
+
+func (x *ListCitiesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_discovery_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCitiesResponse.ProtoReflect.Descriptor instead.
+func (*ListCitiesResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_discovery_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ListCitiesResponse) GetCities() []*CityInfo {
+	if x != nil {
+		return x.Cities
+	}
+	return nil
+}
+
 var File_social_v1_discovery_proto protoreflect.FileDescriptor
 
 const file_social_v1_discovery_proto_rawDesc = "" +
@@ -434,19 +698,36 @@ const file_social_v1_discovery_proto_rawDesc = "" +
 	"\blocation\x18\x01 \x01(\v2\x13.social.v1.GeoPointR\blocation\"J\n" +
 	"\x12DetectCityResponse\x12\x17\n" +
 	"\acity_id\x18\x01 \x01(\tR\x06cityId\x12\x1b\n" +
-	"\tcity_name\x18\x02 \x01(\tR\bcityName*k\n" +
+	"\tcity_name\x18\x02 \x01(\tR\bcityName\".\n" +
+	"\bCategory\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"\x17\n" +
+	"\x15ListCategoriesRequest\"M\n" +
+	"\x16ListCategoriesResponse\x123\n" +
+	"\n" +
+	"categories\x18\x01 \x03(\v2\x13.social.v1.CategoryR\n" +
+	"categories\".\n" +
+	"\bCityInfo\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"\x13\n" +
+	"\x11ListCitiesRequest\"A\n" +
+	"\x12ListCitiesResponse\x12+\n" +
+	"\x06cities\x18\x01 \x03(\v2\x13.social.v1.CityInfoR\x06cities*k\n" +
 	"\vFeedSection\x12\x1c\n" +
 	"\x18FEED_SECTION_UNSPECIFIED\x10\x00\x12\t\n" +
 	"\x05TODAY\x10\x01\x12\v\n" +
 	"\aTONIGHT\x10\x02\x12\v\n" +
 	"\aWEEKEND\x10\x03\x12\f\n" +
 	"\bNEAR_YOU\x10\x04\x12\v\n" +
-	"\aFOR_YOU\x10\x052\x82\x02\n" +
+	"\aFOR_YOU\x10\x052\xa4\x03\n" +
 	"\x10DiscoveryService\x12L\n" +
 	"\vGetHomeFeed\x12\x1d.social.v1.GetHomeFeedRequest\x1a\x1e.social.v1.GetHomeFeedResponse\x12U\n" +
 	"\x0eGetNearbyPlans\x12 .social.v1.GetNearbyPlansRequest\x1a!.social.v1.GetNearbyPlansResponse\x12I\n" +
 	"\n" +
-	"DetectCity\x12\x1c.social.v1.DetectCityRequest\x1a\x1d.social.v1.DetectCityResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
+	"DetectCity\x12\x1c.social.v1.DetectCityRequest\x1a\x1d.social.v1.DetectCityResponse\x12U\n" +
+	"\x0eListCategories\x12 .social.v1.ListCategoriesRequest\x1a!.social.v1.ListCategoriesResponse\x12I\n" +
+	"\n" +
+	"ListCities\x12\x1c.social.v1.ListCitiesRequest\x1a\x1d.social.v1.ListCitiesResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
 var (
 	file_social_v1_discovery_proto_rawDescOnce sync.Once
@@ -461,7 +742,7 @@ func file_social_v1_discovery_proto_rawDescGZIP() []byte {
 }
 
 var file_social_v1_discovery_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_social_v1_discovery_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_social_v1_discovery_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_social_v1_discovery_proto_goTypes = []any{
 	(FeedSection)(0),               // 0: social.v1.FeedSection
 	(*GetHomeFeedRequest)(nil),     // 1: social.v1.GetHomeFeedRequest
@@ -470,29 +751,41 @@ var file_social_v1_discovery_proto_goTypes = []any{
 	(*GetNearbyPlansResponse)(nil), // 4: social.v1.GetNearbyPlansResponse
 	(*DetectCityRequest)(nil),      // 5: social.v1.DetectCityRequest
 	(*DetectCityResponse)(nil),     // 6: social.v1.DetectCityResponse
-	(*PageRequest)(nil),            // 7: social.v1.PageRequest
-	(*PageResponse)(nil),           // 8: social.v1.PageResponse
-	(*GeoPoint)(nil),               // 9: social.v1.GeoPoint
+	(*Category)(nil),               // 7: social.v1.Category
+	(*ListCategoriesRequest)(nil),  // 8: social.v1.ListCategoriesRequest
+	(*ListCategoriesResponse)(nil), // 9: social.v1.ListCategoriesResponse
+	(*CityInfo)(nil),               // 10: social.v1.CityInfo
+	(*ListCitiesRequest)(nil),      // 11: social.v1.ListCitiesRequest
+	(*ListCitiesResponse)(nil),     // 12: social.v1.ListCitiesResponse
+	(*PageRequest)(nil),            // 13: social.v1.PageRequest
+	(*PageResponse)(nil),           // 14: social.v1.PageResponse
+	(*GeoPoint)(nil),               // 15: social.v1.GeoPoint
 }
 var file_social_v1_discovery_proto_depIdxs = []int32{
 	0,  // 0: social.v1.GetHomeFeedRequest.section:type_name -> social.v1.FeedSection
-	7,  // 1: social.v1.GetHomeFeedRequest.page:type_name -> social.v1.PageRequest
-	8,  // 2: social.v1.GetHomeFeedResponse.page:type_name -> social.v1.PageResponse
-	9,  // 3: social.v1.GetNearbyPlansRequest.origin:type_name -> social.v1.GeoPoint
-	7,  // 4: social.v1.GetNearbyPlansRequest.page:type_name -> social.v1.PageRequest
-	8,  // 5: social.v1.GetNearbyPlansResponse.page:type_name -> social.v1.PageResponse
-	9,  // 6: social.v1.DetectCityRequest.location:type_name -> social.v1.GeoPoint
-	1,  // 7: social.v1.DiscoveryService.GetHomeFeed:input_type -> social.v1.GetHomeFeedRequest
-	3,  // 8: social.v1.DiscoveryService.GetNearbyPlans:input_type -> social.v1.GetNearbyPlansRequest
-	5,  // 9: social.v1.DiscoveryService.DetectCity:input_type -> social.v1.DetectCityRequest
-	2,  // 10: social.v1.DiscoveryService.GetHomeFeed:output_type -> social.v1.GetHomeFeedResponse
-	4,  // 11: social.v1.DiscoveryService.GetNearbyPlans:output_type -> social.v1.GetNearbyPlansResponse
-	6,  // 12: social.v1.DiscoveryService.DetectCity:output_type -> social.v1.DetectCityResponse
-	10, // [10:13] is the sub-list for method output_type
-	7,  // [7:10] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	13, // 1: social.v1.GetHomeFeedRequest.page:type_name -> social.v1.PageRequest
+	14, // 2: social.v1.GetHomeFeedResponse.page:type_name -> social.v1.PageResponse
+	15, // 3: social.v1.GetNearbyPlansRequest.origin:type_name -> social.v1.GeoPoint
+	13, // 4: social.v1.GetNearbyPlansRequest.page:type_name -> social.v1.PageRequest
+	14, // 5: social.v1.GetNearbyPlansResponse.page:type_name -> social.v1.PageResponse
+	15, // 6: social.v1.DetectCityRequest.location:type_name -> social.v1.GeoPoint
+	7,  // 7: social.v1.ListCategoriesResponse.categories:type_name -> social.v1.Category
+	10, // 8: social.v1.ListCitiesResponse.cities:type_name -> social.v1.CityInfo
+	1,  // 9: social.v1.DiscoveryService.GetHomeFeed:input_type -> social.v1.GetHomeFeedRequest
+	3,  // 10: social.v1.DiscoveryService.GetNearbyPlans:input_type -> social.v1.GetNearbyPlansRequest
+	5,  // 11: social.v1.DiscoveryService.DetectCity:input_type -> social.v1.DetectCityRequest
+	8,  // 12: social.v1.DiscoveryService.ListCategories:input_type -> social.v1.ListCategoriesRequest
+	11, // 13: social.v1.DiscoveryService.ListCities:input_type -> social.v1.ListCitiesRequest
+	2,  // 14: social.v1.DiscoveryService.GetHomeFeed:output_type -> social.v1.GetHomeFeedResponse
+	4,  // 15: social.v1.DiscoveryService.GetNearbyPlans:output_type -> social.v1.GetNearbyPlansResponse
+	6,  // 16: social.v1.DiscoveryService.DetectCity:output_type -> social.v1.DetectCityResponse
+	9,  // 17: social.v1.DiscoveryService.ListCategories:output_type -> social.v1.ListCategoriesResponse
+	12, // 18: social.v1.DiscoveryService.ListCities:output_type -> social.v1.ListCitiesResponse
+	14, // [14:19] is the sub-list for method output_type
+	9,  // [9:14] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_discovery_proto_init() }
@@ -507,7 +800,7 @@ func file_social_v1_discovery_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_discovery_proto_rawDesc), len(file_social_v1_discovery_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   6,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

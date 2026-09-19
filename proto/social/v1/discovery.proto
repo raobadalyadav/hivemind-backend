@@ -13,6 +13,10 @@ service DiscoveryService {
   // DetectCity — flow.md §2.3's "ask location permission → show nearby
   // plans": resolves a GPS point to the nearest launched city.
   rpc DetectCity(DetectCityRequest) returns (DetectCityResponse);
+  // ListCategories returns plan categories with ids (CreatePlan needs a
+  // category_id; the interest catalog only has names) and active cities.
+  rpc ListCategories(ListCategoriesRequest) returns (ListCategoriesResponse);
+  rpc ListCities(ListCitiesRequest) returns (ListCitiesResponse);
 }
 
 enum FeedSection {
@@ -57,4 +61,22 @@ message DetectCityRequest {
 message DetectCityResponse {
   string city_id = 1;
   string city_name = 2;
+}
+
+message Category {
+  string id = 1;
+  string name = 2;
+}
+message ListCategoriesRequest {}
+message ListCategoriesResponse {
+  repeated Category categories = 1;
+}
+
+message CityInfo {
+  string id = 1;
+  string name = 2;
+}
+message ListCitiesRequest {}
+message ListCitiesResponse {
+  repeated CityInfo cities = 1;
 }
