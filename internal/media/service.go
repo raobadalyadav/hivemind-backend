@@ -240,6 +240,7 @@ func (s *Service) GC(ctx context.Context, now time.Time) (int, error) {
 		  AND NOT EXISTS (SELECT 1 FROM message_media WHERE media_id = m.id)
 		  AND NOT EXISTS (SELECT 1 FROM profile_photos WHERE media_id = m.id)
 		  AND NOT EXISTS (SELECT 1 FROM plans WHERE cover_media_id = m.id)
+		  AND NOT EXISTS (SELECT 1 FROM verification_requests WHERE media_id = m.id)
 		ORDER BY m.created_at LIMIT 200
 		FOR UPDATE SKIP LOCKED`, now, s.cfg.GCAge.Seconds())
 	if err != nil {

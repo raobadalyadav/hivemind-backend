@@ -35,6 +35,7 @@ type Profile struct {
 	Education          string                 `protobuf:"bytes,10,opt,name=education,proto3" json:"education,omitempty"`
 	Hobbies            []string               `protobuf:"bytes,11,rep,name=hobbies,proto3" json:"hobbies,omitempty"`
 	Photos             []*ProfilePhoto        `protobuf:"bytes,12,rep,name=photos,proto3" json:"photos,omitempty"`
+	SelfieVerified     bool                   `protobuf:"varint,13,opt,name=selfie_verified,json=selfieVerified,proto3" json:"selfie_verified,omitempty"` // blue tick (live-selfie verification approved)
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -151,6 +152,13 @@ func (x *Profile) GetPhotos() []*ProfilePhoto {
 		return x.Photos
 	}
 	return nil
+}
+
+func (x *Profile) GetSelfieVerified() bool {
+	if x != nil {
+		return x.SelfieVerified
+	}
+	return false
 }
 
 type ProfilePhoto struct {
@@ -1071,7 +1079,7 @@ var File_social_v1_profile_proto protoreflect.FileDescriptor
 
 const file_social_v1_profile_proto_rawDesc = "" +
 	"\n" +
-	"\x17social/v1/profile.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"\x8d\x03\n" +
+	"\x17social/v1/profile.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"\xb6\x03\n" +
 	"\aProfile\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
 	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12\x10\n" +
@@ -1087,7 +1095,8 @@ const file_social_v1_profile_proto_rawDesc = "" +
 	"\teducation\x18\n" +
 	" \x01(\tR\teducation\x12\x18\n" +
 	"\ahobbies\x18\v \x03(\tR\ahobbies\x12/\n" +
-	"\x06photos\x18\f \x03(\v2\x17.social.v1.ProfilePhotoR\x06photos\"\x97\x01\n" +
+	"\x06photos\x18\f \x03(\v2\x17.social.v1.ProfilePhotoR\x06photos\x12'\n" +
+	"\x0fselfie_verified\x18\r \x01(\bR\x0eselfieVerified\"\x97\x01\n" +
 	"\fProfilePhoto\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\x12\x1a\n" +

@@ -34,6 +34,22 @@ service PlanService {
   // caller's own opt-out for one plan.
   rpc GetPlanParticipants(GetPlanParticipantsRequest) returns (GetPlanParticipantsResponse);
   rpc SetParticipantVisibility(SetParticipantVisibilityRequest) returns (SetParticipantVisibilityResponse);
+
+  // ListUpcomingPlans: discoverable plans starting in [from, to), soonest
+  // first — powers "what's on next week" and the Plans discover list.
+  rpc ListUpcomingPlans(ListUpcomingPlansRequest) returns (ListUpcomingPlansResponse);
+}
+
+message ListUpcomingPlansRequest {
+  google.protobuf.Timestamp from = 1; // default now
+  google.protobuf.Timestamp to = 2;   // default now + 30 days
+  string category_id = 3;
+  string city_id = 4;   // default: the caller's city
+  bool free_only = 5;
+  int32 limit = 6;      // default 50, max 100
+}
+message ListUpcomingPlansResponse {
+  repeated Plan plans = 1;
 }
 
 message GetPlanParticipantsRequest {

@@ -35,6 +35,9 @@ service AdminService {
   rpc CreateExternalEvent(CreateExternalEventRequest) returns (ExternalEvent);
   rpc DeactivateExternalEvent(DeactivateExternalEventRequest) returns (DeactivateExternalEventResponse);
 
+  rpc ListVerificationRequests(ListVerificationRequestsRequest) returns (ListVerificationRequestsResponse);
+  rpc ReviewVerification(ReviewVerificationRequest) returns (ReviewVerificationResponse);
+
   rpc CreateCity(CreateCityRequest) returns (City);
   rpc UpdateCityStatus(UpdateCityStatusRequest) returns (UpdateCityStatusResponse);
 }
@@ -203,3 +206,24 @@ message DeactivateExternalEventRequest {
   string event_id = 1;
 }
 message DeactivateExternalEventResponse {}
+
+message VerificationRequest {
+  string id = 1;
+  string user_id = 2;
+  string user_name = 3;
+  string challenge = 4;
+  string selfie_url = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+message ListVerificationRequestsRequest {
+  int32 limit = 1;
+}
+message ListVerificationRequestsResponse {
+  repeated VerificationRequest requests = 1;
+}
+message ReviewVerificationRequest {
+  string request_id = 1;
+  bool approve = 2;
+  string reason = 3; // shown to the user on rejection
+}
+message ReviewVerificationResponse {}

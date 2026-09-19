@@ -27,6 +27,7 @@ const (
 	FeedScope_FEED_SCOPE_GLOBAL      FeedScope = 0 // everything the caller may see that isn't private
 	FeedScope_FEED_SCOPE_CONNECTIONS FeedScope = 1 // posts by the caller's accepted connections
 	FeedScope_FEED_SCOPE_COMMUNITY   FeedScope = 2 // one community's posts (community_id required)
+	FeedScope_FEED_SCOPE_FOR_YOU     FeedScope = 3 // recommended: recency × connections × shared interests × likes
 )
 
 // Enum value maps for FeedScope.
@@ -35,11 +36,13 @@ var (
 		0: "FEED_SCOPE_GLOBAL",
 		1: "FEED_SCOPE_CONNECTIONS",
 		2: "FEED_SCOPE_COMMUNITY",
+		3: "FEED_SCOPE_FOR_YOU",
 	}
 	FeedScope_value = map[string]int32{
 		"FEED_SCOPE_GLOBAL":      0,
 		"FEED_SCOPE_CONNECTIONS": 1,
 		"FEED_SCOPE_COMMUNITY":   2,
+		"FEED_SCOPE_FOR_YOU":     3,
 	}
 )
 
@@ -1535,11 +1538,12 @@ const file_social_v1_social_proto_rawDesc = "" +
 	"\x10SharePostRequest\x12\x17\n" +
 	"\apost_id\x18\x01 \x01(\tR\x06postId\"'\n" +
 	"\x11SharePostResponse\x12\x12\n" +
-	"\x04link\x18\x01 \x01(\tR\x04link*X\n" +
+	"\x04link\x18\x01 \x01(\tR\x04link*p\n" +
 	"\tFeedScope\x12\x15\n" +
 	"\x11FEED_SCOPE_GLOBAL\x10\x00\x12\x1a\n" +
 	"\x16FEED_SCOPE_CONNECTIONS\x10\x01\x12\x18\n" +
-	"\x14FEED_SCOPE_COMMUNITY\x10\x022\x9e\x06\n" +
+	"\x14FEED_SCOPE_COMMUNITY\x10\x02\x12\x16\n" +
+	"\x12FEED_SCOPE_FOR_YOU\x10\x032\x9e\x06\n" +
 	"\rSocialService\x12;\n" +
 	"\n" +
 	"CreatePost\x12\x1c.social.v1.CreatePostRequest\x1a\x0f.social.v1.Post\x125\n" +

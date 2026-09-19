@@ -40,6 +40,7 @@ message Profile {
   string education = 10;
   repeated string hobbies = 11;
   repeated ProfilePhoto photos = 12;
+  bool selfie_verified = 13; // blue tick (live-selfie verification approved)
 }
 
 message ProfilePhoto {

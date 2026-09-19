@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "google/protobuf/timestamp.proto";
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// MeetService — the swipe deck for making new friends. A "wave" says "I'd
+// like to be friends"; a "super wave" is shown to the other person first. A
+// mutual wave is a match: the two become connections and a DM chat opens.
+service MeetService {
+  rpc GetDeck(GetDeckRequest) returns (GetDeckResponse);
+  rpc Swipe(SwipeRequest) returns (SwipeResponse);
+  rpc ListWaves(ListWavesRequest) returns (ListWavesResponse);
+  rpc GetBoostStatus(GetBoostStatusRequest) returns (BoostStatus);
+  rpc ActivateBoost(ActivateBoostRequest) returns (BoostStatus);
+}
+
+message MeetPhoto {
+  string url = 1;
+  string thumb_url = 2;
+  int32 width = 3;
+  int32 height = 4;
+}
+
+message MeetCard {
+  string user_id = 1;
+  string display_name = 2;
+  int32 age = 3; // 0 = unknown
+  string city_name = 4;
+  string bio = 5;
+  string occupation = 6;
+  string education = 7;
+  repeated string interests = 8;
+  repeated string hobbies = 9;
+  repeated string intents = 10;
+  repeated MeetPhoto photos = 11;
+  bool selfie_verified = 12; // blue tick
+  repeated string shared_interests = 13;
+  bool waved_at_you = 14;
+  bool boosted = 15;
+  int32 common_communities = 16; // communities you're both in (flow.md §24)
+}
+
+message GetDeckRequest {
+  int32 limit = 1;   // default 10, max 30
+  int32 min_age = 2; // 0 = no minimum; people with an unknown age always pass
+  int32 max_age = 3; // 0 = no maximum
+}
+message GetDeckResponse {
+  repeated MeetCard cards = 1;
+}
+
+enum SwipeAction {
+  SWIPE_ACTION_PASS = 0;
+  SWIPE_ACTION_WAVE = 1;
+  SWIPE_ACTION_SUPER = 2;
+}
+
+message SwipeRequest {
+  string target_id = 1;
+  SwipeAction action = 2;
+}
+message SwipeResponse {
+  bool matched = 1;
+  string room_id = 2; // the DM chat, when matched
+  string target_name = 3;
+}
+
+enum WaveDirection {
+  WAVE_DIRECTION_INCOMING = 0;
+  WAVE_DIRECTION_SENT = 1;
+}
+
+message Wave {
+  string user_id = 1;
+  string display_name = 2;
+  int32 age = 3;
+  string photo_url = 4;
+  bool selfie_verified = 5;
+  bool super = 6;
+  bool matched = 7;
+  string room_id = 8; // when matched
+  google.protobuf.Timestamp created_at = 9;
+}
+
+message ListWavesRequest {
+  WaveDirection direction = 1;
+}
+message ListWavesResponse {
+  repeated Wave waves = 1;
+}
+
+message GetBoostStatusRequest {}
+message ActivateBoostRequest {}
+message BoostStatus {
+  bool active = 1;
+  google.protobuf.Timestamp ends_at = 2;
+  bool free_available = 3;
+  int64 cost_minor = 4; // paise, when not free
+  string currency = 5;
+  int64 balance_minor = 6;
+  int32 duration_minutes = 7;
+  google.protobuf.Timestamp free_again_at = 8;
+}

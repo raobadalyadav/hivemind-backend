@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// VerificationService — the blue tick. The user takes a live selfie doing a
+// random pose (so an old photo can't be reused); an admin reviews it. The
+// selfie is deleted after the decision. There is no automatic face matching.
+service VerificationService {
+  rpc GetVerification(GetVerificationRequest) returns (VerificationState);
+  rpc StartSelfieVerification(StartSelfieVerificationRequest) returns (VerificationState);
+  rpc SubmitSelfie(SubmitSelfieRequest) returns (VerificationState);
+}
+
+enum VerificationStatus {
+  VERIFICATION_STATUS_NONE = 0;
+  VERIFICATION_STATUS_ISSUED = 1;   // a pose was issued, waiting for the selfie
+  VERIFICATION_STATUS_PENDING = 2;  // submitted, waiting for review
+  VERIFICATION_STATUS_APPROVED = 3; // verified
+  VERIFICATION_STATUS_REJECTED = 4;
+}
+
+message VerificationState {
+  VerificationStatus status = 1;
+  // Pose to hold in the selfie: peace | thumbs_up | wave | touch_nose | look_left.
+  string challenge = 2;
+  google.protobuf.Timestamp expires_at = 3;
+  string reject_reason = 4;
+  bool verified = 5;
+}
+
+message GetVerificationRequest {}
+message StartSelfieVerificationRequest {}
+message SubmitSelfieRequest {
+  string media_id = 1; // the caller's own image upload, taken live
+}

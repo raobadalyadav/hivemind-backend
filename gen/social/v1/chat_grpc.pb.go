@@ -27,6 +27,9 @@ const (
 	ChatService_CreatePoll_FullMethodName         = "/social.v1.ChatService/CreatePoll"
 	ChatService_VotePoll_FullMethodName           = "/social.v1.ChatService/VotePoll"
 	ChatService_PinMessage_FullMethodName         = "/social.v1.ChatService/PinMessage"
+	ChatService_ListMyChats_FullMethodName        = "/social.v1.ChatService/ListMyChats"
+	ChatService_MarkRead_FullMethodName           = "/social.v1.ChatService/MarkRead"
+	ChatService_OpenDirectChat_FullMethodName     = "/social.v1.ChatService/OpenDirectChat"
 )
 
 // ChatServiceClient is the client API for ChatService service.
@@ -49,6 +52,11 @@ type ChatServiceClient interface {
 	CreatePoll(ctx context.Context, in *CreatePollRequest, opts ...grpc.CallOption) (*Message, error)
 	VotePoll(ctx context.Context, in *VotePollRequest, opts ...grpc.CallOption) (*Poll, error)
 	PinMessage(ctx context.Context, in *PinMessageRequest, opts ...grpc.CallOption) (*PinMessageResponse, error)
+	// Inbox: the caller's chats, split Primary / General, with unread counts.
+	ListMyChats(ctx context.Context, in *ListMyChatsRequest, opts ...grpc.CallOption) (*ListMyChatsResponse, error)
+	MarkRead(ctx context.Context, in *MarkReadRequest, opts ...grpc.CallOption) (*MarkReadResponse, error)
+	// OpenDirectChat opens (or returns) the 1:1 chat with an accepted connection.
+	OpenDirectChat(ctx context.Context, in *OpenDirectChatRequest, opts ...grpc.CallOption) (*ChatRoom, error)
 }
 
 type chatServiceClient struct {
@@ -139,6 +147,36 @@ func (c *chatServiceClient) PinMessage(ctx context.Context, in *PinMessageReques
 	return out, nil
 }
 
+func (c *chatServiceClient) ListMyChats(ctx context.Context, in *ListMyChatsRequest, opts ...grpc.CallOption) (*ListMyChatsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListMyChatsResponse)
+	err := c.cc.Invoke(ctx, ChatService_ListMyChats_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatServiceClient) MarkRead(ctx context.Context, in *MarkReadRequest, opts ...grpc.CallOption) (*MarkReadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MarkReadResponse)
+	err := c.cc.Invoke(ctx, ChatService_MarkRead_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatServiceClient) OpenDirectChat(ctx context.Context, in *OpenDirectChatRequest, opts ...grpc.CallOption) (*ChatRoom, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ChatRoom)
+	err := c.cc.Invoke(ctx, ChatService_OpenDirectChat_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ChatServiceServer is the server API for ChatService service.
 // All implementations must embed UnimplementedChatServiceServer
 // for forward compatibility.
@@ -159,6 +197,11 @@ type ChatServiceServer interface {
 	CreatePoll(context.Context, *CreatePollRequest) (*Message, error)
 	VotePoll(context.Context, *VotePollRequest) (*Poll, error)
 	PinMessage(context.Context, *PinMessageRequest) (*PinMessageResponse, error)
+	// Inbox: the caller's chats, split Primary / General, with unread counts.
+	ListMyChats(context.Context, *ListMyChatsRequest) (*ListMyChatsResponse, error)
+	MarkRead(context.Context, *MarkReadRequest) (*MarkReadResponse, error)
+	// OpenDirectChat opens (or returns) the 1:1 chat with an accepted connection.
+	OpenDirectChat(context.Context, *OpenDirectChatRequest) (*ChatRoom, error)
 	mustEmbedUnimplementedChatServiceServer()
 }
 
@@ -192,6 +235,15 @@ func (UnimplementedChatServiceServer) VotePoll(context.Context, *VotePollRequest
 }
 func (UnimplementedChatServiceServer) PinMessage(context.Context, *PinMessageRequest) (*PinMessageResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method PinMessage not implemented")
+}
+func (UnimplementedChatServiceServer) ListMyChats(context.Context, *ListMyChatsRequest) (*ListMyChatsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListMyChats not implemented")
+}
+func (UnimplementedChatServiceServer) MarkRead(context.Context, *MarkReadRequest) (*MarkReadResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method MarkRead not implemented")
+}
+func (UnimplementedChatServiceServer) OpenDirectChat(context.Context, *OpenDirectChatRequest) (*ChatRoom, error) {
+	return nil, status.Error(codes.Unimplemented, "method OpenDirectChat not implemented")
 }
 func (UnimplementedChatServiceServer) mustEmbedUnimplementedChatServiceServer() {}
 func (UnimplementedChatServiceServer) testEmbeddedByValue()                     {}
@@ -358,6 +410,60 @@ func _ChatService_PinMessage_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ChatService_ListMyChats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListMyChatsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServiceServer).ListMyChats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatService_ListMyChats_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServiceServer).ListMyChats(ctx, req.(*ListMyChatsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ChatService_MarkRead_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarkReadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServiceServer).MarkRead(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatService_MarkRead_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServiceServer).MarkRead(ctx, req.(*MarkReadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ChatService_OpenDirectChat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OpenDirectChatRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServiceServer).OpenDirectChat(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatService_OpenDirectChat_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServiceServer).OpenDirectChat(ctx, req.(*OpenDirectChatRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ChatService_ServiceDesc is the grpc.ServiceDesc for ChatService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -396,6 +502,18 @@ var ChatService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PinMessage",
 			Handler:    _ChatService_PinMessage_Handler,
+		},
+		{
+			MethodName: "ListMyChats",
+			Handler:    _ChatService_ListMyChats_Handler,
+		},
+		{
+			MethodName: "MarkRead",
+			Handler:    _ChatService_MarkRead_Handler,
+		},
+		{
+			MethodName: "OpenDirectChat",
+			Handler:    _ChatService_OpenDirectChat_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

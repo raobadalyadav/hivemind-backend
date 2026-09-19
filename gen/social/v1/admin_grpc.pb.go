@@ -19,23 +19,25 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AdminService_ListUsers_FullMethodName               = "/social.v1.AdminService/ListUsers"
-	AdminService_SuspendUser_FullMethodName             = "/social.v1.AdminService/SuspendUser"
-	AdminService_ListReports_FullMethodName             = "/social.v1.AdminService/ListReports"
-	AdminService_OverrideBookingStatus_FullMethodName   = "/social.v1.AdminService/OverrideBookingStatus"
-	AdminService_GetDashboardStats_FullMethodName       = "/social.v1.AdminService/GetDashboardStats"
-	AdminService_ApproveHost_FullMethodName             = "/social.v1.AdminService/ApproveHost"
-	AdminService_MarkPayoutProcessed_FullMethodName     = "/social.v1.AdminService/MarkPayoutProcessed"
-	AdminService_AdminGrantCredit_FullMethodName        = "/social.v1.AdminService/AdminGrantCredit"
-	AdminService_CreateCoupon_FullMethodName            = "/social.v1.AdminService/CreateCoupon"
-	AdminService_ListCoupons_FullMethodName             = "/social.v1.AdminService/ListCoupons"
-	AdminService_DeactivateCoupon_FullMethodName        = "/social.v1.AdminService/DeactivateCoupon"
-	AdminService_ListSOSEvents_FullMethodName           = "/social.v1.AdminService/ListSOSEvents"
-	AdminService_AcknowledgeSOSEvent_FullMethodName     = "/social.v1.AdminService/AcknowledgeSOSEvent"
-	AdminService_CreateExternalEvent_FullMethodName     = "/social.v1.AdminService/CreateExternalEvent"
-	AdminService_DeactivateExternalEvent_FullMethodName = "/social.v1.AdminService/DeactivateExternalEvent"
-	AdminService_CreateCity_FullMethodName              = "/social.v1.AdminService/CreateCity"
-	AdminService_UpdateCityStatus_FullMethodName        = "/social.v1.AdminService/UpdateCityStatus"
+	AdminService_ListUsers_FullMethodName                = "/social.v1.AdminService/ListUsers"
+	AdminService_SuspendUser_FullMethodName              = "/social.v1.AdminService/SuspendUser"
+	AdminService_ListReports_FullMethodName              = "/social.v1.AdminService/ListReports"
+	AdminService_OverrideBookingStatus_FullMethodName    = "/social.v1.AdminService/OverrideBookingStatus"
+	AdminService_GetDashboardStats_FullMethodName        = "/social.v1.AdminService/GetDashboardStats"
+	AdminService_ApproveHost_FullMethodName              = "/social.v1.AdminService/ApproveHost"
+	AdminService_MarkPayoutProcessed_FullMethodName      = "/social.v1.AdminService/MarkPayoutProcessed"
+	AdminService_AdminGrantCredit_FullMethodName         = "/social.v1.AdminService/AdminGrantCredit"
+	AdminService_CreateCoupon_FullMethodName             = "/social.v1.AdminService/CreateCoupon"
+	AdminService_ListCoupons_FullMethodName              = "/social.v1.AdminService/ListCoupons"
+	AdminService_DeactivateCoupon_FullMethodName         = "/social.v1.AdminService/DeactivateCoupon"
+	AdminService_ListSOSEvents_FullMethodName            = "/social.v1.AdminService/ListSOSEvents"
+	AdminService_AcknowledgeSOSEvent_FullMethodName      = "/social.v1.AdminService/AcknowledgeSOSEvent"
+	AdminService_CreateExternalEvent_FullMethodName      = "/social.v1.AdminService/CreateExternalEvent"
+	AdminService_DeactivateExternalEvent_FullMethodName  = "/social.v1.AdminService/DeactivateExternalEvent"
+	AdminService_ListVerificationRequests_FullMethodName = "/social.v1.AdminService/ListVerificationRequests"
+	AdminService_ReviewVerification_FullMethodName       = "/social.v1.AdminService/ReviewVerification"
+	AdminService_CreateCity_FullMethodName               = "/social.v1.AdminService/CreateCity"
+	AdminService_UpdateCityStatus_FullMethodName         = "/social.v1.AdminService/UpdateCityStatus"
 )
 
 // AdminServiceClient is the client API for AdminService service.
@@ -66,6 +68,8 @@ type AdminServiceClient interface {
 	AcknowledgeSOSEvent(ctx context.Context, in *AcknowledgeSOSEventRequest, opts ...grpc.CallOption) (*AcknowledgeSOSEventResponse, error)
 	CreateExternalEvent(ctx context.Context, in *CreateExternalEventRequest, opts ...grpc.CallOption) (*ExternalEvent, error)
 	DeactivateExternalEvent(ctx context.Context, in *DeactivateExternalEventRequest, opts ...grpc.CallOption) (*DeactivateExternalEventResponse, error)
+	ListVerificationRequests(ctx context.Context, in *ListVerificationRequestsRequest, opts ...grpc.CallOption) (*ListVerificationRequestsResponse, error)
+	ReviewVerification(ctx context.Context, in *ReviewVerificationRequest, opts ...grpc.CallOption) (*ReviewVerificationResponse, error)
 	CreateCity(ctx context.Context, in *CreateCityRequest, opts ...grpc.CallOption) (*City, error)
 	UpdateCityStatus(ctx context.Context, in *UpdateCityStatusRequest, opts ...grpc.CallOption) (*UpdateCityStatusResponse, error)
 }
@@ -228,6 +232,26 @@ func (c *adminServiceClient) DeactivateExternalEvent(ctx context.Context, in *De
 	return out, nil
 }
 
+func (c *adminServiceClient) ListVerificationRequests(ctx context.Context, in *ListVerificationRequestsRequest, opts ...grpc.CallOption) (*ListVerificationRequestsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListVerificationRequestsResponse)
+	err := c.cc.Invoke(ctx, AdminService_ListVerificationRequests_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) ReviewVerification(ctx context.Context, in *ReviewVerificationRequest, opts ...grpc.CallOption) (*ReviewVerificationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReviewVerificationResponse)
+	err := c.cc.Invoke(ctx, AdminService_ReviewVerification_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *adminServiceClient) CreateCity(ctx context.Context, in *CreateCityRequest, opts ...grpc.CallOption) (*City, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(City)
@@ -276,6 +300,8 @@ type AdminServiceServer interface {
 	AcknowledgeSOSEvent(context.Context, *AcknowledgeSOSEventRequest) (*AcknowledgeSOSEventResponse, error)
 	CreateExternalEvent(context.Context, *CreateExternalEventRequest) (*ExternalEvent, error)
 	DeactivateExternalEvent(context.Context, *DeactivateExternalEventRequest) (*DeactivateExternalEventResponse, error)
+	ListVerificationRequests(context.Context, *ListVerificationRequestsRequest) (*ListVerificationRequestsResponse, error)
+	ReviewVerification(context.Context, *ReviewVerificationRequest) (*ReviewVerificationResponse, error)
 	CreateCity(context.Context, *CreateCityRequest) (*City, error)
 	UpdateCityStatus(context.Context, *UpdateCityStatusRequest) (*UpdateCityStatusResponse, error)
 	mustEmbedUnimplementedAdminServiceServer()
@@ -332,6 +358,12 @@ func (UnimplementedAdminServiceServer) CreateExternalEvent(context.Context, *Cre
 }
 func (UnimplementedAdminServiceServer) DeactivateExternalEvent(context.Context, *DeactivateExternalEventRequest) (*DeactivateExternalEventResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeactivateExternalEvent not implemented")
+}
+func (UnimplementedAdminServiceServer) ListVerificationRequests(context.Context, *ListVerificationRequestsRequest) (*ListVerificationRequestsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListVerificationRequests not implemented")
+}
+func (UnimplementedAdminServiceServer) ReviewVerification(context.Context, *ReviewVerificationRequest) (*ReviewVerificationResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReviewVerification not implemented")
 }
 func (UnimplementedAdminServiceServer) CreateCity(context.Context, *CreateCityRequest) (*City, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateCity not implemented")
@@ -630,6 +662,42 @@ func _AdminService_DeactivateExternalEvent_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AdminService_ListVerificationRequests_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListVerificationRequestsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ListVerificationRequests(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ListVerificationRequests_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ListVerificationRequests(ctx, req.(*ListVerificationRequestsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_ReviewVerification_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReviewVerificationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ReviewVerification(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ReviewVerification_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ReviewVerification(ctx, req.(*ReviewVerificationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AdminService_CreateCity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateCityRequest)
 	if err := dec(in); err != nil {
@@ -732,6 +800,14 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeactivateExternalEvent",
 			Handler:    _AdminService_DeactivateExternalEvent_Handler,
+		},
+		{
+			MethodName: "ListVerificationRequests",
+			Handler:    _AdminService_ListVerificationRequests_Handler,
+		},
+		{
+			MethodName: "ReviewVerification",
+			Handler:    _AdminService_ReviewVerification_Handler,
 		},
 		{
 			MethodName: "CreateCity",

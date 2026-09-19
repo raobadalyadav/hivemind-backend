@@ -33,6 +33,7 @@ const (
 	PlanService_RevokePlanInvite_FullMethodName         = "/social.v1.PlanService/RevokePlanInvite"
 	PlanService_GetPlanParticipants_FullMethodName      = "/social.v1.PlanService/GetPlanParticipants"
 	PlanService_SetParticipantVisibility_FullMethodName = "/social.v1.PlanService/SetParticipantVisibility"
+	PlanService_ListUpcomingPlans_FullMethodName        = "/social.v1.PlanService/ListUpcomingPlans"
 )
 
 // PlanServiceClient is the client API for PlanService service.
@@ -64,6 +65,9 @@ type PlanServiceClient interface {
 	// caller's own opt-out for one plan.
 	GetPlanParticipants(ctx context.Context, in *GetPlanParticipantsRequest, opts ...grpc.CallOption) (*GetPlanParticipantsResponse, error)
 	SetParticipantVisibility(ctx context.Context, in *SetParticipantVisibilityRequest, opts ...grpc.CallOption) (*SetParticipantVisibilityResponse, error)
+	// ListUpcomingPlans: discoverable plans starting in [from, to), soonest
+	// first — powers "what's on next week" and the Plans discover list.
+	ListUpcomingPlans(ctx context.Context, in *ListUpcomingPlansRequest, opts ...grpc.CallOption) (*ListUpcomingPlansResponse, error)
 }
 
 type planServiceClient struct {
@@ -214,6 +218,16 @@ func (c *planServiceClient) SetParticipantVisibility(ctx context.Context, in *Se
 	return out, nil
 }
 
+func (c *planServiceClient) ListUpcomingPlans(ctx context.Context, in *ListUpcomingPlansRequest, opts ...grpc.CallOption) (*ListUpcomingPlansResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListUpcomingPlansResponse)
+	err := c.cc.Invoke(ctx, PlanService_ListUpcomingPlans_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PlanServiceServer is the server API for PlanService service.
 // All implementations must embed UnimplementedPlanServiceServer
 // for forward compatibility.
@@ -243,6 +257,9 @@ type PlanServiceServer interface {
 	// caller's own opt-out for one plan.
 	GetPlanParticipants(context.Context, *GetPlanParticipantsRequest) (*GetPlanParticipantsResponse, error)
 	SetParticipantVisibility(context.Context, *SetParticipantVisibilityRequest) (*SetParticipantVisibilityResponse, error)
+	// ListUpcomingPlans: discoverable plans starting in [from, to), soonest
+	// first — powers "what's on next week" and the Plans discover list.
+	ListUpcomingPlans(context.Context, *ListUpcomingPlansRequest) (*ListUpcomingPlansResponse, error)
 	mustEmbedUnimplementedPlanServiceServer()
 }
 
@@ -294,6 +311,9 @@ func (UnimplementedPlanServiceServer) GetPlanParticipants(context.Context, *GetP
 }
 func (UnimplementedPlanServiceServer) SetParticipantVisibility(context.Context, *SetParticipantVisibilityRequest) (*SetParticipantVisibilityResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SetParticipantVisibility not implemented")
+}
+func (UnimplementedPlanServiceServer) ListUpcomingPlans(context.Context, *ListUpcomingPlansRequest) (*ListUpcomingPlansResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListUpcomingPlans not implemented")
 }
 func (UnimplementedPlanServiceServer) mustEmbedUnimplementedPlanServiceServer() {}
 func (UnimplementedPlanServiceServer) testEmbeddedByValue()                     {}
@@ -568,6 +588,24 @@ func _PlanService_SetParticipantVisibility_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PlanService_ListUpcomingPlans_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUpcomingPlansRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlanServiceServer).ListUpcomingPlans(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlanService_ListUpcomingPlans_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlanServiceServer).ListUpcomingPlans(ctx, req.(*ListUpcomingPlansRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PlanService_ServiceDesc is the grpc.ServiceDesc for PlanService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -630,6 +668,10 @@ var PlanService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetParticipantVisibility",
 			Handler:    _PlanService_SetParticipantVisibility_Handler,
+		},
+		{
+			MethodName: "ListUpcomingPlans",
+			Handler:    _PlanService_ListUpcomingPlans_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

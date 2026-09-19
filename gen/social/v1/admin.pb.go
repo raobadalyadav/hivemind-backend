@@ -1870,6 +1870,274 @@ func (*DeactivateExternalEventResponse) Descriptor() ([]byte, []int) {
 	return file_social_v1_admin_proto_rawDescGZIP(), []int{33}
 }
 
+type VerificationRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserName      string                 `protobuf:"bytes,3,opt,name=user_name,json=userName,proto3" json:"user_name,omitempty"`
+	Challenge     string                 `protobuf:"bytes,4,opt,name=challenge,proto3" json:"challenge,omitempty"`
+	SelfieUrl     string                 `protobuf:"bytes,5,opt,name=selfie_url,json=selfieUrl,proto3" json:"selfie_url,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VerificationRequest) Reset() {
+	*x = VerificationRequest{}
+	mi := &file_social_v1_admin_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VerificationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VerificationRequest) ProtoMessage() {}
+
+func (x *VerificationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VerificationRequest.ProtoReflect.Descriptor instead.
+func (*VerificationRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *VerificationRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *VerificationRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *VerificationRequest) GetUserName() string {
+	if x != nil {
+		return x.UserName
+	}
+	return ""
+}
+
+func (x *VerificationRequest) GetChallenge() string {
+	if x != nil {
+		return x.Challenge
+	}
+	return ""
+}
+
+func (x *VerificationRequest) GetSelfieUrl() string {
+	if x != nil {
+		return x.SelfieUrl
+	}
+	return ""
+}
+
+func (x *VerificationRequest) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+type ListVerificationRequestsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Limit         int32                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListVerificationRequestsRequest) Reset() {
+	*x = ListVerificationRequestsRequest{}
+	mi := &file_social_v1_admin_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListVerificationRequestsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListVerificationRequestsRequest) ProtoMessage() {}
+
+func (x *ListVerificationRequestsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListVerificationRequestsRequest.ProtoReflect.Descriptor instead.
+func (*ListVerificationRequestsRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *ListVerificationRequestsRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+type ListVerificationRequestsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Requests      []*VerificationRequest `protobuf:"bytes,1,rep,name=requests,proto3" json:"requests,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListVerificationRequestsResponse) Reset() {
+	*x = ListVerificationRequestsResponse{}
+	mi := &file_social_v1_admin_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListVerificationRequestsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListVerificationRequestsResponse) ProtoMessage() {}
+
+func (x *ListVerificationRequestsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListVerificationRequestsResponse.ProtoReflect.Descriptor instead.
+func (*ListVerificationRequestsResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *ListVerificationRequestsResponse) GetRequests() []*VerificationRequest {
+	if x != nil {
+		return x.Requests
+	}
+	return nil
+}
+
+type ReviewVerificationRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RequestId     string                 `protobuf:"bytes,1,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	Approve       bool                   `protobuf:"varint,2,opt,name=approve,proto3" json:"approve,omitempty"`
+	Reason        string                 `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"` // shown to the user on rejection
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReviewVerificationRequest) Reset() {
+	*x = ReviewVerificationRequest{}
+	mi := &file_social_v1_admin_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReviewVerificationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReviewVerificationRequest) ProtoMessage() {}
+
+func (x *ReviewVerificationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReviewVerificationRequest.ProtoReflect.Descriptor instead.
+func (*ReviewVerificationRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *ReviewVerificationRequest) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
+}
+
+func (x *ReviewVerificationRequest) GetApprove() bool {
+	if x != nil {
+		return x.Approve
+	}
+	return false
+}
+
+func (x *ReviewVerificationRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+type ReviewVerificationResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReviewVerificationResponse) Reset() {
+	*x = ReviewVerificationResponse{}
+	mi := &file_social_v1_admin_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReviewVerificationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReviewVerificationResponse) ProtoMessage() {}
+
+func (x *ReviewVerificationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReviewVerificationResponse.ProtoReflect.Descriptor instead.
+func (*ReviewVerificationResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{38}
+}
+
 var File_social_v1_admin_proto protoreflect.FileDescriptor
 
 const file_social_v1_admin_proto_rawDesc = "" +
@@ -1996,7 +2264,26 @@ const file_social_v1_admin_proto_rawDesc = "" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\x06endsAt\";\n" +
 	"\x1eDeactivateExternalEventRequest\x12\x19\n" +
 	"\bevent_id\x18\x01 \x01(\tR\aeventId\"!\n" +
-	"\x1fDeactivateExternalEventResponse2\xdb\v\n" +
+	"\x1fDeactivateExternalEventResponse\"\xd3\x01\n" +
+	"\x13VerificationRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1b\n" +
+	"\tuser_name\x18\x03 \x01(\tR\buserName\x12\x1c\n" +
+	"\tchallenge\x18\x04 \x01(\tR\tchallenge\x12\x1d\n" +
+	"\n" +
+	"selfie_url\x18\x05 \x01(\tR\tselfieUrl\x129\n" +
+	"\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"7\n" +
+	"\x1fListVerificationRequestsRequest\x12\x14\n" +
+	"\x05limit\x18\x01 \x01(\x05R\x05limit\"^\n" +
+	" ListVerificationRequestsResponse\x12:\n" +
+	"\brequests\x18\x01 \x03(\v2\x1e.social.v1.VerificationRequestR\brequests\"l\n" +
+	"\x19ReviewVerificationRequest\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x01 \x01(\tR\trequestId\x12\x18\n" +
+	"\aapprove\x18\x02 \x01(\bR\aapprove\x12\x16\n" +
+	"\x06reason\x18\x03 \x01(\tR\x06reason\"\x1c\n" +
+	"\x1aReviewVerificationResponse2\xb3\r\n" +
 	"\fAdminService\x12F\n" +
 	"\tListUsers\x12\x1b.social.v1.ListUsersRequest\x1a\x1c.social.v1.ListUsersResponse\x12L\n" +
 	"\vSuspendUser\x12\x1d.social.v1.SuspendUserRequest\x1a\x1e.social.v1.SuspendUserResponse\x12L\n" +
@@ -2012,7 +2299,9 @@ const file_social_v1_admin_proto_rawDesc = "" +
 	"\rListSOSEvents\x12\x1f.social.v1.ListSOSEventsRequest\x1a .social.v1.ListSOSEventsResponse\x12d\n" +
 	"\x13AcknowledgeSOSEvent\x12%.social.v1.AcknowledgeSOSEventRequest\x1a&.social.v1.AcknowledgeSOSEventResponse\x12V\n" +
 	"\x13CreateExternalEvent\x12%.social.v1.CreateExternalEventRequest\x1a\x18.social.v1.ExternalEvent\x12p\n" +
-	"\x17DeactivateExternalEvent\x12).social.v1.DeactivateExternalEventRequest\x1a*.social.v1.DeactivateExternalEventResponse\x12;\n" +
+	"\x17DeactivateExternalEvent\x12).social.v1.DeactivateExternalEventRequest\x1a*.social.v1.DeactivateExternalEventResponse\x12s\n" +
+	"\x18ListVerificationRequests\x12*.social.v1.ListVerificationRequestsRequest\x1a+.social.v1.ListVerificationRequestsResponse\x12a\n" +
+	"\x12ReviewVerification\x12$.social.v1.ReviewVerificationRequest\x1a%.social.v1.ReviewVerificationResponse\x12;\n" +
 	"\n" +
 	"CreateCity\x12\x1c.social.v1.CreateCityRequest\x1a\x0f.social.v1.City\x12[\n" +
 	"\x10UpdateCityStatus\x12\".social.v1.UpdateCityStatusRequest\x1a#.social.v1.UpdateCityStatusResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
@@ -2029,99 +2318,110 @@ func file_social_v1_admin_proto_rawDescGZIP() []byte {
 	return file_social_v1_admin_proto_rawDescData
 }
 
-var file_social_v1_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
+var file_social_v1_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
 var file_social_v1_admin_proto_goTypes = []any{
-	(*ListUsersRequest)(nil),                // 0: social.v1.ListUsersRequest
-	(*ListUsersResponse)(nil),               // 1: social.v1.ListUsersResponse
-	(*SuspendUserRequest)(nil),              // 2: social.v1.SuspendUserRequest
-	(*SuspendUserResponse)(nil),             // 3: social.v1.SuspendUserResponse
-	(*ListReportsRequest)(nil),              // 4: social.v1.ListReportsRequest
-	(*ListReportsResponse)(nil),             // 5: social.v1.ListReportsResponse
-	(*OverrideBookingStatusRequest)(nil),    // 6: social.v1.OverrideBookingStatusRequest
-	(*OverrideBookingStatusResponse)(nil),   // 7: social.v1.OverrideBookingStatusResponse
-	(*GetDashboardStatsRequest)(nil),        // 8: social.v1.GetDashboardStatsRequest
-	(*GetDashboardStatsResponse)(nil),       // 9: social.v1.GetDashboardStatsResponse
-	(*ApproveHostRequest)(nil),              // 10: social.v1.ApproveHostRequest
-	(*ApproveHostResponse)(nil),             // 11: social.v1.ApproveHostResponse
-	(*MarkPayoutProcessedRequest)(nil),      // 12: social.v1.MarkPayoutProcessedRequest
-	(*MarkPayoutProcessedResponse)(nil),     // 13: social.v1.MarkPayoutProcessedResponse
-	(*AdminGrantCreditRequest)(nil),         // 14: social.v1.AdminGrantCreditRequest
-	(*AdminGrantCreditResponse)(nil),        // 15: social.v1.AdminGrantCreditResponse
-	(*CreateCouponRequest)(nil),             // 16: social.v1.CreateCouponRequest
-	(*Coupon)(nil),                          // 17: social.v1.Coupon
-	(*ListCouponsRequest)(nil),              // 18: social.v1.ListCouponsRequest
-	(*ListCouponsResponse)(nil),             // 19: social.v1.ListCouponsResponse
-	(*DeactivateCouponRequest)(nil),         // 20: social.v1.DeactivateCouponRequest
-	(*DeactivateCouponResponse)(nil),        // 21: social.v1.DeactivateCouponResponse
-	(*City)(nil),                            // 22: social.v1.City
-	(*CreateCityRequest)(nil),               // 23: social.v1.CreateCityRequest
-	(*UpdateCityStatusRequest)(nil),         // 24: social.v1.UpdateCityStatusRequest
-	(*UpdateCityStatusResponse)(nil),        // 25: social.v1.UpdateCityStatusResponse
-	(*SOSEvent)(nil),                        // 26: social.v1.SOSEvent
-	(*ListSOSEventsRequest)(nil),            // 27: social.v1.ListSOSEventsRequest
-	(*ListSOSEventsResponse)(nil),           // 28: social.v1.ListSOSEventsResponse
-	(*AcknowledgeSOSEventRequest)(nil),      // 29: social.v1.AcknowledgeSOSEventRequest
-	(*AcknowledgeSOSEventResponse)(nil),     // 30: social.v1.AcknowledgeSOSEventResponse
-	(*CreateExternalEventRequest)(nil),      // 31: social.v1.CreateExternalEventRequest
-	(*DeactivateExternalEventRequest)(nil),  // 32: social.v1.DeactivateExternalEventRequest
-	(*DeactivateExternalEventResponse)(nil), // 33: social.v1.DeactivateExternalEventResponse
-	(*PageRequest)(nil),                     // 34: social.v1.PageRequest
-	(*PageResponse)(nil),                    // 35: social.v1.PageResponse
-	(*timestamppb.Timestamp)(nil),           // 36: google.protobuf.Timestamp
-	(*ExternalEvent)(nil),                   // 37: social.v1.ExternalEvent
+	(*ListUsersRequest)(nil),                 // 0: social.v1.ListUsersRequest
+	(*ListUsersResponse)(nil),                // 1: social.v1.ListUsersResponse
+	(*SuspendUserRequest)(nil),               // 2: social.v1.SuspendUserRequest
+	(*SuspendUserResponse)(nil),              // 3: social.v1.SuspendUserResponse
+	(*ListReportsRequest)(nil),               // 4: social.v1.ListReportsRequest
+	(*ListReportsResponse)(nil),              // 5: social.v1.ListReportsResponse
+	(*OverrideBookingStatusRequest)(nil),     // 6: social.v1.OverrideBookingStatusRequest
+	(*OverrideBookingStatusResponse)(nil),    // 7: social.v1.OverrideBookingStatusResponse
+	(*GetDashboardStatsRequest)(nil),         // 8: social.v1.GetDashboardStatsRequest
+	(*GetDashboardStatsResponse)(nil),        // 9: social.v1.GetDashboardStatsResponse
+	(*ApproveHostRequest)(nil),               // 10: social.v1.ApproveHostRequest
+	(*ApproveHostResponse)(nil),              // 11: social.v1.ApproveHostResponse
+	(*MarkPayoutProcessedRequest)(nil),       // 12: social.v1.MarkPayoutProcessedRequest
+	(*MarkPayoutProcessedResponse)(nil),      // 13: social.v1.MarkPayoutProcessedResponse
+	(*AdminGrantCreditRequest)(nil),          // 14: social.v1.AdminGrantCreditRequest
+	(*AdminGrantCreditResponse)(nil),         // 15: social.v1.AdminGrantCreditResponse
+	(*CreateCouponRequest)(nil),              // 16: social.v1.CreateCouponRequest
+	(*Coupon)(nil),                           // 17: social.v1.Coupon
+	(*ListCouponsRequest)(nil),               // 18: social.v1.ListCouponsRequest
+	(*ListCouponsResponse)(nil),              // 19: social.v1.ListCouponsResponse
+	(*DeactivateCouponRequest)(nil),          // 20: social.v1.DeactivateCouponRequest
+	(*DeactivateCouponResponse)(nil),         // 21: social.v1.DeactivateCouponResponse
+	(*City)(nil),                             // 22: social.v1.City
+	(*CreateCityRequest)(nil),                // 23: social.v1.CreateCityRequest
+	(*UpdateCityStatusRequest)(nil),          // 24: social.v1.UpdateCityStatusRequest
+	(*UpdateCityStatusResponse)(nil),         // 25: social.v1.UpdateCityStatusResponse
+	(*SOSEvent)(nil),                         // 26: social.v1.SOSEvent
+	(*ListSOSEventsRequest)(nil),             // 27: social.v1.ListSOSEventsRequest
+	(*ListSOSEventsResponse)(nil),            // 28: social.v1.ListSOSEventsResponse
+	(*AcknowledgeSOSEventRequest)(nil),       // 29: social.v1.AcknowledgeSOSEventRequest
+	(*AcknowledgeSOSEventResponse)(nil),      // 30: social.v1.AcknowledgeSOSEventResponse
+	(*CreateExternalEventRequest)(nil),       // 31: social.v1.CreateExternalEventRequest
+	(*DeactivateExternalEventRequest)(nil),   // 32: social.v1.DeactivateExternalEventRequest
+	(*DeactivateExternalEventResponse)(nil),  // 33: social.v1.DeactivateExternalEventResponse
+	(*VerificationRequest)(nil),              // 34: social.v1.VerificationRequest
+	(*ListVerificationRequestsRequest)(nil),  // 35: social.v1.ListVerificationRequestsRequest
+	(*ListVerificationRequestsResponse)(nil), // 36: social.v1.ListVerificationRequestsResponse
+	(*ReviewVerificationRequest)(nil),        // 37: social.v1.ReviewVerificationRequest
+	(*ReviewVerificationResponse)(nil),       // 38: social.v1.ReviewVerificationResponse
+	(*PageRequest)(nil),                      // 39: social.v1.PageRequest
+	(*PageResponse)(nil),                     // 40: social.v1.PageResponse
+	(*timestamppb.Timestamp)(nil),            // 41: google.protobuf.Timestamp
+	(*ExternalEvent)(nil),                    // 42: social.v1.ExternalEvent
 }
 var file_social_v1_admin_proto_depIdxs = []int32{
-	34, // 0: social.v1.ListUsersRequest.page:type_name -> social.v1.PageRequest
-	35, // 1: social.v1.ListUsersResponse.page:type_name -> social.v1.PageResponse
-	34, // 2: social.v1.ListReportsRequest.page:type_name -> social.v1.PageRequest
-	35, // 3: social.v1.ListReportsResponse.page:type_name -> social.v1.PageResponse
-	36, // 4: social.v1.CreateCouponRequest.expires_at:type_name -> google.protobuf.Timestamp
-	34, // 5: social.v1.ListCouponsRequest.page:type_name -> social.v1.PageRequest
+	39, // 0: social.v1.ListUsersRequest.page:type_name -> social.v1.PageRequest
+	40, // 1: social.v1.ListUsersResponse.page:type_name -> social.v1.PageResponse
+	39, // 2: social.v1.ListReportsRequest.page:type_name -> social.v1.PageRequest
+	40, // 3: social.v1.ListReportsResponse.page:type_name -> social.v1.PageResponse
+	41, // 4: social.v1.CreateCouponRequest.expires_at:type_name -> google.protobuf.Timestamp
+	39, // 5: social.v1.ListCouponsRequest.page:type_name -> social.v1.PageRequest
 	17, // 6: social.v1.ListCouponsResponse.coupons:type_name -> social.v1.Coupon
-	35, // 7: social.v1.ListCouponsResponse.page:type_name -> social.v1.PageResponse
-	36, // 8: social.v1.SOSEvent.created_at:type_name -> google.protobuf.Timestamp
+	40, // 7: social.v1.ListCouponsResponse.page:type_name -> social.v1.PageResponse
+	41, // 8: social.v1.SOSEvent.created_at:type_name -> google.protobuf.Timestamp
 	26, // 9: social.v1.ListSOSEventsResponse.events:type_name -> social.v1.SOSEvent
-	36, // 10: social.v1.CreateExternalEventRequest.starts_at:type_name -> google.protobuf.Timestamp
-	36, // 11: social.v1.CreateExternalEventRequest.ends_at:type_name -> google.protobuf.Timestamp
-	0,  // 12: social.v1.AdminService.ListUsers:input_type -> social.v1.ListUsersRequest
-	2,  // 13: social.v1.AdminService.SuspendUser:input_type -> social.v1.SuspendUserRequest
-	4,  // 14: social.v1.AdminService.ListReports:input_type -> social.v1.ListReportsRequest
-	6,  // 15: social.v1.AdminService.OverrideBookingStatus:input_type -> social.v1.OverrideBookingStatusRequest
-	8,  // 16: social.v1.AdminService.GetDashboardStats:input_type -> social.v1.GetDashboardStatsRequest
-	10, // 17: social.v1.AdminService.ApproveHost:input_type -> social.v1.ApproveHostRequest
-	12, // 18: social.v1.AdminService.MarkPayoutProcessed:input_type -> social.v1.MarkPayoutProcessedRequest
-	14, // 19: social.v1.AdminService.AdminGrantCredit:input_type -> social.v1.AdminGrantCreditRequest
-	16, // 20: social.v1.AdminService.CreateCoupon:input_type -> social.v1.CreateCouponRequest
-	18, // 21: social.v1.AdminService.ListCoupons:input_type -> social.v1.ListCouponsRequest
-	20, // 22: social.v1.AdminService.DeactivateCoupon:input_type -> social.v1.DeactivateCouponRequest
-	27, // 23: social.v1.AdminService.ListSOSEvents:input_type -> social.v1.ListSOSEventsRequest
-	29, // 24: social.v1.AdminService.AcknowledgeSOSEvent:input_type -> social.v1.AcknowledgeSOSEventRequest
-	31, // 25: social.v1.AdminService.CreateExternalEvent:input_type -> social.v1.CreateExternalEventRequest
-	32, // 26: social.v1.AdminService.DeactivateExternalEvent:input_type -> social.v1.DeactivateExternalEventRequest
-	23, // 27: social.v1.AdminService.CreateCity:input_type -> social.v1.CreateCityRequest
-	24, // 28: social.v1.AdminService.UpdateCityStatus:input_type -> social.v1.UpdateCityStatusRequest
-	1,  // 29: social.v1.AdminService.ListUsers:output_type -> social.v1.ListUsersResponse
-	3,  // 30: social.v1.AdminService.SuspendUser:output_type -> social.v1.SuspendUserResponse
-	5,  // 31: social.v1.AdminService.ListReports:output_type -> social.v1.ListReportsResponse
-	7,  // 32: social.v1.AdminService.OverrideBookingStatus:output_type -> social.v1.OverrideBookingStatusResponse
-	9,  // 33: social.v1.AdminService.GetDashboardStats:output_type -> social.v1.GetDashboardStatsResponse
-	11, // 34: social.v1.AdminService.ApproveHost:output_type -> social.v1.ApproveHostResponse
-	13, // 35: social.v1.AdminService.MarkPayoutProcessed:output_type -> social.v1.MarkPayoutProcessedResponse
-	15, // 36: social.v1.AdminService.AdminGrantCredit:output_type -> social.v1.AdminGrantCreditResponse
-	17, // 37: social.v1.AdminService.CreateCoupon:output_type -> social.v1.Coupon
-	19, // 38: social.v1.AdminService.ListCoupons:output_type -> social.v1.ListCouponsResponse
-	21, // 39: social.v1.AdminService.DeactivateCoupon:output_type -> social.v1.DeactivateCouponResponse
-	28, // 40: social.v1.AdminService.ListSOSEvents:output_type -> social.v1.ListSOSEventsResponse
-	30, // 41: social.v1.AdminService.AcknowledgeSOSEvent:output_type -> social.v1.AcknowledgeSOSEventResponse
-	37, // 42: social.v1.AdminService.CreateExternalEvent:output_type -> social.v1.ExternalEvent
-	33, // 43: social.v1.AdminService.DeactivateExternalEvent:output_type -> social.v1.DeactivateExternalEventResponse
-	22, // 44: social.v1.AdminService.CreateCity:output_type -> social.v1.City
-	25, // 45: social.v1.AdminService.UpdateCityStatus:output_type -> social.v1.UpdateCityStatusResponse
-	29, // [29:46] is the sub-list for method output_type
-	12, // [12:29] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	41, // 10: social.v1.CreateExternalEventRequest.starts_at:type_name -> google.protobuf.Timestamp
+	41, // 11: social.v1.CreateExternalEventRequest.ends_at:type_name -> google.protobuf.Timestamp
+	41, // 12: social.v1.VerificationRequest.created_at:type_name -> google.protobuf.Timestamp
+	34, // 13: social.v1.ListVerificationRequestsResponse.requests:type_name -> social.v1.VerificationRequest
+	0,  // 14: social.v1.AdminService.ListUsers:input_type -> social.v1.ListUsersRequest
+	2,  // 15: social.v1.AdminService.SuspendUser:input_type -> social.v1.SuspendUserRequest
+	4,  // 16: social.v1.AdminService.ListReports:input_type -> social.v1.ListReportsRequest
+	6,  // 17: social.v1.AdminService.OverrideBookingStatus:input_type -> social.v1.OverrideBookingStatusRequest
+	8,  // 18: social.v1.AdminService.GetDashboardStats:input_type -> social.v1.GetDashboardStatsRequest
+	10, // 19: social.v1.AdminService.ApproveHost:input_type -> social.v1.ApproveHostRequest
+	12, // 20: social.v1.AdminService.MarkPayoutProcessed:input_type -> social.v1.MarkPayoutProcessedRequest
+	14, // 21: social.v1.AdminService.AdminGrantCredit:input_type -> social.v1.AdminGrantCreditRequest
+	16, // 22: social.v1.AdminService.CreateCoupon:input_type -> social.v1.CreateCouponRequest
+	18, // 23: social.v1.AdminService.ListCoupons:input_type -> social.v1.ListCouponsRequest
+	20, // 24: social.v1.AdminService.DeactivateCoupon:input_type -> social.v1.DeactivateCouponRequest
+	27, // 25: social.v1.AdminService.ListSOSEvents:input_type -> social.v1.ListSOSEventsRequest
+	29, // 26: social.v1.AdminService.AcknowledgeSOSEvent:input_type -> social.v1.AcknowledgeSOSEventRequest
+	31, // 27: social.v1.AdminService.CreateExternalEvent:input_type -> social.v1.CreateExternalEventRequest
+	32, // 28: social.v1.AdminService.DeactivateExternalEvent:input_type -> social.v1.DeactivateExternalEventRequest
+	35, // 29: social.v1.AdminService.ListVerificationRequests:input_type -> social.v1.ListVerificationRequestsRequest
+	37, // 30: social.v1.AdminService.ReviewVerification:input_type -> social.v1.ReviewVerificationRequest
+	23, // 31: social.v1.AdminService.CreateCity:input_type -> social.v1.CreateCityRequest
+	24, // 32: social.v1.AdminService.UpdateCityStatus:input_type -> social.v1.UpdateCityStatusRequest
+	1,  // 33: social.v1.AdminService.ListUsers:output_type -> social.v1.ListUsersResponse
+	3,  // 34: social.v1.AdminService.SuspendUser:output_type -> social.v1.SuspendUserResponse
+	5,  // 35: social.v1.AdminService.ListReports:output_type -> social.v1.ListReportsResponse
+	7,  // 36: social.v1.AdminService.OverrideBookingStatus:output_type -> social.v1.OverrideBookingStatusResponse
+	9,  // 37: social.v1.AdminService.GetDashboardStats:output_type -> social.v1.GetDashboardStatsResponse
+	11, // 38: social.v1.AdminService.ApproveHost:output_type -> social.v1.ApproveHostResponse
+	13, // 39: social.v1.AdminService.MarkPayoutProcessed:output_type -> social.v1.MarkPayoutProcessedResponse
+	15, // 40: social.v1.AdminService.AdminGrantCredit:output_type -> social.v1.AdminGrantCreditResponse
+	17, // 41: social.v1.AdminService.CreateCoupon:output_type -> social.v1.Coupon
+	19, // 42: social.v1.AdminService.ListCoupons:output_type -> social.v1.ListCouponsResponse
+	21, // 43: social.v1.AdminService.DeactivateCoupon:output_type -> social.v1.DeactivateCouponResponse
+	28, // 44: social.v1.AdminService.ListSOSEvents:output_type -> social.v1.ListSOSEventsResponse
+	30, // 45: social.v1.AdminService.AcknowledgeSOSEvent:output_type -> social.v1.AcknowledgeSOSEventResponse
+	42, // 46: social.v1.AdminService.CreateExternalEvent:output_type -> social.v1.ExternalEvent
+	33, // 47: social.v1.AdminService.DeactivateExternalEvent:output_type -> social.v1.DeactivateExternalEventResponse
+	36, // 48: social.v1.AdminService.ListVerificationRequests:output_type -> social.v1.ListVerificationRequestsResponse
+	38, // 49: social.v1.AdminService.ReviewVerification:output_type -> social.v1.ReviewVerificationResponse
+	22, // 50: social.v1.AdminService.CreateCity:output_type -> social.v1.City
+	25, // 51: social.v1.AdminService.UpdateCityStatus:output_type -> social.v1.UpdateCityStatusResponse
+	33, // [33:52] is the sub-list for method output_type
+	14, // [14:33] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_admin_proto_init() }
@@ -2137,7 +2437,7 @@ func file_social_v1_admin_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_admin_proto_rawDesc), len(file_social_v1_admin_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   34,
+			NumMessages:   39,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

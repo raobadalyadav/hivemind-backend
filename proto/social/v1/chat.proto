@@ -24,7 +24,52 @@ service ChatService {
   rpc CreatePoll(CreatePollRequest) returns (Message);
   rpc VotePoll(VotePollRequest) returns (Poll);
   rpc PinMessage(PinMessageRequest) returns (PinMessageResponse);
+
+  // Inbox: the caller's chats, split Primary / General, with unread counts.
+  rpc ListMyChats(ListMyChatsRequest) returns (ListMyChatsResponse);
+  rpc MarkRead(MarkReadRequest) returns (MarkReadResponse);
+  // OpenDirectChat opens (or returns) the 1:1 chat with an accepted connection.
+  rpc OpenDirectChat(OpenDirectChatRequest) returns (ChatRoom);
 }
+
+enum ChatTab {
+  CHAT_TAB_PRIMARY = 0; // friends' DMs + chats of upcoming plans you're in
+  CHAT_TAB_GENERAL = 1; // everything else: event groups, meet-again groups, past plans
+}
+
+enum ChatKind {
+  CHAT_KIND_GROUP = 0;
+  CHAT_KIND_PLAN = 1;
+  CHAT_KIND_DM = 2;
+}
+
+message ChatSummary {
+  string room_id = 1;
+  ChatKind kind = 2;
+  string title = 3;         // person's name (DM) or plan title
+  string other_user_id = 4; // DM only
+  string plan_id = 5;       // plan chats only
+  string avatar_url = 6;    // DM: their main photo
+  bool other_verified = 7;  // DM: blue tick
+  string last_message = 8;  // preview ("📷 Photo" for media)
+  google.protobuf.Timestamp last_message_at = 9;
+  int32 unread_count = 10;
+  bool muted = 11;
+}
+
+message ListMyChatsRequest {
+  ChatTab tab = 1;
+}
+message ListMyChatsResponse {
+  repeated ChatSummary chats = 1;
+  int32 primary_unread = 2; // totals across both tabs, for the bar badge and tab dots
+  int32 general_unread = 3;
+}
+
+message MarkReadRequest { string room_id = 1; }
+message MarkReadResponse {}
+
+message OpenDirectChatRequest { string user_id = 1; }
 
 enum MessageType {
   MESSAGE_TYPE_TEXT = 0;

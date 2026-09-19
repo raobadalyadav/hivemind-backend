@@ -71,6 +71,15 @@ make lan-ip              # the API_HOST a phone on the same Wi-Fi should use
 
 `make` loads `.env` automatically. `cmd/devtoken` refuses to run unless `APP_ENV` is empty or `dev`.
 
+## Media uploads
+
+`POST /v1/media` (multipart `file`, optional `poster`/`width`/`height`/`duration_ms`, `Authorization: <access token>`)
+stores a photo or video in MinIO/S3 and returns `{id, url, thumb_url, kind, width, height, duration_ms}`; stories, posts,
+chat messages, profile photos and plan covers then reference it by **id** (`media_id`/`media_ids`/`cover_media_id`).
+`GET /media/{key}` serves files (Range supported). Photos are decoded and re-encoded as JPEG (EXIF/GPS stripped, ≤ 2048 px,
+480 px thumbnail); videos are stored as sent (≤ `MEDIA_MAX_VIDEO_MB`). Uploads nothing references after 24 h are deleted by
+the worker's `media_gc` job. `MEDIA_PUBLIC_BASE_URL` must be reachable from phones (`make run-api` defaults it to your LAN IP).
+
 ## Configuration
 
 All configuration is via environment variables (see `config/config.go`), each with a sane local default:

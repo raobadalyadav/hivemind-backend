@@ -127,6 +127,7 @@ enum FeedScope {
   FEED_SCOPE_GLOBAL = 0;      // everything the caller may see that isn't private
   FEED_SCOPE_CONNECTIONS = 1; // posts by the caller's accepted connections
   FEED_SCOPE_COMMUNITY = 2;   // one community's posts (community_id required)
+  FEED_SCOPE_FOR_YOU = 3;     // recommended: recency × connections × shared interests × likes
 }
 
 message GetFeedRequest {
