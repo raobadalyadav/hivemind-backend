@@ -118,6 +118,8 @@ message Plan {
   string community_id = 18;
   string requires_entitlement = 19; // subscription product name (premium plans)
   string series_id = 20;            // set on recurring-plan occurrences
+  string cover_url = 21;
+  string cover_thumb_url = 22;
 }
 
 message CreatePlanRequest {
@@ -138,6 +140,7 @@ message CreatePlanRequest {
   string requires_entitlement = 15; // must be an existing subscription product name
   // recurrence_rule: FREQ=DAILY|WEEKLY|MONTHLY[;INTERVAL=n][;COUNT=n|;UNTIL=YYYYMMDD]
   string recurrence_rule = 16;
+  string cover_media_id = 17; // optional: the caller's own image upload
 }
 
 message GetPlanRequest {

@@ -47,6 +47,8 @@ func chatErr(err error, fallback string) error {
 		return status.Error(codes.PermissionDenied, err.Error())
 	case ErrContentRejected:
 		return status.Error(codes.FailedPrecondition, err.Error())
+	case ErrMediaUnavailable:
+		return status.Error(codes.Unimplemented, err.Error())
 	case ErrMessageNotFound, ErrPollNotFound, ErrRoomNotFound:
 		return status.Error(codes.NotFound, err.Error())
 	}
@@ -78,7 +80,7 @@ func (h *Handler) SendMessage(ctx context.Context, req *socialv1.SendMessageRequ
 	}
 	m := &Message{
 		RoomID: req.GetRoomId(), SenderID: senderID, Body: req.GetBody(), Type: t,
-		MediaURLs: req.GetMediaUrls(), DurationSeconds: req.GetDurationSeconds(),
+		MediaIDs: req.GetMediaIds(), DurationSeconds: req.GetDurationSeconds(),
 	}
 	if l := req.GetLocation(); l != nil {
 		m.Location = &Location{Latitude: l.GetLatitude(), Longitude: l.GetLongitude(), Label: l.GetLabel()}
@@ -189,6 +191,9 @@ func toProtoMessage(m *Message) *socialv1.Message {
 		Type:            msgTypeToProto[m.Type],
 		MediaUrls:       m.MediaURLs,
 		DurationSeconds: m.DurationSeconds,
+	}
+	for _, a := range m.Media {
+		out.Media = append(out.Media, &socialv1.MediaAsset{Id: a.ID, Url: a.URL, ThumbUrl: a.ThumbURL, Kind: a.Kind, Width: a.Width, Height: a.Height, DurationMs: a.DurationMS})
 	}
 	if m.Location != nil {
 		out.Location = &socialv1.Location{Latitude: m.Location.Latitude, Longitude: m.Location.Longitude, Label: m.Location.Label}

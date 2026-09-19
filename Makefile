@@ -2,6 +2,12 @@
 -include .env
 export
 
+# Phones fetch media from this API's HTTP port, so the public base URL must be
+# an address they can reach. Default: this machine's current LAN IP (override in .env).
+LAN_IP := $(shell hostname -I | awk '{print $$1}')
+MEDIA_PUBLIC_BASE_URL ?= http://$(LAN_IP):$(or $(WEBHOOK_PORT),8080)
+export MEDIA_PUBLIC_BASE_URL
+
 DB_URL ?= $(or $(DATABASE_URL),postgres://hivemind:hivemind@localhost:5432/hivemind?sslmode=disable)
 
 .PHONY: up down proto migrate-up migrate-down run-api run-worker build test vet fmt dev dev-token lan-ip

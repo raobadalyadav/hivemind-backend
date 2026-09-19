@@ -46,6 +46,19 @@ enum ErrorCode {
   RATE_LIMITED = 11;
 }
 
+// MediaAsset is an uploaded photo/video (POST /v1/media). Clients attach it to
+// stories, posts, chat, profile photos and plan covers by `id`; URLs are
+// read-only. Width/height let clients reserve layout space before loading.
+message MediaAsset {
+  string id = 1;
+  string url = 2;
+  string thumb_url = 3;
+  string kind = 4; // image | video
+  int32 width = 5;
+  int32 height = 6;
+  int32 duration_ms = 7; // video only
+}
+
 message Audit {
   google.protobuf.Timestamp created_at = 1;
   google.protobuf.Timestamp updated_at = 2;

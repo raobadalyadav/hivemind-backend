@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/hivemind/backend/pkg/media/mediatest"
 )
 
 type badScreener struct{}
@@ -20,7 +22,8 @@ func TestFeedVisibility_ConnectionsAndCommunityPosts(t *testing.T) {
 	pool := testPool(t)
 	defer pool.Close()
 	ctx := context.Background()
-	svc := NewService(NewRepository(pool), nil, badScreener{})
+	fm := mediatest.New(pool)
+	svc := NewService(NewRepository(pool), nil, badScreener{}).WithMedia(fm)
 
 	author, friend, member, stranger := seedUser(t, pool, "fa"), seedUser(t, pool, "ff"), seedUser(t, pool, "fm"), seedUser(t, pool, "fs")
 	var comm string
@@ -97,11 +100,27 @@ func TestFeedVisibility_ConnectionsAndCommunityPosts(t *testing.T) {
 	if _, err := svc.CreatePost(ctx, &Post{AuthorID: author, Body: "x", Visibility: "friends-of-friends"}); err != ErrInvalidInput {
 		t.Errorf("unknown visibility must be rejected, not treated as public: %v", err)
 	}
-	if _, err := svc.CreatePost(ctx, &Post{AuthorID: author, Body: "x", Visibility: "public", Media: []Media{{URL: "http://x/v.mp4", Type: "video"}}}); err != ErrInvalidInput {
-		t.Errorf("non-https media: %v", err)
+	if _, err := svc.CreatePost(ctx, &Post{AuthorID: author, Body: "x", Visibility: "public", Media: []Media{{ID: "https://x/v.mp4"}}}); err != ErrInvalidInput {
+		t.Errorf("a link is not media: %v", err)
 	}
-	if v, err := svc.CreatePost(ctx, &Post{AuthorID: author, Body: "clip", Visibility: "public", Media: []Media{{URL: "https://cdn.example/v.mp4", Type: "video"}}}); err != nil || len(v.Media) != 1 {
-		t.Errorf("video post: %+v %v", v, err)
+	if _, err := svc.CreatePost(ctx, &Post{AuthorID: author, Body: "x", Visibility: "public", Media: []Media{{ID: fm.Add(stranger, "image").ID}}}); err != ErrInvalidInput {
+		t.Errorf("someone else's upload can't be attached: %v", err)
+	}
+	clip := fm.Add(author, "video")
+	photo := fm.Add(author, "image")
+	v, err := svc.CreatePost(ctx, &Post{AuthorID: author, Body: "clip", Visibility: "public", Media: []Media{{ID: clip.ID}, {ID: photo.ID}}})
+	if err != nil || len(v.Media) != 2 || v.Media[0].Type != "video" || v.Media[0].DurationMS != 8000 || v.Media[1].Type != "image" {
+		t.Errorf("carousel keeps order and asset details: %+v %v", v, err)
+	}
+	if got, err := svc.GetPost(ctx, v.ID, author); err != nil || len(got.Media) != 2 || got.Media[0].ThumbURL == "" || got.Media[1].Width != 1080 {
+		t.Errorf("media round-trips through the database: %+v %v", got, err)
+	}
+	tooMany := make([]Media, 11)
+	for i := range tooMany {
+		tooMany[i] = Media{ID: fm.Add(author, "image").ID}
+	}
+	if _, err := svc.CreatePost(ctx, &Post{AuthorID: author, Body: "x", Visibility: "public", Media: tooMany}); err != ErrInvalidInput {
+		t.Errorf("more than 10 attachments: %v", err)
 	}
 	if _, err := svc.CommentOnPost(ctx, &Comment{PostID: pub.ID, AuthorID: stranger, Body: "BADWORD"}); err != ErrContentRejected {
 		t.Errorf("comments are screened now: %v", err)

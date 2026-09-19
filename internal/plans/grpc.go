@@ -43,6 +43,7 @@ func (h *Handler) CreatePlan(ctx context.Context, req *socialv1.CreatePlanReques
 		Visibility:          visibilityFromProto(req.GetVisibility()),
 		CommunityID:         req.GetCommunityId(),
 		RequiresEntitlement: req.GetRequiresEntitlement(),
+		CoverMediaID:        req.GetCoverMediaId(),
 	}
 	if req.GetStartsAt() != nil {
 		p.StartsAt = req.GetStartsAt().AsTime()
@@ -66,6 +67,8 @@ func (h *Handler) CreatePlan(ctx context.Context, req *socialv1.CreatePlanReques
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		case ErrForbidden:
 			return nil, status.Error(codes.PermissionDenied, "you must own or moderate that community")
+		case ErrMediaUnavailable:
+			return nil, status.Error(codes.Unimplemented, err.Error())
 		default:
 			return nil, status.Error(codes.Internal, "failed to create plan")
 		}
@@ -193,6 +196,8 @@ func toProto(p *Plan) *socialv1.Plan {
 		CommunityId:         p.CommunityID,
 		RequiresEntitlement: p.RequiresEntitlement,
 		SeriesId:            p.SeriesID,
+		CoverUrl:            p.CoverURL,
+		CoverThumbUrl:       p.CoverThumbURL,
 	}
 	if p.Latitude != nil && p.Longitude != nil {
 		out.Location = &socialv1.GeoPoint{Latitude: *p.Latitude, Longitude: *p.Longitude}

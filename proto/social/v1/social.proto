@@ -68,8 +68,13 @@ message Post {
 }
 
 message PostMedia {
-  string url = 1;        // https only
-  string media_type = 2; // image | video
+  string url = 1;        // read-only; ignored on create
+  string media_type = 2; // image | video (read-only; the upload knows its kind)
+  string media_id = 3;   // create: the caller's own upload
+  string thumb_url = 4;
+  int32 width = 5;
+  int32 height = 6;
+  int32 duration_ms = 7;
 }
 
 message Comment {
@@ -83,10 +88,10 @@ message CreatePostRequest {
   string author_id = 1;
   string plan_id = 2;
   string body = 3;
-  repeated string media_urls = 4; // images; kept for compatibility
+  repeated string media_urls = 4 [deprecated = true]; // ignored on create; upload and use media[].media_id
   string visibility = 5;          // default private
   string community_id = 6;        // required for (and only for) visibility=community; caller must be a member
-  repeated PostMedia media = 7;   // typed media (image|video)
+  repeated PostMedia media = 7;   // 1–10 uploads, in display order
 }
 
 message GetPostRequest {

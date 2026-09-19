@@ -2,9 +2,17 @@ package stories
 
 import (
 	"context"
-	"strings"
+	"encoding/json"
+	"errors"
 	"time"
+
+	"github.com/hivemind/backend/pkg/media"
 )
+
+// MaxEditsBytes bounds the overlay/filter JSON a client may attach.
+const MaxEditsBytes = 8 << 10
+
+var ErrMediaUnavailable = errors.New("stories: media uploads are not configured")
 
 // ContentScreener is satisfied by *moderation.Screener.
 type ContentScreener interface {
@@ -14,27 +22,39 @@ type ContentScreener interface {
 type Service struct {
 	repo     *Repository
 	screener ContentScreener
+	media    media.Resolver
 	now      func() time.Time
+}
+
+// WithMedia enables story creation (uploads are attached by id).
+func (s *Service) WithMedia(m media.Resolver) *Service {
+	s.media = m
+	return s
 }
 
 func NewService(repo *Repository, screener ContentScreener) *Service {
 	return &Service{repo: repo, screener: screener, now: time.Now}
 }
 
-func validHTTPS(u string) bool {
-	return len(u) > len("https://") && len(u) <= 2048 && strings.HasPrefix(u, "https://")
+// validEdits accepts only a JSON object of bounded size; the shape inside is
+// interpreted by clients, the server just refuses anything that isn't one.
+func validEdits(e string) (string, bool) {
+	if e == "" {
+		return "{}", true
+	}
+	var v map[string]any
+	if len(e) > MaxEditsBytes || json.Unmarshal([]byte(e), &v) != nil {
+		return "", false
+	}
+	return e, true
 }
 
 func (s *Service) CreateStory(ctx context.Context, st *Story) (*Story, error) {
-	if st.AuthorID == "" || !validHTTPS(st.MediaURL) || len(st.Caption) > 500 {
+	edits, ok := validEdits(st.Edits)
+	if st.AuthorID == "" || st.MediaID == "" || len(st.Caption) > 500 || !ok {
 		return nil, ErrInvalidInput
 	}
-	if st.MediaType == "" {
-		st.MediaType = "image"
-	}
-	if st.MediaType != "image" && st.MediaType != "video" {
-		return nil, ErrInvalidInput
-	}
+	st.Edits = edits
 	if st.Audience != "connections" && st.Audience != "community" {
 		return nil, ErrInvalidInput
 	}
@@ -50,6 +70,19 @@ func (s *Service) CreateStory(ctx context.Context, st *Story) (*Story, error) {
 			return nil, ErrNotMember
 		}
 	}
+	if s.media == nil {
+		return nil, ErrMediaUnavailable
+	}
+	assets, err := s.media.Claim(ctx, st.AuthorID, []string{st.MediaID})
+	if err != nil {
+		if errors.Is(err, media.ErrNotFound) {
+			return nil, ErrInvalidInput
+		}
+		return nil, err
+	}
+	a := assets[0]
+	st.MediaURL, st.MediaType, st.ThumbURL, st.Width, st.Height, st.DurationMS = a.URL, a.Kind, a.ThumbURL, a.Width, a.Height, a.DurationMS
+
 	// A story is ephemeral and low-friction, so anything screening flags at
 	// all is refused rather than queued for review.
 	if sev, _ := s.screener.Screen(ctx, st.Caption); sev == "severe" || sev == "review" {

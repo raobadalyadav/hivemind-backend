@@ -53,10 +53,12 @@ func (r *Repository) ExtendSeries(ctx context.Context, templateID string, now ti
 		tag, err := r.pool.Exec(ctx, `
 			INSERT INTO plans (title, description, category_id, host_id, city_id, venue_id,
 				starts_at, ends_at, capacity, price_minor, currency, status, location,
-				join_mode, visibility, community_id, requires_entitlement, series_id)
+				join_mode, visibility, community_id, requires_entitlement, series_id,
+				cover_media_id, cover_url, cover_thumb_url)
 			SELECT title, description, category_id, host_id, city_id, venue_id,
 				$2::timestamptz, $3::timestamptz, capacity, price_minor, currency, 'published', location,
-				join_mode, visibility, community_id, requires_entitlement, series_id
+				join_mode, visibility, community_id, requires_entitlement, series_id,
+				cover_media_id, cover_url, cover_thumb_url
 			FROM plans WHERE id = $1
 			ON CONFLICT (series_id, starts_at) DO NOTHING`,
 			templateID, start, start.Add(duration),

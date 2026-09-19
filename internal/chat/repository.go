@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/hivemind/backend/pkg/media"
 )
 
 var (
@@ -52,6 +54,8 @@ type Message struct {
 	SentAt          time.Time
 	Type            string // text | image | voice | poll | announcement | location
 	MediaURLs       []string
+	MediaIDs        []string      // input: the sender's own uploads (IMAGE messages)
+	Media           []media.Asset // resolved photos/videos
 	Location        *Location
 	DurationSeconds int32
 	Poll            *Poll

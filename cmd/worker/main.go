@@ -18,6 +18,7 @@ import (
 	"github.com/hivemind/backend/config"
 	"github.com/hivemind/backend/internal/bookings"
 	"github.com/hivemind/backend/internal/chat"
+	"github.com/hivemind/backend/internal/media"
 	"github.com/hivemind/backend/internal/moderation"
 	"github.com/hivemind/backend/internal/notifications"
 	"github.com/hivemind/backend/internal/payments"
@@ -49,6 +50,12 @@ func main() {
 
 	rdb := redis.NewClient(&redis.Options{Addr: cfg.RedisAddr})
 	defer rdb.Close()
+
+	mediaSvc, err := media.Connect(ctx, cfg, pool) // only used for the media_gc job
+	if err != nil {
+		logger.Error("media storage unavailable — media_gc disabled", "error", err)
+		mediaSvc = nil
+	}
 
 	publisher, err := eventbus.Connect(cfg.NATSURL)
 	if err != nil {
@@ -84,6 +91,7 @@ func main() {
 		paymentsSvc:  payments.NewService(payments.NewRepository(pool), nil, nil, logger),
 		plansSvc:     plans.NewService(plans.NewRepository(pool), nil, nil, nil),
 		storiesSvc:   stories.NewService(stories.NewRepository(pool), nil),
+		mediaSvc:     mediaSvc,
 		bookingsSvc:  bookings.NewService(bookings.NewRepository(pool), idempotency.NewGuard(rdb)),
 		analyticsRec: analytics.NewRecorder(pool),
 		logger:       logger,

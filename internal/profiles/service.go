@@ -4,12 +4,24 @@ import (
 	"context"
 	"errors"
 	"strings"
+
+	"github.com/hivemind/backend/pkg/media"
 )
 
-var ErrInvalidInput = errors.New("profiles: invalid input")
+var (
+	ErrInvalidInput     = errors.New("profiles: invalid input")
+	ErrMediaUnavailable = errors.New("profiles: media uploads are not configured")
+)
 
 type Service struct {
-	repo *Repository
+	repo  *Repository
+	media media.Resolver
+}
+
+// WithMedia enables profile photo uploads (attached by upload id).
+func (s *Service) WithMedia(m media.Resolver) *Service {
+	s.media = m
+	return s
 }
 
 func NewService(repo *Repository) *Service {
@@ -17,10 +29,6 @@ func NewService(repo *Repository) *Service {
 }
 
 var validGenders = map[string]bool{"male": true, "female": true, "non_binary": true, "prefer_not_to_say": true}
-
-func validHTTPSURL(u string) bool {
-	return len(u) <= 2048 && strings.HasPrefix(u, "https://") && len(u) > len("https://")
-}
 
 func (s *Service) CreateProfile(ctx context.Context, p *Profile) (*Profile, error) {
 	if p.UserID == "" || p.DisplayName == "" {
@@ -91,11 +99,24 @@ func (s *Service) SetPrivacy(ctx context.Context, userID string, showInPreviews 
 	return s.repo.SetPrivacy(ctx, userID, showInPreviews)
 }
 
-func (s *Service) AddPhoto(ctx context.Context, userID, url string) (*Photo, error) {
-	if userID == "" || !validHTTPSURL(url) {
+func (s *Service) AddPhoto(ctx context.Context, userID, mediaID string) (*Photo, error) {
+	if userID == "" || mediaID == "" {
 		return nil, ErrInvalidInput
 	}
-	return s.repo.AddPhoto(ctx, userID, url)
+	if s.media == nil {
+		return nil, ErrMediaUnavailable
+	}
+	assets, err := s.media.Claim(ctx, userID, []string{mediaID})
+	if err != nil {
+		if errors.Is(err, media.ErrNotFound) {
+			return nil, ErrInvalidInput
+		}
+		return nil, err
+	}
+	if assets[0].Kind != "image" {
+		return nil, ErrInvalidInput
+	}
+	return s.repo.AddPhoto(ctx, userID, assets[0])
 }
 
 func (s *Service) DeletePhoto(ctx context.Context, userID, photoID string) error {

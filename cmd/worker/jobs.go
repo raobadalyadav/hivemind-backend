@@ -20,7 +20,7 @@ type job struct {
 }
 
 func (d *deps) jobs() []job {
-	return []job{
+	js := []job{
 		{"complete_plans", time.Minute, d.bookingsSvc.CompleteEndedPlans},
 		{"mark_no_shows", time.Minute, d.bookingsSvc.MarkNoShows},
 		{"sweep_waitlist", time.Minute, d.bookingsSvc.SweepWaitlist},
@@ -28,6 +28,10 @@ func (d *deps) jobs() []job {
 		{"extend_series", time.Hour, d.plansSvc.ExtendAllSeries},
 		{"purge_stories", time.Hour, d.storiesSvc.PurgeExpired},
 	}
+	if d.mediaSvc != nil { // uploads nothing references (abandoned drafts, expired stories)
+		js = append(js, job{"media_gc", time.Hour, d.mediaSvc.GC})
+	}
+	return js
 }
 
 // runDueJobs runs every job whose interval has elapsed since it last ran.

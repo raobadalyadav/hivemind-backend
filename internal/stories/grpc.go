@@ -30,6 +30,8 @@ func storyErr(err error, fallback string) error {
 		return status.Error(codes.PermissionDenied, err.Error())
 	case ErrNotFound:
 		return status.Error(codes.NotFound, err.Error())
+	case ErrMediaUnavailable:
+		return status.Error(codes.Unimplemented, err.Error())
 	}
 	return status.Error(codes.Internal, fallback)
 }
@@ -44,10 +46,17 @@ func toProto(s *Story) *socialv1.Story {
 	if s.Audience == "community" {
 		aud = socialv1.StoryAudience_STORY_AUDIENCE_COMMUNITY
 	}
+	edits := s.Edits
+	if edits == "{}" {
+		edits = ""
+	}
 	return &socialv1.Story{
 		Id: s.ID, AuthorId: s.AuthorID, MediaUrl: s.MediaURL, MediaType: s.MediaType, Caption: s.Caption,
 		Audience: aud, CommunityId: s.CommunityID, KeepArchive: s.KeepArchive,
 		CreatedAt: timestamppb.New(s.CreatedAt), ExpiresAt: timestamppb.New(s.ExpiresAt),
+		Media: &socialv1.MediaAsset{Id: s.MediaID, Url: s.MediaURL, ThumbUrl: s.ThumbURL, Kind: s.MediaType,
+			Width: s.Width, Height: s.Height, DurationMs: s.DurationMS},
+		EditsJson: edits,
 	}
 }
 
@@ -57,7 +66,7 @@ func (h *Handler) CreateStory(ctx context.Context, req *socialv1.CreateStoryRequ
 		return nil, status.Error(codes.Unauthenticated, "auth required")
 	}
 	st, err := h.svc.CreateStory(ctx, &Story{
-		AuthorID: userID, MediaURL: req.GetMediaUrl(), MediaType: req.GetMediaType(), Caption: req.GetCaption(),
+		AuthorID: userID, MediaID: req.GetMediaId(), Edits: req.GetEditsJson(), Caption: req.GetCaption(),
 		Audience: audienceToDB[req.GetAudience()], CommunityID: req.GetCommunityId(), KeepArchive: req.GetKeepArchive(),
 	})
 	if err != nil {

@@ -311,6 +311,101 @@ func (x *PageResponse) GetHasMore() bool {
 	return false
 }
 
+// MediaAsset is an uploaded photo/video (POST /v1/media). Clients attach it to
+// stories, posts, chat, profile photos and plan covers by `id`; URLs are
+// read-only. Width/height let clients reserve layout space before loading.
+type MediaAsset struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Url           string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
+	ThumbUrl      string                 `protobuf:"bytes,3,opt,name=thumb_url,json=thumbUrl,proto3" json:"thumb_url,omitempty"`
+	Kind          string                 `protobuf:"bytes,4,opt,name=kind,proto3" json:"kind,omitempty"` // image | video
+	Width         int32                  `protobuf:"varint,5,opt,name=width,proto3" json:"width,omitempty"`
+	Height        int32                  `protobuf:"varint,6,opt,name=height,proto3" json:"height,omitempty"`
+	DurationMs    int32                  `protobuf:"varint,7,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"` // video only
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MediaAsset) Reset() {
+	*x = MediaAsset{}
+	mi := &file_social_v1_common_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MediaAsset) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MediaAsset) ProtoMessage() {}
+
+func (x *MediaAsset) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_common_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MediaAsset.ProtoReflect.Descriptor instead.
+func (*MediaAsset) Descriptor() ([]byte, []int) {
+	return file_social_v1_common_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *MediaAsset) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *MediaAsset) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *MediaAsset) GetThumbUrl() string {
+	if x != nil {
+		return x.ThumbUrl
+	}
+	return ""
+}
+
+func (x *MediaAsset) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *MediaAsset) GetWidth() int32 {
+	if x != nil {
+		return x.Width
+	}
+	return 0
+}
+
+func (x *MediaAsset) GetHeight() int32 {
+	if x != nil {
+		return x.Height
+	}
+	return 0
+}
+
+func (x *MediaAsset) GetDurationMs() int32 {
+	if x != nil {
+		return x.DurationMs
+	}
+	return 0
+}
+
 type Audit struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
@@ -321,7 +416,7 @@ type Audit struct {
 
 func (x *Audit) Reset() {
 	*x = Audit{}
-	mi := &file_social_v1_common_proto_msgTypes[4]
+	mi := &file_social_v1_common_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -333,7 +428,7 @@ func (x *Audit) String() string {
 func (*Audit) ProtoMessage() {}
 
 func (x *Audit) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_common_proto_msgTypes[4]
+	mi := &file_social_v1_common_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -346,7 +441,7 @@ func (x *Audit) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Audit.ProtoReflect.Descriptor instead.
 func (*Audit) Descriptor() ([]byte, []int) {
-	return file_social_v1_common_proto_rawDescGZIP(), []int{4}
+	return file_social_v1_common_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Audit) GetCreatedAt() *timestamppb.Timestamp {
@@ -381,7 +476,17 @@ const file_social_v1_common_proto_rawDesc = "" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\"Q\n" +
 	"\fPageResponse\x12&\n" +
 	"\x0fnext_page_token\x18\x01 \x01(\tR\rnextPageToken\x12\x19\n" +
-	"\bhas_more\x18\x02 \x01(\bR\ahasMore\"}\n" +
+	"\bhas_more\x18\x02 \x01(\bR\ahasMore\"\xae\x01\n" +
+	"\n" +
+	"MediaAsset\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x10\n" +
+	"\x03url\x18\x02 \x01(\tR\x03url\x12\x1b\n" +
+	"\tthumb_url\x18\x03 \x01(\tR\bthumbUrl\x12\x12\n" +
+	"\x04kind\x18\x04 \x01(\tR\x04kind\x12\x14\n" +
+	"\x05width\x18\x05 \x01(\x05R\x05width\x12\x16\n" +
+	"\x06height\x18\x06 \x01(\x05R\x06height\x12\x1f\n" +
+	"\vduration_ms\x18\a \x01(\x05R\n" +
+	"durationMs\"}\n" +
 	"\x05Audit\x129\n" +
 	"\n" +
 	"created_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
@@ -415,19 +520,20 @@ func file_social_v1_common_proto_rawDescGZIP() []byte {
 }
 
 var file_social_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_social_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_social_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_social_v1_common_proto_goTypes = []any{
 	(ErrorCode)(0),                // 0: social.v1.ErrorCode
 	(*Money)(nil),                 // 1: social.v1.Money
 	(*GeoPoint)(nil),              // 2: social.v1.GeoPoint
 	(*PageRequest)(nil),           // 3: social.v1.PageRequest
 	(*PageResponse)(nil),          // 4: social.v1.PageResponse
-	(*Audit)(nil),                 // 5: social.v1.Audit
-	(*timestamppb.Timestamp)(nil), // 6: google.protobuf.Timestamp
+	(*MediaAsset)(nil),            // 5: social.v1.MediaAsset
+	(*Audit)(nil),                 // 6: social.v1.Audit
+	(*timestamppb.Timestamp)(nil), // 7: google.protobuf.Timestamp
 }
 var file_social_v1_common_proto_depIdxs = []int32{
-	6, // 0: social.v1.Audit.created_at:type_name -> google.protobuf.Timestamp
-	6, // 1: social.v1.Audit.updated_at:type_name -> google.protobuf.Timestamp
+	7, // 0: social.v1.Audit.created_at:type_name -> google.protobuf.Timestamp
+	7, // 1: social.v1.Audit.updated_at:type_name -> google.protobuf.Timestamp
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
@@ -446,7 +552,7 @@ func file_social_v1_common_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_common_proto_rawDesc), len(file_social_v1_common_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   5,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

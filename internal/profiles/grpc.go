@@ -108,7 +108,7 @@ func toProto(p *Profile) *socialv1.Profile {
 func photosToProto(ps []Photo) []*socialv1.ProfilePhoto {
 	out := make([]*socialv1.ProfilePhoto, 0, len(ps))
 	for _, p := range ps {
-		out = append(out, &socialv1.ProfilePhoto{Id: p.ID, Url: p.URL, Position: p.Position})
+		out = append(out, &socialv1.ProfilePhoto{Id: p.ID, Url: p.URL, Position: p.Position, ThumbUrl: p.ThumbURL, Width: p.Width, Height: p.Height})
 	}
 	return out
 }
@@ -124,6 +124,8 @@ func mapErr(err error, msg string) error {
 	switch err {
 	case ErrInvalidInput:
 		return status.Error(codes.InvalidArgument, err.Error())
+	case ErrMediaUnavailable:
+		return status.Error(codes.Unimplemented, err.Error())
 	case ErrTooManyPhotos:
 		return status.Error(codes.FailedPrecondition, err.Error())
 	case ErrPhotoNotFound:
@@ -139,11 +141,11 @@ func (h *Handler) AddProfilePhoto(ctx context.Context, req *socialv1.AddProfileP
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "auth required")
 	}
-	p, err := h.svc.AddPhoto(ctx, userID, req.GetUrl())
+	p, err := h.svc.AddPhoto(ctx, userID, req.GetMediaId())
 	if err != nil {
 		return nil, mapErr(err, "failed to add photo")
 	}
-	return &socialv1.ProfilePhoto{Id: p.ID, Url: p.URL, Position: p.Position}, nil
+	return &socialv1.ProfilePhoto{Id: p.ID, Url: p.URL, Position: p.Position, ThumbUrl: p.ThumbURL, Width: p.Width, Height: p.Height}, nil
 }
 
 func (h *Handler) DeleteProfilePhoto(ctx context.Context, req *socialv1.DeleteProfilePhotoRequest) (*socialv1.DeleteProfilePhotoResponse, error) {

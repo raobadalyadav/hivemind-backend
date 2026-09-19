@@ -29,6 +29,8 @@ func socialErr(err error, fallback string) error {
 		return status.Error(codes.InvalidArgument, err.Error())
 	case ErrContentRejected:
 		return status.Error(codes.FailedPrecondition, err.Error())
+	case ErrMediaUnavailable:
+		return status.Error(codes.Unimplemented, err.Error())
 	case ErrNotAttendee, ErrNotMember:
 		return status.Error(codes.PermissionDenied, err.Error())
 	case ErrPostNotFound:
@@ -48,11 +50,10 @@ func (h *Handler) CreatePost(ctx context.Context, req *socialv1.CreatePostReques
 		PlanID:      req.GetPlanId(),
 		CommunityID: req.GetCommunityId(),
 		Body:        req.GetBody(),
-		MediaURLs:   req.GetMediaUrls(),
 		Visibility:  req.GetVisibility(),
 	}
 	for _, m := range req.GetMedia() {
-		p.Media = append(p.Media, Media{URL: m.GetUrl(), Type: m.GetMediaType()})
+		p.Media = append(p.Media, Media{ID: m.GetMediaId()})
 	}
 	created, err := h.svc.CreatePost(ctx, p)
 	if err != nil {
@@ -199,7 +200,7 @@ func toProto(p *Post) *socialv1.Post {
 		SavedByMe:    p.SavedByMe,
 	}
 	for _, m := range p.Media {
-		out.Media = append(out.Media, &socialv1.PostMedia{Url: m.URL, MediaType: m.Type})
+		out.Media = append(out.Media, &socialv1.PostMedia{Url: m.URL, MediaType: m.Type, MediaId: m.ID, ThumbUrl: m.ThumbURL, Width: m.Width, Height: m.Height, DurationMs: m.DurationMS})
 	}
 	return out
 }

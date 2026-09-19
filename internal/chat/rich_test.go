@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/hivemind/backend/pkg/media/mediatest"
 )
 
 type fakeScreener struct{}
@@ -45,6 +47,7 @@ func testPool(t *testing.T) *pgxpool.Pool {
 }
 
 type env struct {
+	fm                             *mediatest.Fake
 	ctx                            context.Context
 	pool                           *pgxpool.Pool
 	svc                            *Service
@@ -57,8 +60,9 @@ func setup(t *testing.T) *env {
 	pool := testPool(t)
 	t.Cleanup(pool.Close)
 	ctx := context.Background()
-	e := &env{ctx: ctx, pool: pool,
-		svc: NewService(NewRepository(pool), fakeReporter{}, fakeScreener{}, NewTemplateIcebreaker())}
+	fm := mediatest.New(pool)
+	e := &env{ctx: ctx, pool: pool, fm: fm,
+		svc: NewService(NewRepository(pool), fakeReporter{}, fakeScreener{}, NewTemplateIcebreaker()).WithMedia(fm)}
 	mk := func(label string) string {
 		var id string
 		if err := pool.QueryRow(ctx, `INSERT INTO users (email) VALUES ($1) RETURNING id`,
@@ -120,24 +124,24 @@ func TestSendMessage_TypesValidationAndAnnouncements(t *testing.T) {
 		_, err := e.svc.SendMessage(e.ctx, m, "user")
 		return err
 	}
-	if err := send(&Message{Type: "image", MediaURLs: []string{"https://cdn.example/a.jpg"}, Body: "cap"}, e.member); err != nil {
-		t.Fatalf("image: %v", err)
+	photo, clip := e.fm.Add(e.member, "image"), e.fm.Add(e.member, "video")
+	if err := send(&Message{Type: "image", MediaIDs: []string{photo.ID, clip.ID}, Body: "cap"}, e.member); err != nil {
+		t.Fatalf("image+video message: %v", err)
 	}
 	for name, m := range map[string]*Message{
-		"image w/o media":      {Type: "image"},
-		"http media":           {Type: "image", MediaURLs: []string{"http://x/a.jpg"}},
-		"voice w/o duration":   {Type: "voice", MediaURLs: []string{"https://cdn.example/v.m4a"}},
-		"voice too long":       {Type: "voice", MediaURLs: []string{"https://cdn.example/v.m4a"}, DurationSeconds: 999},
-		"location bad lat":     {Type: "location", Location: &Location{Latitude: 91}},
-		"poll via SendMessage": {Type: "poll", Body: "q"},
-		"empty text":           {Type: "text", Body: "  "},
+		"image w/o media":              {Type: "image"},
+		"a link is not media":          {Type: "image", MediaIDs: []string{"https://x/a.jpg"}},
+		"someone else's media":         {Type: "image", MediaIDs: []string{e.fm.Add(e.host, "image").ID}},
+		"11 attachments":               {Type: "image", MediaIDs: make([]string, 11)},
+		"voice (no audio uploads yet)": {Type: "voice", MediaIDs: []string{e.fm.Add(e.member, "image").ID}, DurationSeconds: 12},
+		"media on a text message":      {Type: "text", Body: "hi", MediaIDs: []string{e.fm.Add(e.member, "image").ID}},
+		"location bad lat":             {Type: "location", Location: &Location{Latitude: 91}},
+		"poll via SendMessage":         {Type: "poll", Body: "q"},
+		"empty text":                   {Type: "text", Body: "  "},
 	} {
 		if err := send(m, e.member); err != ErrInvalidInput {
 			t.Errorf("%s must be rejected, got %v", name, err)
 		}
-	}
-	if err := send(&Message{Type: "voice", MediaURLs: []string{"https://cdn.example/v.m4a"}, DurationSeconds: 12}, e.member); err != nil {
-		t.Fatalf("voice: %v", err)
 	}
 	if err := send(&Message{Type: "location", Location: &Location{Latitude: 28.6, Longitude: 77.2, Label: "Belong"}}, e.member); err != nil {
 		t.Fatalf("location: %v", err)
@@ -163,8 +167,11 @@ func TestSendMessage_TypesValidationAndAnnouncements(t *testing.T) {
 	for _, m := range msgs {
 		seen[m.Type] = m
 	}
-	if seen["image"] == nil || len(seen["image"].MediaURLs) != 1 || seen["voice"].DurationSeconds != 12 ||
-		seen["location"].Location == nil || seen["location"].Location.Label != "Belong" || seen["announcement"] == nil {
+	im := seen["image"]
+	if im == nil || len(im.Media) != 2 || im.Media[0].Kind != "image" || im.Media[1].Kind != "video" || im.Media[1].DurationMS != 8000 || im.Media[0].ThumbURL == "" {
+		t.Fatalf("photo+video message round-trips with kind/thumbnail/duration: %+v", im)
+	}
+	if seen["location"].Location == nil || seen["location"].Location.Label != "Belong" || seen["announcement"] == nil {
 		t.Fatalf("messages must round-trip their type data: %+v", seen)
 	}
 }

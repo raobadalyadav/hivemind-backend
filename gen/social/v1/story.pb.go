@@ -69,17 +69,21 @@ func (StoryAudience) EnumDescriptor() ([]byte, []int) {
 }
 
 type Story struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	AuthorId      string                 `protobuf:"bytes,2,opt,name=author_id,json=authorId,proto3" json:"author_id,omitempty"`
-	MediaUrl      string                 `protobuf:"bytes,3,opt,name=media_url,json=mediaUrl,proto3" json:"media_url,omitempty"`
-	MediaType     string                 `protobuf:"bytes,4,opt,name=media_type,json=mediaType,proto3" json:"media_type,omitempty"` // image | video
-	Caption       string                 `protobuf:"bytes,5,opt,name=caption,proto3" json:"caption,omitempty"`
-	Audience      StoryAudience          `protobuf:"varint,6,opt,name=audience,proto3,enum=social.v1.StoryAudience" json:"audience,omitempty"`
-	CommunityId   string                 `protobuf:"bytes,7,opt,name=community_id,json=communityId,proto3" json:"community_id,omitempty"`
-	KeepArchive   bool                   `protobuf:"varint,8,opt,name=keep_archive,json=keepArchive,proto3" json:"keep_archive,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Id          string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	AuthorId    string                 `protobuf:"bytes,2,opt,name=author_id,json=authorId,proto3" json:"author_id,omitempty"`
+	MediaUrl    string                 `protobuf:"bytes,3,opt,name=media_url,json=mediaUrl,proto3" json:"media_url,omitempty"`
+	MediaType   string                 `protobuf:"bytes,4,opt,name=media_type,json=mediaType,proto3" json:"media_type,omitempty"` // image | video
+	Caption     string                 `protobuf:"bytes,5,opt,name=caption,proto3" json:"caption,omitempty"`
+	Audience    StoryAudience          `protobuf:"varint,6,opt,name=audience,proto3,enum=social.v1.StoryAudience" json:"audience,omitempty"`
+	CommunityId string                 `protobuf:"bytes,7,opt,name=community_id,json=communityId,proto3" json:"community_id,omitempty"`
+	KeepArchive bool                   `protobuf:"varint,8,opt,name=keep_archive,json=keepArchive,proto3" json:"keep_archive,omitempty"`
+	CreatedAt   *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	ExpiresAt   *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	Media       *MediaAsset            `protobuf:"bytes,11,opt,name=media,proto3" json:"media,omitempty"`
+	// Non-destructive edits (filter id + text/emoji overlays, normalised
+	// coordinates) applied when rendering — see the mobile StoryCanvas.
+	EditsJson     string `protobuf:"bytes,12,opt,name=edits_json,json=editsJson,proto3" json:"edits_json,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -184,14 +188,32 @@ func (x *Story) GetExpiresAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Story) GetMedia() *MediaAsset {
+	if x != nil {
+		return x.Media
+	}
+	return nil
+}
+
+func (x *Story) GetEditsJson() string {
+	if x != nil {
+		return x.EditsJson
+	}
+	return ""
+}
+
 type CreateStoryRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	MediaUrl      string                 `protobuf:"bytes,1,opt,name=media_url,json=mediaUrl,proto3" json:"media_url,omitempty"`    // https only
-	MediaType     string                 `protobuf:"bytes,2,opt,name=media_type,json=mediaType,proto3" json:"media_type,omitempty"` // image | video; default image
-	Caption       string                 `protobuf:"bytes,3,opt,name=caption,proto3" json:"caption,omitempty"`
-	Audience      StoryAudience          `protobuf:"varint,4,opt,name=audience,proto3,enum=social.v1.StoryAudience" json:"audience,omitempty"`
-	CommunityId   string                 `protobuf:"bytes,5,opt,name=community_id,json=communityId,proto3" json:"community_id,omitempty"` // required for (and only for) the community audience; caller must be a member
-	KeepArchive   bool                   `protobuf:"varint,6,opt,name=keep_archive,json=keepArchive,proto3" json:"keep_archive,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Deprecated: Marked as deprecated in social/v1/story.proto.
+	MediaUrl string `protobuf:"bytes,1,opt,name=media_url,json=mediaUrl,proto3" json:"media_url,omitempty"` // ignored: upload with POST /v1/media and send media_id
+	// Deprecated: Marked as deprecated in social/v1/story.proto.
+	MediaType     string        `protobuf:"bytes,2,opt,name=media_type,json=mediaType,proto3" json:"media_type,omitempty"` // ignored: the upload knows its kind
+	Caption       string        `protobuf:"bytes,3,opt,name=caption,proto3" json:"caption,omitempty"`
+	Audience      StoryAudience `protobuf:"varint,4,opt,name=audience,proto3,enum=social.v1.StoryAudience" json:"audience,omitempty"`
+	CommunityId   string        `protobuf:"bytes,5,opt,name=community_id,json=communityId,proto3" json:"community_id,omitempty"` // required for (and only for) the community audience; caller must be a member
+	KeepArchive   bool          `protobuf:"varint,6,opt,name=keep_archive,json=keepArchive,proto3" json:"keep_archive,omitempty"`
+	MediaId       string        `protobuf:"bytes,7,opt,name=media_id,json=mediaId,proto3" json:"media_id,omitempty"`       // required; must be the caller's own upload
+	EditsJson     string        `protobuf:"bytes,8,opt,name=edits_json,json=editsJson,proto3" json:"edits_json,omitempty"` // optional, <= 8 KB JSON object
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -226,6 +248,7 @@ func (*CreateStoryRequest) Descriptor() ([]byte, []int) {
 	return file_social_v1_story_proto_rawDescGZIP(), []int{1}
 }
 
+// Deprecated: Marked as deprecated in social/v1/story.proto.
 func (x *CreateStoryRequest) GetMediaUrl() string {
 	if x != nil {
 		return x.MediaUrl
@@ -233,6 +256,7 @@ func (x *CreateStoryRequest) GetMediaUrl() string {
 	return ""
 }
 
+// Deprecated: Marked as deprecated in social/v1/story.proto.
 func (x *CreateStoryRequest) GetMediaType() string {
 	if x != nil {
 		return x.MediaType
@@ -266,6 +290,20 @@ func (x *CreateStoryRequest) GetKeepArchive() bool {
 		return x.KeepArchive
 	}
 	return false
+}
+
+func (x *CreateStoryRequest) GetMediaId() string {
+	if x != nil {
+		return x.MediaId
+	}
+	return ""
+}
+
+func (x *CreateStoryRequest) GetEditsJson() string {
+	if x != nil {
+		return x.EditsJson
+	}
+	return ""
 }
 
 type StoryGroup struct {
@@ -580,7 +618,7 @@ var File_social_v1_story_proto protoreflect.FileDescriptor
 
 const file_social_v1_story_proto_rawDesc = "" +
 	"\n" +
-	"\x15social/v1/story.proto\x12\tsocial.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xfc\x02\n" +
+	"\x15social/v1/story.proto\x12\tsocial.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x16social/v1/common.proto\"\xc8\x03\n" +
 	"\x05Story\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tauthor_id\x18\x02 \x01(\tR\bauthorId\x12\x1b\n" +
@@ -595,15 +633,21 @@ const file_social_v1_story_proto_rawDesc = "" +
 	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
 	"expires_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\xe6\x01\n" +
-	"\x12CreateStoryRequest\x12\x1b\n" +
-	"\tmedia_url\x18\x01 \x01(\tR\bmediaUrl\x12\x1d\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12+\n" +
+	"\x05media\x18\v \x01(\v2\x15.social.v1.MediaAssetR\x05media\x12\x1d\n" +
 	"\n" +
-	"media_type\x18\x02 \x01(\tR\tmediaType\x12\x18\n" +
+	"edits_json\x18\f \x01(\tR\teditsJson\"\xa8\x02\n" +
+	"\x12CreateStoryRequest\x12\x1f\n" +
+	"\tmedia_url\x18\x01 \x01(\tB\x02\x18\x01R\bmediaUrl\x12!\n" +
+	"\n" +
+	"media_type\x18\x02 \x01(\tB\x02\x18\x01R\tmediaType\x12\x18\n" +
 	"\acaption\x18\x03 \x01(\tR\acaption\x124\n" +
 	"\baudience\x18\x04 \x01(\x0e2\x18.social.v1.StoryAudienceR\baudience\x12!\n" +
 	"\fcommunity_id\x18\x05 \x01(\tR\vcommunityId\x12!\n" +
-	"\fkeep_archive\x18\x06 \x01(\bR\vkeepArchive\"v\n" +
+	"\fkeep_archive\x18\x06 \x01(\bR\vkeepArchive\x12\x19\n" +
+	"\bmedia_id\x18\a \x01(\tR\amediaId\x12\x1d\n" +
+	"\n" +
+	"edits_json\x18\b \x01(\tR\teditsJson\"v\n" +
 	"\n" +
 	"StoryGroup\x12\x1b\n" +
 	"\tauthor_id\x18\x01 \x01(\tR\bauthorId\x12\x1f\n" +
@@ -655,28 +699,30 @@ var file_social_v1_story_proto_goTypes = []any{
 	(*DeleteStoryRequest)(nil),    // 8: social.v1.DeleteStoryRequest
 	(*DeleteStoryResponse)(nil),   // 9: social.v1.DeleteStoryResponse
 	(*timestamppb.Timestamp)(nil), // 10: google.protobuf.Timestamp
+	(*MediaAsset)(nil),            // 11: social.v1.MediaAsset
 }
 var file_social_v1_story_proto_depIdxs = []int32{
 	0,  // 0: social.v1.Story.audience:type_name -> social.v1.StoryAudience
 	10, // 1: social.v1.Story.created_at:type_name -> google.protobuf.Timestamp
 	10, // 2: social.v1.Story.expires_at:type_name -> google.protobuf.Timestamp
-	0,  // 3: social.v1.CreateStoryRequest.audience:type_name -> social.v1.StoryAudience
-	1,  // 4: social.v1.StoryGroup.stories:type_name -> social.v1.Story
-	3,  // 5: social.v1.ListStoriesResponse.groups:type_name -> social.v1.StoryGroup
-	1,  // 6: social.v1.ListMyStoriesResponse.stories:type_name -> social.v1.Story
-	2,  // 7: social.v1.StoryService.CreateStory:input_type -> social.v1.CreateStoryRequest
-	4,  // 8: social.v1.StoryService.ListStories:input_type -> social.v1.ListStoriesRequest
-	6,  // 9: social.v1.StoryService.ListMyStories:input_type -> social.v1.ListMyStoriesRequest
-	8,  // 10: social.v1.StoryService.DeleteStory:input_type -> social.v1.DeleteStoryRequest
-	1,  // 11: social.v1.StoryService.CreateStory:output_type -> social.v1.Story
-	5,  // 12: social.v1.StoryService.ListStories:output_type -> social.v1.ListStoriesResponse
-	7,  // 13: social.v1.StoryService.ListMyStories:output_type -> social.v1.ListMyStoriesResponse
-	9,  // 14: social.v1.StoryService.DeleteStory:output_type -> social.v1.DeleteStoryResponse
-	11, // [11:15] is the sub-list for method output_type
-	7,  // [7:11] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	11, // 3: social.v1.Story.media:type_name -> social.v1.MediaAsset
+	0,  // 4: social.v1.CreateStoryRequest.audience:type_name -> social.v1.StoryAudience
+	1,  // 5: social.v1.StoryGroup.stories:type_name -> social.v1.Story
+	3,  // 6: social.v1.ListStoriesResponse.groups:type_name -> social.v1.StoryGroup
+	1,  // 7: social.v1.ListMyStoriesResponse.stories:type_name -> social.v1.Story
+	2,  // 8: social.v1.StoryService.CreateStory:input_type -> social.v1.CreateStoryRequest
+	4,  // 9: social.v1.StoryService.ListStories:input_type -> social.v1.ListStoriesRequest
+	6,  // 10: social.v1.StoryService.ListMyStories:input_type -> social.v1.ListMyStoriesRequest
+	8,  // 11: social.v1.StoryService.DeleteStory:input_type -> social.v1.DeleteStoryRequest
+	1,  // 12: social.v1.StoryService.CreateStory:output_type -> social.v1.Story
+	5,  // 13: social.v1.StoryService.ListStories:output_type -> social.v1.ListStoriesResponse
+	7,  // 14: social.v1.StoryService.ListMyStories:output_type -> social.v1.ListMyStoriesResponse
+	9,  // 15: social.v1.StoryService.DeleteStory:output_type -> social.v1.DeleteStoryResponse
+	12, // [12:16] is the sub-list for method output_type
+	8,  // [8:12] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_story_proto_init() }
@@ -684,6 +730,7 @@ func file_social_v1_story_proto_init() {
 	if File_social_v1_story_proto != nil {
 		return
 	}
+	file_social_v1_common_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

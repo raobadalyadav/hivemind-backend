@@ -7,13 +7,16 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/hivemind/backend/pkg/media"
 )
 
 var (
-	ErrInvalidInput    = errors.New("social: invalid input")
-	ErrContentRejected = errors.New("social: post violates content policy")
-	ErrNotAttendee     = errors.New("social: you can only tag plans you attended or host")
-	ErrNotMember       = errors.New("social: you must be a member of that community")
+	ErrInvalidInput     = errors.New("social: invalid input")
+	ErrContentRejected  = errors.New("social: post violates content policy")
+	ErrNotAttendee      = errors.New("social: you can only tag plans you attended or host")
+	ErrNotMember        = errors.New("social: you must be a member of that community")
+	ErrMediaUnavailable = errors.New("social: media uploads are not configured")
 )
 
 // ReportSubmitter is satisfied by *moderation.Service — duplicated locally
@@ -33,6 +36,13 @@ type Service struct {
 	repo     *Repository
 	reporter ReportSubmitter
 	screener ContentScreener
+	media    media.Resolver
+}
+
+// WithMedia enables posts with photos/videos (attached by upload id).
+func (s *Service) WithMedia(m media.Resolver) *Service {
+	s.media = m
+	return s
 }
 
 func NewService(repo *Repository, reporter ReportSubmitter, screener ContentScreener) *Service {
@@ -47,10 +57,6 @@ const (
 
 var validVisibility = map[string]bool{"private": true, "public": true, "connections": true, "community": true}
 
-func validHTTPS(u string) bool {
-	return len(u) > len("https://") && len(u) <= 2048 && strings.HasPrefix(u, "https://")
-}
-
 func (s *Service) CreatePost(ctx context.Context, p *Post) (*Post, error) {
 	if p.AuthorID == "" || len(p.Body) > maxPostBody {
 		return nil, ErrInvalidInput
@@ -62,24 +68,32 @@ func (s *Service) CreatePost(ctx context.Context, p *Post) (*Post, error) {
 		return nil, ErrInvalidInput
 	}
 
-	// media_urls (images) and typed media merge into one ordered list.
-	media := make([]Media, 0, len(p.MediaURLs)+len(p.Media))
-	for _, u := range p.MediaURLs {
-		media = append(media, Media{URL: u, Type: "image"})
-	}
-	media = append(media, p.Media...)
-	if len(media) > maxPostMedia || (strings.TrimSpace(p.Body) == "" && len(media) == 0) {
+	// Media is attached by upload id; each must be the author's own upload.
+	// (Legacy link fields are ignored — links can't be posted any more.)
+	p.MediaURLs = nil
+	if len(p.Media) > maxPostMedia || (strings.TrimSpace(p.Body) == "" && len(p.Media) == 0) {
 		return nil, ErrInvalidInput
 	}
-	for i := range media {
-		if media[i].Type == "" {
-			media[i].Type = "image"
+	if len(p.Media) > 0 {
+		if s.media == nil {
+			return nil, ErrMediaUnavailable
 		}
-		if !validHTTPS(media[i].URL) || (media[i].Type != "image" && media[i].Type != "video") {
-			return nil, ErrInvalidInput
+		ids := make([]string, len(p.Media))
+		for i, m := range p.Media {
+			ids[i] = m.ID
+		}
+		assets, err := s.media.Claim(ctx, p.AuthorID, ids)
+		if err != nil {
+			if errors.Is(err, media.ErrNotFound) {
+				return nil, ErrInvalidInput
+			}
+			return nil, err
+		}
+		p.Media = make([]Media, len(assets))
+		for i, a := range assets {
+			p.Media[i] = Media{ID: a.ID, URL: a.URL, Type: a.Kind, ThumbURL: a.ThumbURL, Width: a.Width, Height: a.Height, DurationMS: a.DurationMS}
 		}
 	}
-	p.Media, p.MediaURLs = media, nil
 
 	if p.CommunityID != "" {
 		ok, err := s.repo.IsCommunityMember(ctx, p.CommunityID, p.AuthorID)

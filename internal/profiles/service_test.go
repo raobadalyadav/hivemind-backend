@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/hivemind/backend/pkg/media/mediatest"
 )
 
 func testPool(t *testing.T) *pgxpool.Pool {
@@ -102,21 +104,31 @@ func TestProfilePhotos_CapOwnershipAndReorder(t *testing.T) {
 	pool := testPool(t)
 	defer pool.Close()
 	ctx := context.Background()
-	svc := NewService(NewRepository(pool))
+	fm := mediatest.New(pool)
+	svc := NewService(NewRepository(pool)).WithMedia(fm)
 	a, b := seedUser(t, pool, "photoA"), seedUser(t, pool, "photoB")
 
-	if _, err := svc.AddPhoto(ctx, a, "http://insecure.example/x.jpg"); err != ErrInvalidInput {
-		t.Fatalf("non-https url must be rejected, got %v", err)
+	if _, err := svc.AddPhoto(ctx, a, "https://cdn.example/x.jpg"); err != ErrInvalidInput {
+		t.Fatalf("a link is not an upload id, got %v", err)
+	}
+	if _, err := svc.AddPhoto(ctx, a, fm.Add(b, "image").ID); err != ErrInvalidInput {
+		t.Fatalf("B's upload can't become A's photo, got %v", err)
+	}
+	if _, err := svc.AddPhoto(ctx, a, fm.Add(a, "video").ID); err != ErrInvalidInput {
+		t.Fatalf("a video can't be a profile photo, got %v", err)
 	}
 	var ids []string
 	for i := 0; i < MaxPhotos; i++ {
-		p, err := svc.AddPhoto(ctx, a, "https://cdn.example/"+string(rune('a'+i))+".jpg")
+		p, err := svc.AddPhoto(ctx, a, fm.Add(a, "image").ID)
 		if err != nil {
 			t.Fatalf("add %d: %v", i, err)
 		}
+		if p.ThumbURL == "" || p.Width != 1080 {
+			t.Fatalf("photo carries thumbnail and size: %+v", p)
+		}
 		ids = append(ids, p.ID)
 	}
-	if _, err := svc.AddPhoto(ctx, a, "https://cdn.example/extra.jpg"); err != ErrTooManyPhotos {
+	if _, err := svc.AddPhoto(ctx, a, fm.Add(a, "image").ID); err != ErrTooManyPhotos {
 		t.Fatalf("7th photo must be refused, got %v", err)
 	}
 	if err := svc.DeletePhoto(ctx, b, ids[0]); err != ErrForbidden {

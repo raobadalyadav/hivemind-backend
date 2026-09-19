@@ -45,6 +45,9 @@ type Plan struct {
 	CommunityID         string
 	RequiresEntitlement string
 	SeriesID            string
+	CoverMediaID        string // input on create (an upload id)
+	CoverURL            string
+	CoverThumbURL       string
 }
 
 // planColumns is the single column list every plan read shares — six call
@@ -54,7 +57,8 @@ const planColumns = `id, title, description, COALESCE(category_id::text,''), hos
 	capacity, confirmed_count, price_minor, currency, status::text,
 	ST_Y(location::geometry), ST_X(location::geometry), created_at, updated_at,
 	join_mode::text, visibility::text, COALESCE(community_id::text,''),
-	COALESCE(requires_entitlement,''), COALESCE(series_id::text,'')`
+	COALESCE(requires_entitlement,''), COALESCE(series_id::text,''),
+	cover_url, cover_thumb_url`
 
 type rowScanner interface{ Scan(dest ...any) error }
 
@@ -63,7 +67,7 @@ func scanPlan(row rowScanner, p *Plan) error {
 		&p.CityID, &p.VenueID, &p.StartsAt, &p.EndsAt, &p.Capacity, &p.ConfirmedCount,
 		&p.PriceMinor, &p.Currency, &p.Status, &p.Latitude, &p.Longitude,
 		&p.CreatedAt, &p.UpdatedAt, &p.JoinMode, &p.Visibility, &p.CommunityID,
-		&p.RequiresEntitlement, &p.SeriesID)
+		&p.RequiresEntitlement, &p.SeriesID, &p.CoverURL, &p.CoverThumbURL)
 }
 
 type Repository struct {
@@ -95,17 +99,19 @@ func (r *Repository) Create(ctx context.Context, p *Plan, recurrenceRule string)
 	err = tx.QueryRow(ctx, `
 		INSERT INTO plans (title, description, category_id, host_id, city_id, venue_id,
 			starts_at, ends_at, capacity, price_minor, currency, status, location,
-			join_mode, visibility, community_id, requires_entitlement)
+			join_mode, visibility, community_id, requires_entitlement, cover_media_id, cover_url, cover_thumb_url)
 		VALUES ($1, $2, NULLIF($3,'')::uuid, $4::uuid, NULLIF($5,'')::uuid, NULLIF($6,'')::uuid,
 			$7, $8, $9, $10, $11, 'published',
 			CASE WHEN $12::float8 IS NULL THEN NULL
 			     ELSE ST_SetSRID(ST_MakePoint($13, $12), 4326)::geography END,
-			$14::plan_join_mode, $15::plan_visibility, NULLIF($16,'')::uuid, NULLIF($17,''))
+			$14::plan_join_mode, $15::plan_visibility, NULLIF($16,'')::uuid, NULLIF($17,''),
+			NULLIF($18,'')::uuid, $19, $20)
 		RETURNING id::text`,
 		p.Title, p.Description, p.CategoryID, p.HostID, p.CityID, p.VenueID,
 		p.StartsAt, p.EndsAt, p.Capacity, p.PriceMinor, p.Currency,
 		p.Latitude, p.Longitude,
 		p.JoinMode, p.Visibility, p.CommunityID, p.RequiresEntitlement,
+		p.CoverMediaID, p.CoverURL, p.CoverThumbURL,
 	).Scan(&id)
 	if err != nil {
 		return nil, err

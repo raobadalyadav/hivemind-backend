@@ -6,6 +6,8 @@ import (
 	"sort"
 
 	"github.com/jackc/pgx/v5"
+
+	"github.com/hivemind/backend/pkg/media"
 )
 
 const MaxPhotos = 6
@@ -20,11 +22,14 @@ type Photo struct {
 	ID       string
 	URL      string
 	Position int32
+	ThumbURL string
+	Width    int32
+	Height   int32
 }
 
 func (r *Repository) ListPhotos(ctx context.Context, userID string) ([]Photo, error) {
 	rows, err := r.pool.Query(ctx, `
-		SELECT id::text, url, position FROM profile_photos
+		SELECT id::text, url, position, thumb_url, width, height FROM profile_photos
 		WHERE user_id = $1 ORDER BY position, created_at, id`, userID)
 	if err != nil {
 		return nil, err
@@ -33,7 +38,7 @@ func (r *Repository) ListPhotos(ctx context.Context, userID string) ([]Photo, er
 	var out []Photo
 	for rows.Next() {
 		var p Photo
-		if err := rows.Scan(&p.ID, &p.URL, &p.Position); err != nil {
+		if err := rows.Scan(&p.ID, &p.URL, &p.Position, &p.ThumbURL, &p.Width, &p.Height); err != nil {
 			return nil, err
 		}
 		out = append(out, p)
@@ -43,7 +48,7 @@ func (r *Repository) ListPhotos(ctx context.Context, userID string) ([]Photo, er
 
 // AddPhoto serialises per user with an advisory lock so two concurrent adds
 // can't both slip past the 6-photo cap.
-func (r *Repository) AddPhoto(ctx context.Context, userID, url string) (*Photo, error) {
+func (r *Repository) AddPhoto(ctx context.Context, userID string, a media.Asset) (*Photo, error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return nil, err
@@ -62,10 +67,10 @@ func (r *Repository) AddPhoto(ctx context.Context, userID, url string) (*Photo, 
 	if n >= MaxPhotos {
 		return nil, ErrTooManyPhotos
 	}
-	p := Photo{URL: url, Position: next}
+	p := Photo{URL: a.URL, Position: next, ThumbURL: a.ThumbURL, Width: a.Width, Height: a.Height}
 	if err := tx.QueryRow(ctx,
-		`INSERT INTO profile_photos (user_id, url, position) VALUES ($1, $2, $3) RETURNING id::text`,
-		userID, url, next).Scan(&p.ID); err != nil {
+		`INSERT INTO profile_photos (user_id, url, position, media_id, thumb_url, width, height) VALUES ($1, $2, $3, $4::uuid, $5, $6, $7) RETURNING id::text`,
+		userID, a.URL, next, a.ID, a.ThumbURL, a.Width, a.Height).Scan(&p.ID); err != nil {
 		return nil, err
 	}
 	return &p, tx.Commit(ctx)

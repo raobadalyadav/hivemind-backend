@@ -436,8 +436,13 @@ func (x *Post) GetSavedByMe() bool {
 
 type PostMedia struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`                              // https only
-	MediaType     string                 `protobuf:"bytes,2,opt,name=media_type,json=mediaType,proto3" json:"media_type,omitempty"` // image | video
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`                              // read-only; ignored on create
+	MediaType     string                 `protobuf:"bytes,2,opt,name=media_type,json=mediaType,proto3" json:"media_type,omitempty"` // image | video (read-only; the upload knows its kind)
+	MediaId       string                 `protobuf:"bytes,3,opt,name=media_id,json=mediaId,proto3" json:"media_id,omitempty"`       // create: the caller's own upload
+	ThumbUrl      string                 `protobuf:"bytes,4,opt,name=thumb_url,json=thumbUrl,proto3" json:"thumb_url,omitempty"`
+	Width         int32                  `protobuf:"varint,5,opt,name=width,proto3" json:"width,omitempty"`
+	Height        int32                  `protobuf:"varint,6,opt,name=height,proto3" json:"height,omitempty"`
+	DurationMs    int32                  `protobuf:"varint,7,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -484,6 +489,41 @@ func (x *PostMedia) GetMediaType() string {
 		return x.MediaType
 	}
 	return ""
+}
+
+func (x *PostMedia) GetMediaId() string {
+	if x != nil {
+		return x.MediaId
+	}
+	return ""
+}
+
+func (x *PostMedia) GetThumbUrl() string {
+	if x != nil {
+		return x.ThumbUrl
+	}
+	return ""
+}
+
+func (x *PostMedia) GetWidth() int32 {
+	if x != nil {
+		return x.Width
+	}
+	return 0
+}
+
+func (x *PostMedia) GetHeight() int32 {
+	if x != nil {
+		return x.Height
+	}
+	return 0
+}
+
+func (x *PostMedia) GetDurationMs() int32 {
+	if x != nil {
+		return x.DurationMs
+	}
+	return 0
 }
 
 type Comment struct {
@@ -555,14 +595,15 @@ func (x *Comment) GetBody() string {
 }
 
 type CreatePostRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AuthorId      string                 `protobuf:"bytes,1,opt,name=author_id,json=authorId,proto3" json:"author_id,omitempty"`
-	PlanId        string                 `protobuf:"bytes,2,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
-	Body          string                 `protobuf:"bytes,3,opt,name=body,proto3" json:"body,omitempty"`
-	MediaUrls     []string               `protobuf:"bytes,4,rep,name=media_urls,json=mediaUrls,proto3" json:"media_urls,omitempty"`       // images; kept for compatibility
-	Visibility    string                 `protobuf:"bytes,5,opt,name=visibility,proto3" json:"visibility,omitempty"`                      // default private
-	CommunityId   string                 `protobuf:"bytes,6,opt,name=community_id,json=communityId,proto3" json:"community_id,omitempty"` // required for (and only for) visibility=community; caller must be a member
-	Media         []*PostMedia           `protobuf:"bytes,7,rep,name=media,proto3" json:"media,omitempty"`                                // typed media (image|video)
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	AuthorId string                 `protobuf:"bytes,1,opt,name=author_id,json=authorId,proto3" json:"author_id,omitempty"`
+	PlanId   string                 `protobuf:"bytes,2,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	Body     string                 `protobuf:"bytes,3,opt,name=body,proto3" json:"body,omitempty"`
+	// Deprecated: Marked as deprecated in social/v1/social.proto.
+	MediaUrls     []string     `protobuf:"bytes,4,rep,name=media_urls,json=mediaUrls,proto3" json:"media_urls,omitempty"`       // ignored on create; upload and use media[].media_id
+	Visibility    string       `protobuf:"bytes,5,opt,name=visibility,proto3" json:"visibility,omitempty"`                      // default private
+	CommunityId   string       `protobuf:"bytes,6,opt,name=community_id,json=communityId,proto3" json:"community_id,omitempty"` // required for (and only for) visibility=community; caller must be a member
+	Media         []*PostMedia `protobuf:"bytes,7,rep,name=media,proto3" json:"media,omitempty"`                                // 1–10 uploads, in display order
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -618,6 +659,7 @@ func (x *CreatePostRequest) GetBody() string {
 	return ""
 }
 
+// Deprecated: Marked as deprecated in social/v1/social.proto.
 func (x *CreatePostRequest) GetMediaUrls() []string {
 	if x != nil {
 		return x.MediaUrls
@@ -1429,22 +1471,28 @@ const file_social_v1_social_proto_rawDesc = "" +
 	" \x01(\x05R\tlikeCount\x12#\n" +
 	"\rcomment_count\x18\v \x01(\x05R\fcommentCount\x12\x1e\n" +
 	"\vliked_by_me\x18\f \x01(\bR\tlikedByMe\x12\x1e\n" +
-	"\vsaved_by_me\x18\r \x01(\bR\tsavedByMe\"<\n" +
+	"\vsaved_by_me\x18\r \x01(\bR\tsavedByMe\"\xc3\x01\n" +
 	"\tPostMedia\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x12\x1d\n" +
 	"\n" +
-	"media_type\x18\x02 \x01(\tR\tmediaType\"c\n" +
+	"media_type\x18\x02 \x01(\tR\tmediaType\x12\x19\n" +
+	"\bmedia_id\x18\x03 \x01(\tR\amediaId\x12\x1b\n" +
+	"\tthumb_url\x18\x04 \x01(\tR\bthumbUrl\x12\x14\n" +
+	"\x05width\x18\x05 \x01(\x05R\x05width\x12\x16\n" +
+	"\x06height\x18\x06 \x01(\x05R\x06height\x12\x1f\n" +
+	"\vduration_ms\x18\a \x01(\x05R\n" +
+	"durationMs\"c\n" +
 	"\aComment\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\apost_id\x18\x02 \x01(\tR\x06postId\x12\x1b\n" +
 	"\tauthor_id\x18\x03 \x01(\tR\bauthorId\x12\x12\n" +
-	"\x04body\x18\x04 \x01(\tR\x04body\"\xeb\x01\n" +
+	"\x04body\x18\x04 \x01(\tR\x04body\"\xef\x01\n" +
 	"\x11CreatePostRequest\x12\x1b\n" +
 	"\tauthor_id\x18\x01 \x01(\tR\bauthorId\x12\x17\n" +
 	"\aplan_id\x18\x02 \x01(\tR\x06planId\x12\x12\n" +
-	"\x04body\x18\x03 \x01(\tR\x04body\x12\x1d\n" +
+	"\x04body\x18\x03 \x01(\tR\x04body\x12!\n" +
 	"\n" +
-	"media_urls\x18\x04 \x03(\tR\tmediaUrls\x12\x1e\n" +
+	"media_urls\x18\x04 \x03(\tB\x02\x18\x01R\tmediaUrls\x12\x1e\n" +
 	"\n" +
 	"visibility\x18\x05 \x01(\tR\n" +
 	"visibility\x12!\n" +

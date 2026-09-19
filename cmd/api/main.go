@@ -33,6 +33,7 @@ import (
 	"github.com/hivemind/backend/internal/discovery"
 	"github.com/hivemind/backend/internal/externalevents"
 	"github.com/hivemind/backend/internal/host"
+	"github.com/hivemind/backend/internal/media"
 	"github.com/hivemind/backend/internal/moderation"
 	"github.com/hivemind/backend/internal/notifications"
 	"github.com/hivemind/backend/internal/payments"
@@ -55,6 +56,7 @@ import (
 	"github.com/hivemind/backend/pkg/email"
 	"github.com/hivemind/backend/pkg/grpcmiddleware"
 	"github.com/hivemind/backend/pkg/idempotency"
+	pkgmedia "github.com/hivemind/backend/pkg/media"
 	"github.com/hivemind/backend/pkg/oauth"
 	"github.com/hivemind/backend/pkg/observability"
 	"github.com/hivemind/backend/pkg/push"
@@ -84,6 +86,18 @@ func main() {
 
 	issuer := security.NewTokenIssuer(cfg.JWTSecret, cfg.JWTTTL)
 	guard := idempotency.NewGuard(rdb)
+
+	// Object storage for uploads. If it's unreachable the API still starts;
+	// anything that needs media answers Unimplemented ("not configured")
+	// instead of the whole server refusing to boot. Declared as the interface
+	// type so a failed connection is a true nil, not a typed-nil pointer.
+	var mediaResolver pkgmedia.Resolver
+	mediaSvc, err := media.Connect(ctx, cfg, pool)
+	if err != nil {
+		logger.Error("media storage unavailable — uploads disabled", "error", err)
+	} else {
+		mediaResolver = mediaSvc
+	}
 
 	interceptors := grpc.ChainUnaryInterceptor(
 		grpcmiddleware.RecoveryUnaryInterceptor(logger),
@@ -160,7 +174,7 @@ func main() {
 	// those packages declare.
 	subscriptionsSvc := subscriptions.NewService(subscriptions.NewRepository(pool))
 	communitiesSvc := communities.NewService(communities.NewRepository(pool)).WithEntitlements(subscriptionsSvc)
-	plansSvc := plans.NewService(plans.NewRepository(pool), bookingsSvc, bookingsSvc, plans.NewTemplateDraftGenerator()).WithCommunities(communitiesSvc)
+	plansSvc := plans.NewService(plans.NewRepository(pool), bookingsSvc, bookingsSvc, plans.NewTemplateDraftGenerator()).WithCommunities(communitiesSvc).WithMedia(mediaResolver)
 	bookingsSvc.WithEntitlements(subscriptionsSvc)
 
 	// Declared as the interface type for the same nil-interface reason as
@@ -176,14 +190,14 @@ func main() {
 
 	socialv1.RegisterAuthServiceServer(srv, auth.NewHandler(auth.NewService(auth.NewRepository(pool), issuer, googleVerifier, appleVerifier, emailSender, analyticsRec, logger)))
 	socialv1.RegisterUserServiceServer(srv, users.NewHandler(users.NewService(users.NewRepository(pool))))
-	socialv1.RegisterProfileServiceServer(srv, profiles.NewHandler(profiles.NewService(profiles.NewRepository(pool))))
+	socialv1.RegisterProfileServiceServer(srv, profiles.NewHandler(profiles.NewService(profiles.NewRepository(pool)).WithMedia(mediaResolver)))
 	socialv1.RegisterDiscoveryServiceServer(srv, discovery.NewHandler(discovery.NewService(discovery.NewRepository(pool))))
 	socialv1.RegisterPlanServiceServer(srv, plans.NewHandler(plansSvc))
 	socialv1.RegisterBookingServiceServer(srv, bookings.NewHandler(bookingsSvc))
 	socialv1.RegisterPaymentServiceServer(srv, payments.NewHandler(paymentsSvc))
 	socialv1.RegisterSubscriptionServiceServer(srv, subscriptions.NewHandler(subscriptionsSvc))
 	socialv1.RegisterCommunityServiceServer(srv, communities.NewHandler(communitiesSvc))
-	chatSvc := chat.NewService(chat.NewRepository(pool), moderationSvc, contentScreener, chat.NewTemplateIcebreaker())
+	chatSvc := chat.NewService(chat.NewRepository(pool), moderationSvc, contentScreener, chat.NewTemplateIcebreaker()).WithMedia(mediaResolver)
 	socialv1.RegisterConnectionServiceServer(srv, connections.NewHandler(connections.NewService(connections.NewRepository(pool)).WithMeetAgain(guard, chatSvc)))
 	availabilitySvc := availability.NewService(availability.NewRepository(pool), chatSvc)
 	socialv1.RegisterChatServiceServer(srv, chat.NewHandler(chatSvc))
@@ -191,8 +205,8 @@ func main() {
 	socialv1.RegisterReferralServiceServer(srv, referral.NewHandler(referral.NewService(referral.NewRepository(pool))))
 	socialv1.RegisterSafetyServiceServer(srv, safety.NewHandler(safety.NewService(safety.NewRepository(pool), emailSender, cfg.EmergencyNumber)))
 	socialv1.RegisterExternalEventServiceServer(srv, externalevents.NewHandler(externalevents.NewService(externalevents.NewRepository(pool), chatSvc)))
-	socialv1.RegisterStoryServiceServer(srv, stories.NewHandler(stories.NewService(stories.NewRepository(pool), contentScreener)))
-	socialv1.RegisterSocialServiceServer(srv, social.NewHandler(social.NewService(social.NewRepository(pool), moderationSvc, contentScreener)))
+	socialv1.RegisterStoryServiceServer(srv, stories.NewHandler(stories.NewService(stories.NewRepository(pool), contentScreener).WithMedia(mediaResolver)))
+	socialv1.RegisterSocialServiceServer(srv, social.NewHandler(social.NewService(social.NewRepository(pool), moderationSvc, contentScreener).WithMedia(mediaResolver)))
 	socialv1.RegisterModerationServiceServer(srv, moderation.NewHandler(moderationSvc))
 	socialv1.RegisterNotificationServiceServer(srv, notifications.NewHandler(notifications.NewService(notifications.NewRepository(pool), emailSender, pushSender, logger)))
 	socialv1.RegisterSearchServiceServer(srv, search.NewHandler(search.NewService(search.NewRepository(pool))))
@@ -230,6 +244,9 @@ func main() {
 	// Cashfree webhooks are plain HTTP POSTs from Cashfree's servers, not
 	// gRPC — a second, separate listener, same process.
 	webhookMux := http.NewServeMux()
+	if mediaSvc != nil {
+		media.NewHandler(mediaSvc, issuer, logger).Register(webhookMux)
+	}
 	webhookMux.HandleFunc("/webhooks/cashfree", cashfreeWebhookHandler(paymentsSvc, promotionsSvc, cashfreeClient, logger))
 	webhookSrv := &http.Server{Addr: ":" + cfg.WebhookPort, Handler: webhookMux}
 	go func() {

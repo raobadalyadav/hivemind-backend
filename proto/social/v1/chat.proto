@@ -73,6 +73,7 @@ message Message {
   Location location = 8;
   int32 duration_seconds = 9; // voice
   Poll poll = 10;
+  repeated MediaAsset media = 11; // image messages: photos and/or videos
 }
 
 message CreateRoomRequest {
@@ -88,9 +89,10 @@ message SendMessageRequest {
   string sender_id = 2;
   string body = 3;
   MessageType type = 4;
-  repeated string media_urls = 5;
+  repeated string media_urls = 5 [deprecated = true]; // ignored: upload and send media_ids
   Location location = 6;
   int32 duration_seconds = 7;
+  repeated string media_ids = 8; // IMAGE messages: 1–10 of the caller's own uploads (photo or video)
 }
 
 message CreatePollRequest {

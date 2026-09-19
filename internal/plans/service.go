@@ -6,12 +6,14 @@ import (
 	"time"
 
 	"github.com/hivemind/backend/pkg/eventbus"
+	"github.com/hivemind/backend/pkg/media"
 )
 
 var (
-	ErrInvalidInput   = errors.New("plans: invalid input")
-	ErrForbidden      = errors.New("plans: caller is not the host of this plan")
-	ErrAlreadyDecided = errors.New("plans: join request was already decided differently")
+	ErrInvalidInput     = errors.New("plans: invalid input")
+	ErrForbidden        = errors.New("plans: caller is not the host of this plan")
+	ErrMediaUnavailable = errors.New("plans: media uploads are not configured")
+	ErrAlreadyDecided   = errors.New("plans: join request was already decided differently")
 )
 
 // CommunityRoleChecker is satisfied by *communities.Service — creating a
@@ -44,7 +46,14 @@ type Service struct {
 	creator     BookingCreator
 	canceller   BookingCanceller
 	draftGen    DraftGenerator
+	media       media.Resolver
 	communities CommunityRoleChecker
+}
+
+// WithMedia enables plan cover photos (attached by upload id).
+func (s *Service) WithMedia(m media.Resolver) *Service {
+	s.media = m
+	return s
 }
 
 // WithCommunities enables community plans (setter, so NewService call sites
@@ -78,6 +87,22 @@ var (
 func (s *Service) CreatePlan(ctx context.Context, p *Plan, recurrenceRule string) (*Plan, error) {
 	if p.Title == "" || p.HostID == "" || p.Capacity <= 0 {
 		return nil, ErrInvalidInput
+	}
+	if p.CoverMediaID != "" {
+		if s.media == nil {
+			return nil, ErrMediaUnavailable
+		}
+		assets, err := s.media.Claim(ctx, p.HostID, []string{p.CoverMediaID})
+		if err != nil {
+			if errors.Is(err, media.ErrNotFound) {
+				return nil, ErrInvalidInput
+			}
+			return nil, err
+		}
+		if assets[0].Kind != "image" {
+			return nil, ErrInvalidInput
+		}
+		p.CoverURL, p.CoverThumbURL = assets[0].URL, assets[0].ThumbURL
 	}
 	if p.Currency == "" {
 		p.Currency = "INR"

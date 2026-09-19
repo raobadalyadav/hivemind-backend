@@ -7,6 +7,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+
+	"github.com/hivemind/backend/pkg/media"
 )
 
 var (
@@ -32,10 +34,17 @@ func (r *Repository) SendMessage(ctx context.Context, m *Message) (*Message, err
 	if err != nil {
 		return nil, err
 	}
-	for _, u := range m.MediaURLs {
-		if _, err := tx.Exec(ctx, `INSERT INTO message_media (message_id, media_url) VALUES ($1, $2)`, out.ID, u); err != nil {
+	for i, a := range m.Media {
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO message_media (message_id, media_url, media_id, kind, thumb_url, width, height, duration_ms, position)
+			VALUES ($1, $2, $3::uuid, $4, $5, $6, $7, $8, $9)`,
+			out.ID, a.URL, a.ID, a.Kind, a.ThumbURL, a.Width, a.Height, a.DurationMS, i); err != nil {
 			return nil, err
 		}
+	}
+	out.MediaURLs = nil
+	for _, a := range m.Media {
+		out.MediaURLs = append(out.MediaURLs, a.URL)
 	}
 	return out, tx.Commit(ctx)
 }
@@ -209,17 +218,19 @@ func (r *Repository) hydrate(ctx context.Context, msgs []*Message, viewerID stri
 	for i, m := range msgs {
 		ids[i], byID[m.ID] = m.ID, m
 	}
-	rows, err := r.pool.Query(ctx, `SELECT message_id::text, media_url FROM message_media WHERE message_id = ANY($1::uuid[]) ORDER BY id`, ids)
+	rows, err := r.pool.Query(ctx, `SELECT message_id::text, media_url, COALESCE(media_id::text,''), kind, thumb_url, width, height, duration_ms FROM message_media WHERE message_id = ANY($1::uuid[]) ORDER BY position, id`, ids)
 	if err != nil {
 		return err
 	}
 	for rows.Next() {
-		var id, u string
-		if err := rows.Scan(&id, &u); err != nil {
+		var id string
+		var a media.Asset
+		if err := rows.Scan(&id, &a.URL, &a.ID, &a.Kind, &a.ThumbURL, &a.Width, &a.Height, &a.DurationMS); err != nil {
 			rows.Close()
 			return err
 		}
-		byID[id].MediaURLs = append(byID[id].MediaURLs, u)
+		byID[id].MediaURLs = append(byID[id].MediaURLs, a.URL)
+		byID[id].Media = append(byID[id].Media, a)
 	}
 	rows.Close()
 	if err := rows.Err(); err != nil {

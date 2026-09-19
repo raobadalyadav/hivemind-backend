@@ -7,6 +7,7 @@ import (
 
 	"github.com/hivemind/backend/internal/bookings"
 	"github.com/hivemind/backend/internal/chat"
+	"github.com/hivemind/backend/internal/media"
 	"github.com/hivemind/backend/internal/notifications"
 	"github.com/hivemind/backend/internal/payments"
 	"github.com/hivemind/backend/internal/plans"
@@ -24,6 +25,7 @@ type deps struct {
 	bookingsSvc      *bookings.Service
 	plansSvc         *plans.Service
 	storiesSvc       *stories.Service
+	mediaSvc         *media.Service // nil when object storage is unreachable
 	analyticsRec     *analytics.Recorder
 	logger           *slog.Logger
 }

@@ -15,8 +15,13 @@ import (
 )
 
 type Media struct {
-	URL  string
-	Type string // image | video
+	ID         string // upload id (create) — empty for legacy link rows
+	URL        string
+	Type       string // image | video
+	ThumbURL   string
+	Width      int32
+	Height     int32
+	DurationMS int32
 }
 
 type Post struct {
@@ -92,14 +97,14 @@ func (r *Repository) hydrate(ctx context.Context, posts []*Post, viewerID string
 		ids[i], byID[p.ID] = p.ID, p
 	}
 	rows, err := r.pool.Query(ctx,
-		`SELECT post_id::text, media_url, media_type FROM post_media WHERE post_id = ANY($1::uuid[]) ORDER BY post_id, position`, ids)
+		`SELECT post_id::text, media_url, media_type, thumb_url, width, height, duration_ms FROM post_media WHERE post_id = ANY($1::uuid[]) ORDER BY post_id, position`, ids)
 	if err != nil {
 		return err
 	}
 	for rows.Next() {
 		var id string
 		var m Media
-		if err := rows.Scan(&id, &m.URL, &m.Type); err != nil {
+		if err := rows.Scan(&id, &m.URL, &m.Type, &m.ThumbURL, &m.Width, &m.Height, &m.DurationMS); err != nil {
 			rows.Close()
 			return err
 		}
@@ -161,8 +166,9 @@ func (r *Repository) Create(ctx context.Context, p *Post) (*Post, error) {
 	}
 	for i, m := range p.Media {
 		if _, err := tx.Exec(ctx,
-			`INSERT INTO post_media (post_id, media_url, media_type, position) VALUES ($1, $2, $3, $4)`,
-			out.ID, m.URL, m.Type, i,
+			`INSERT INTO post_media (post_id, media_url, media_type, position, media_id, thumb_url, width, height, duration_ms)
+			 VALUES ($1, $2, $3, $4, NULLIF($5,'')::uuid, $6, $7, $8, $9)`,
+			out.ID, m.URL, m.Type, i, m.ID, m.ThumbURL, m.Width, m.Height, m.DurationMS,
 		); err != nil {
 			return nil, err
 		}

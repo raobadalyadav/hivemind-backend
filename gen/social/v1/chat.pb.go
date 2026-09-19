@@ -356,6 +356,7 @@ type Message struct {
 	Location        *Location              `protobuf:"bytes,8,opt,name=location,proto3" json:"location,omitempty"`
 	DurationSeconds int32                  `protobuf:"varint,9,opt,name=duration_seconds,json=durationSeconds,proto3" json:"duration_seconds,omitempty"` // voice
 	Poll            *Poll                  `protobuf:"bytes,10,opt,name=poll,proto3" json:"poll,omitempty"`
+	Media           []*MediaAsset          `protobuf:"bytes,11,rep,name=media,proto3" json:"media,omitempty"` // image messages: photos and/or videos
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -460,6 +461,13 @@ func (x *Message) GetPoll() *Poll {
 	return nil
 }
 
+func (x *Message) GetMedia() []*MediaAsset {
+	if x != nil {
+		return x.Media
+	}
+	return nil
+}
+
 type CreateRoomRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PlanId        string                 `protobuf:"bytes,1,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
@@ -509,14 +517,16 @@ func (x *CreateRoomRequest) GetPlanId() string {
 // caption); voice needs exactly 1 media_url + duration_seconds 1–300;
 // location needs a valid location.
 type SendMessageRequest struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	RoomId          string                 `protobuf:"bytes,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
-	SenderId        string                 `protobuf:"bytes,2,opt,name=sender_id,json=senderId,proto3" json:"sender_id,omitempty"`
-	Body            string                 `protobuf:"bytes,3,opt,name=body,proto3" json:"body,omitempty"`
-	Type            MessageType            `protobuf:"varint,4,opt,name=type,proto3,enum=social.v1.MessageType" json:"type,omitempty"`
-	MediaUrls       []string               `protobuf:"bytes,5,rep,name=media_urls,json=mediaUrls,proto3" json:"media_urls,omitempty"`
-	Location        *Location              `protobuf:"bytes,6,opt,name=location,proto3" json:"location,omitempty"`
-	DurationSeconds int32                  `protobuf:"varint,7,opt,name=duration_seconds,json=durationSeconds,proto3" json:"duration_seconds,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	RoomId   string                 `protobuf:"bytes,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
+	SenderId string                 `protobuf:"bytes,2,opt,name=sender_id,json=senderId,proto3" json:"sender_id,omitempty"`
+	Body     string                 `protobuf:"bytes,3,opt,name=body,proto3" json:"body,omitempty"`
+	Type     MessageType            `protobuf:"varint,4,opt,name=type,proto3,enum=social.v1.MessageType" json:"type,omitempty"`
+	// Deprecated: Marked as deprecated in social/v1/chat.proto.
+	MediaUrls       []string  `protobuf:"bytes,5,rep,name=media_urls,json=mediaUrls,proto3" json:"media_urls,omitempty"` // ignored: upload and send media_ids
+	Location        *Location `protobuf:"bytes,6,opt,name=location,proto3" json:"location,omitempty"`
+	DurationSeconds int32     `protobuf:"varint,7,opt,name=duration_seconds,json=durationSeconds,proto3" json:"duration_seconds,omitempty"`
+	MediaIds        []string  `protobuf:"bytes,8,rep,name=media_ids,json=mediaIds,proto3" json:"media_ids,omitempty"` // IMAGE messages: 1–10 of the caller's own uploads (photo or video)
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -579,6 +589,7 @@ func (x *SendMessageRequest) GetType() MessageType {
 	return MessageType_MESSAGE_TYPE_TEXT
 }
 
+// Deprecated: Marked as deprecated in social/v1/chat.proto.
 func (x *SendMessageRequest) GetMediaUrls() []string {
 	if x != nil {
 		return x.MediaUrls
@@ -598,6 +609,13 @@ func (x *SendMessageRequest) GetDurationSeconds() int32 {
 		return x.DurationSeconds
 	}
 	return 0
+}
+
+func (x *SendMessageRequest) GetMediaIds() []string {
+	if x != nil {
+		return x.MediaIds
+	}
+	return nil
 }
 
 type CreatePollRequest struct {
@@ -1146,7 +1164,7 @@ const file_social_v1_chat_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\aplan_id\x18\x02 \x01(\tR\x06planId\x12&\n" +
 	"\x05audit\x18\x03 \x01(\v2\x10.social.v1.AuditR\x05audit\x12*\n" +
-	"\x11pinned_message_id\x18\x04 \x01(\tR\x0fpinnedMessageId\"\xe4\x02\n" +
+	"\x11pinned_message_id\x18\x04 \x01(\tR\x0fpinnedMessageId\"\x91\x03\n" +
 	"\aMessage\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\aroom_id\x18\x02 \x01(\tR\x06roomId\x12\x1b\n" +
@@ -1159,18 +1177,20 @@ const file_social_v1_chat_proto_rawDesc = "" +
 	"\blocation\x18\b \x01(\v2\x13.social.v1.LocationR\blocation\x12)\n" +
 	"\x10duration_seconds\x18\t \x01(\x05R\x0fdurationSeconds\x12#\n" +
 	"\x04poll\x18\n" +
-	" \x01(\v2\x0f.social.v1.PollR\x04poll\",\n" +
+	" \x01(\v2\x0f.social.v1.PollR\x04poll\x12+\n" +
+	"\x05media\x18\v \x03(\v2\x15.social.v1.MediaAssetR\x05media\",\n" +
 	"\x11CreateRoomRequest\x12\x17\n" +
-	"\aplan_id\x18\x01 \x01(\tR\x06planId\"\x85\x02\n" +
+	"\aplan_id\x18\x01 \x01(\tR\x06planId\"\xa6\x02\n" +
 	"\x12SendMessageRequest\x12\x17\n" +
 	"\aroom_id\x18\x01 \x01(\tR\x06roomId\x12\x1b\n" +
 	"\tsender_id\x18\x02 \x01(\tR\bsenderId\x12\x12\n" +
 	"\x04body\x18\x03 \x01(\tR\x04body\x12*\n" +
-	"\x04type\x18\x04 \x01(\x0e2\x16.social.v1.MessageTypeR\x04type\x12\x1d\n" +
+	"\x04type\x18\x04 \x01(\x0e2\x16.social.v1.MessageTypeR\x04type\x12!\n" +
 	"\n" +
-	"media_urls\x18\x05 \x03(\tR\tmediaUrls\x12/\n" +
+	"media_urls\x18\x05 \x03(\tB\x02\x18\x01R\tmediaUrls\x12/\n" +
 	"\blocation\x18\x06 \x01(\v2\x13.social.v1.LocationR\blocation\x12)\n" +
-	"\x10duration_seconds\x18\a \x01(\x05R\x0fdurationSeconds\"b\n" +
+	"\x10duration_seconds\x18\a \x01(\x05R\x0fdurationSeconds\x12\x1b\n" +
+	"\tmedia_ids\x18\b \x03(\tR\bmediaIds\"b\n" +
 	"\x11CreatePollRequest\x12\x17\n" +
 	"\aroom_id\x18\x01 \x01(\tR\x06roomId\x12\x1a\n" +
 	"\bquestion\x18\x02 \x01(\tR\bquestion\x12\x18\n" +
@@ -1259,8 +1279,9 @@ var file_social_v1_chat_proto_goTypes = []any{
 	(*GenerateIcebreakerResponse)(nil), // 17: social.v1.GenerateIcebreakerResponse
 	(*Audit)(nil),                      // 18: social.v1.Audit
 	(*timestamppb.Timestamp)(nil),      // 19: google.protobuf.Timestamp
-	(*PageRequest)(nil),                // 20: social.v1.PageRequest
-	(*PageResponse)(nil),               // 21: social.v1.PageResponse
+	(*MediaAsset)(nil),                 // 20: social.v1.MediaAsset
+	(*PageRequest)(nil),                // 21: social.v1.PageRequest
+	(*PageResponse)(nil),               // 22: social.v1.PageResponse
 }
 var file_social_v1_chat_proto_depIdxs = []int32{
 	2,  // 0: social.v1.Poll.options:type_name -> social.v1.PollOption
@@ -1269,33 +1290,34 @@ var file_social_v1_chat_proto_depIdxs = []int32{
 	0,  // 3: social.v1.Message.type:type_name -> social.v1.MessageType
 	1,  // 4: social.v1.Message.location:type_name -> social.v1.Location
 	3,  // 5: social.v1.Message.poll:type_name -> social.v1.Poll
-	0,  // 6: social.v1.SendMessageRequest.type:type_name -> social.v1.MessageType
-	1,  // 7: social.v1.SendMessageRequest.location:type_name -> social.v1.Location
-	20, // 8: social.v1.ListMessagesRequest.page:type_name -> social.v1.PageRequest
-	5,  // 9: social.v1.ListMessagesResponse.messages:type_name -> social.v1.Message
-	21, // 10: social.v1.ListMessagesResponse.page:type_name -> social.v1.PageResponse
-	5,  // 11: social.v1.ListMessagesResponse.pinned_message:type_name -> social.v1.Message
-	6,  // 12: social.v1.ChatService.CreateRoom:input_type -> social.v1.CreateRoomRequest
-	7,  // 13: social.v1.ChatService.SendMessage:input_type -> social.v1.SendMessageRequest
-	12, // 14: social.v1.ChatService.ListMessages:input_type -> social.v1.ListMessagesRequest
-	14, // 15: social.v1.ChatService.ReportMessage:input_type -> social.v1.ReportMessageRequest
-	16, // 16: social.v1.ChatService.GenerateIcebreaker:input_type -> social.v1.GenerateIcebreakerRequest
-	8,  // 17: social.v1.ChatService.CreatePoll:input_type -> social.v1.CreatePollRequest
-	9,  // 18: social.v1.ChatService.VotePoll:input_type -> social.v1.VotePollRequest
-	10, // 19: social.v1.ChatService.PinMessage:input_type -> social.v1.PinMessageRequest
-	4,  // 20: social.v1.ChatService.CreateRoom:output_type -> social.v1.ChatRoom
-	5,  // 21: social.v1.ChatService.SendMessage:output_type -> social.v1.Message
-	13, // 22: social.v1.ChatService.ListMessages:output_type -> social.v1.ListMessagesResponse
-	15, // 23: social.v1.ChatService.ReportMessage:output_type -> social.v1.ReportMessageResponse
-	17, // 24: social.v1.ChatService.GenerateIcebreaker:output_type -> social.v1.GenerateIcebreakerResponse
-	5,  // 25: social.v1.ChatService.CreatePoll:output_type -> social.v1.Message
-	3,  // 26: social.v1.ChatService.VotePoll:output_type -> social.v1.Poll
-	11, // 27: social.v1.ChatService.PinMessage:output_type -> social.v1.PinMessageResponse
-	20, // [20:28] is the sub-list for method output_type
-	12, // [12:20] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	20, // 6: social.v1.Message.media:type_name -> social.v1.MediaAsset
+	0,  // 7: social.v1.SendMessageRequest.type:type_name -> social.v1.MessageType
+	1,  // 8: social.v1.SendMessageRequest.location:type_name -> social.v1.Location
+	21, // 9: social.v1.ListMessagesRequest.page:type_name -> social.v1.PageRequest
+	5,  // 10: social.v1.ListMessagesResponse.messages:type_name -> social.v1.Message
+	22, // 11: social.v1.ListMessagesResponse.page:type_name -> social.v1.PageResponse
+	5,  // 12: social.v1.ListMessagesResponse.pinned_message:type_name -> social.v1.Message
+	6,  // 13: social.v1.ChatService.CreateRoom:input_type -> social.v1.CreateRoomRequest
+	7,  // 14: social.v1.ChatService.SendMessage:input_type -> social.v1.SendMessageRequest
+	12, // 15: social.v1.ChatService.ListMessages:input_type -> social.v1.ListMessagesRequest
+	14, // 16: social.v1.ChatService.ReportMessage:input_type -> social.v1.ReportMessageRequest
+	16, // 17: social.v1.ChatService.GenerateIcebreaker:input_type -> social.v1.GenerateIcebreakerRequest
+	8,  // 18: social.v1.ChatService.CreatePoll:input_type -> social.v1.CreatePollRequest
+	9,  // 19: social.v1.ChatService.VotePoll:input_type -> social.v1.VotePollRequest
+	10, // 20: social.v1.ChatService.PinMessage:input_type -> social.v1.PinMessageRequest
+	4,  // 21: social.v1.ChatService.CreateRoom:output_type -> social.v1.ChatRoom
+	5,  // 22: social.v1.ChatService.SendMessage:output_type -> social.v1.Message
+	13, // 23: social.v1.ChatService.ListMessages:output_type -> social.v1.ListMessagesResponse
+	15, // 24: social.v1.ChatService.ReportMessage:output_type -> social.v1.ReportMessageResponse
+	17, // 25: social.v1.ChatService.GenerateIcebreaker:output_type -> social.v1.GenerateIcebreakerResponse
+	5,  // 26: social.v1.ChatService.CreatePoll:output_type -> social.v1.Message
+	3,  // 27: social.v1.ChatService.VotePoll:output_type -> social.v1.Poll
+	11, // 28: social.v1.ChatService.PinMessage:output_type -> social.v1.PinMessageResponse
+	21, // [21:29] is the sub-list for method output_type
+	13, // [13:21] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_chat_proto_init() }

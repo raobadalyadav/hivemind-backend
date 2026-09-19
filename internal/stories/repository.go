@@ -35,6 +35,12 @@ type Story struct {
 	KeepArchive bool
 	CreatedAt   time.Time
 	ExpiresAt   time.Time
+	MediaID     string
+	ThumbURL    string
+	Width       int32
+	Height      int32
+	DurationMS  int32
+	Edits       string // JSON object; "{}" when unedited
 }
 
 type Repository struct {
@@ -46,7 +52,8 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 }
 
 const storyCols = `s.id::text, s.author_id::text, COALESCE(up.display_name,''), s.media_url, s.media_type, s.caption,
-	s.audience::text, COALESCE(s.community_id::text,''), s.keep_archive, s.created_at, s.expires_at`
+	s.audience::text, COALESCE(s.community_id::text,''), s.keep_archive, s.created_at, s.expires_at,
+	COALESCE(s.media_id::text,''), s.thumb_url, s.width, s.height, s.duration_ms, s.edits::text`
 
 func scanStories(rows pgx.Rows) ([]*Story, error) {
 	defer rows.Close()
@@ -54,7 +61,8 @@ func scanStories(rows pgx.Rows) ([]*Story, error) {
 	for rows.Next() {
 		var s Story
 		if err := rows.Scan(&s.ID, &s.AuthorID, &s.AuthorName, &s.MediaURL, &s.MediaType, &s.Caption,
-			&s.Audience, &s.CommunityID, &s.KeepArchive, &s.CreatedAt, &s.ExpiresAt); err != nil {
+			&s.Audience, &s.CommunityID, &s.KeepArchive, &s.CreatedAt, &s.ExpiresAt,
+			&s.MediaID, &s.ThumbURL, &s.Width, &s.Height, &s.DurationMS, &s.Edits); err != nil {
 			return nil, err
 		}
 		out = append(out, &s)
@@ -76,10 +84,13 @@ func (r *Repository) IsCommunityMember(ctx context.Context, communityID, userID 
 func (r *Repository) Create(ctx context.Context, s *Story, now time.Time) (*Story, error) {
 	out := *s
 	err := r.pool.QueryRow(ctx, `
-		INSERT INTO stories (author_id, media_url, media_type, caption, audience, community_id, keep_archive, created_at, expires_at)
-		VALUES ($1, $2, $3, $4, $5::story_audience, NULLIF($6,'')::uuid, $7, $8::timestamptz, $9::timestamptz)
+		INSERT INTO stories (author_id, media_url, media_type, caption, audience, community_id, keep_archive, created_at, expires_at,
+			media_id, thumb_url, width, height, duration_ms, edits)
+		VALUES ($1, $2, $3, $4, $5::story_audience, NULLIF($6,'')::uuid, $7, $8::timestamptz, $9::timestamptz,
+			$10::uuid, $11, $12, $13, $14, $15::jsonb)
 		RETURNING id::text, created_at, expires_at`,
 		s.AuthorID, s.MediaURL, s.MediaType, s.Caption, s.Audience, s.CommunityID, s.KeepArchive, now, now.Add(Lifetime),
+		s.MediaID, s.ThumbURL, s.Width, s.Height, s.DurationMS, s.Edits,
 	).Scan(&out.ID, &out.CreatedAt, &out.ExpiresAt)
 	return &out, err
 }

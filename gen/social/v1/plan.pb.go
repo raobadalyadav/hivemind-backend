@@ -563,6 +563,8 @@ type Plan struct {
 	CommunityId         string                 `protobuf:"bytes,18,opt,name=community_id,json=communityId,proto3" json:"community_id,omitempty"`
 	RequiresEntitlement string                 `protobuf:"bytes,19,opt,name=requires_entitlement,json=requiresEntitlement,proto3" json:"requires_entitlement,omitempty"` // subscription product name (premium plans)
 	SeriesId            string                 `protobuf:"bytes,20,opt,name=series_id,json=seriesId,proto3" json:"series_id,omitempty"`                                  // set on recurring-plan occurrences
+	CoverUrl            string                 `protobuf:"bytes,21,opt,name=cover_url,json=coverUrl,proto3" json:"cover_url,omitempty"`
+	CoverThumbUrl       string                 `protobuf:"bytes,22,opt,name=cover_thumb_url,json=coverThumbUrl,proto3" json:"cover_thumb_url,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -737,6 +739,20 @@ func (x *Plan) GetSeriesId() string {
 	return ""
 }
 
+func (x *Plan) GetCoverUrl() string {
+	if x != nil {
+		return x.CoverUrl
+	}
+	return ""
+}
+
+func (x *Plan) GetCoverThumbUrl() string {
+	if x != nil {
+		return x.CoverThumbUrl
+	}
+	return ""
+}
+
 type CreatePlanRequest struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	Title               string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
@@ -756,6 +772,7 @@ type CreatePlanRequest struct {
 	RequiresEntitlement string                 `protobuf:"bytes,15,opt,name=requires_entitlement,json=requiresEntitlement,proto3" json:"requires_entitlement,omitempty"` // must be an existing subscription product name
 	// recurrence_rule: FREQ=DAILY|WEEKLY|MONTHLY[;INTERVAL=n][;COUNT=n|;UNTIL=YYYYMMDD]
 	RecurrenceRule string `protobuf:"bytes,16,opt,name=recurrence_rule,json=recurrenceRule,proto3" json:"recurrence_rule,omitempty"`
+	CoverMediaId   string `protobuf:"bytes,17,opt,name=cover_media_id,json=coverMediaId,proto3" json:"cover_media_id,omitempty"` // optional: the caller's own image upload
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -898,6 +915,13 @@ func (x *CreatePlanRequest) GetRequiresEntitlement() string {
 func (x *CreatePlanRequest) GetRecurrenceRule() string {
 	if x != nil {
 		return x.RecurrenceRule
+	}
+	return ""
+}
+
+func (x *CreatePlanRequest) GetCoverMediaId() string {
+	if x != nil {
+		return x.CoverMediaId
 	}
 	return ""
 }
@@ -1908,7 +1932,7 @@ const file_social_v1_plan_proto_rawDesc = "" +
 	"\x1fSetParticipantVisibilityRequest\x12\x17\n" +
 	"\aplan_id\x18\x01 \x01(\tR\x06planId\x12\x18\n" +
 	"\avisible\x18\x02 \x01(\bR\avisible\"\"\n" +
-	" SetParticipantVisibilityResponse\"\x83\x06\n" +
+	" SetParticipantVisibilityResponse\"\xc8\x06\n" +
 	"\x04Plan\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
@@ -1933,7 +1957,9 @@ const file_social_v1_plan_proto_rawDesc = "" +
 	"visibility\x12!\n" +
 	"\fcommunity_id\x18\x12 \x01(\tR\vcommunityId\x121\n" +
 	"\x14requires_entitlement\x18\x13 \x01(\tR\x13requiresEntitlement\x12\x1b\n" +
-	"\tseries_id\x18\x14 \x01(\tR\bseriesId\"\x8c\x05\n" +
+	"\tseries_id\x18\x14 \x01(\tR\bseriesId\x12\x1b\n" +
+	"\tcover_url\x18\x15 \x01(\tR\bcoverUrl\x12&\n" +
+	"\x0fcover_thumb_url\x18\x16 \x01(\tR\rcoverThumbUrl\"\xb2\x05\n" +
 	"\x11CreatePlanRequest\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1f\n" +
@@ -1954,7 +1980,8 @@ const file_social_v1_plan_proto_rawDesc = "" +
 	"visibility\x12!\n" +
 	"\fcommunity_id\x18\x0e \x01(\tR\vcommunityId\x121\n" +
 	"\x14requires_entitlement\x18\x0f \x01(\tR\x13requiresEntitlement\x12'\n" +
-	"\x0frecurrence_rule\x18\x10 \x01(\tR\x0erecurrenceRule\" \n" +
+	"\x0frecurrence_rule\x18\x10 \x01(\tR\x0erecurrenceRule\x12$\n" +
+	"\x0ecover_media_id\x18\x11 \x01(\tR\fcoverMediaId\" \n" +
 	"\x0eGetPlanRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\xc4\x01\n" +
 	"\x12SearchPlansRequest\x12\x17\n" +

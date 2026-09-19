@@ -158,6 +158,9 @@ type ProfilePhoto struct {
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Url           string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
 	Position      int32                  `protobuf:"varint,3,opt,name=position,proto3" json:"position,omitempty"`
+	ThumbUrl      string                 `protobuf:"bytes,4,opt,name=thumb_url,json=thumbUrl,proto3" json:"thumb_url,omitempty"`
+	Width         int32                  `protobuf:"varint,5,opt,name=width,proto3" json:"width,omitempty"`
+	Height        int32                  `protobuf:"varint,6,opt,name=height,proto3" json:"height,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -209,6 +212,27 @@ func (x *ProfilePhoto) GetUrl() string {
 func (x *ProfilePhoto) GetPosition() int32 {
 	if x != nil {
 		return x.Position
+	}
+	return 0
+}
+
+func (x *ProfilePhoto) GetThumbUrl() string {
+	if x != nil {
+		return x.ThumbUrl
+	}
+	return ""
+}
+
+func (x *ProfilePhoto) GetWidth() int32 {
+	if x != nil {
+		return x.Width
+	}
+	return 0
+}
+
+func (x *ProfilePhoto) GetHeight() int32 {
+	if x != nil {
+		return x.Height
 	}
 	return 0
 }
@@ -423,8 +447,10 @@ func (x *UpdateProfileRequest) GetHobbies() []string {
 }
 
 type AddProfilePhotoRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"` // https only, <= 2048 chars; the server never fetches it
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Deprecated: Marked as deprecated in social/v1/profile.proto.
+	Url           string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`                        // ignored
+	MediaId       string `protobuf:"bytes,2,opt,name=media_id,json=mediaId,proto3" json:"media_id,omitempty"` // the caller's own image upload
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -459,9 +485,17 @@ func (*AddProfilePhotoRequest) Descriptor() ([]byte, []int) {
 	return file_social_v1_profile_proto_rawDescGZIP(), []int{5}
 }
 
+// Deprecated: Marked as deprecated in social/v1/profile.proto.
 func (x *AddProfilePhotoRequest) GetUrl() string {
 	if x != nil {
 		return x.Url
+	}
+	return ""
+}
+
+func (x *AddProfilePhotoRequest) GetMediaId() string {
+	if x != nil {
+		return x.MediaId
 	}
 	return ""
 }
@@ -1053,11 +1087,14 @@ const file_social_v1_profile_proto_rawDesc = "" +
 	"\teducation\x18\n" +
 	" \x01(\tR\teducation\x12\x18\n" +
 	"\ahobbies\x18\v \x03(\tR\ahobbies\x12/\n" +
-	"\x06photos\x18\f \x03(\v2\x17.social.v1.ProfilePhotoR\x06photos\"L\n" +
+	"\x06photos\x18\f \x03(\v2\x17.social.v1.ProfilePhotoR\x06photos\"\x97\x01\n" +
 	"\fProfilePhoto\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\x12\x1a\n" +
-	"\bposition\x18\x03 \x01(\x05R\bposition\"p\n" +
+	"\bposition\x18\x03 \x01(\x05R\bposition\x12\x1b\n" +
+	"\tthumb_url\x18\x04 \x01(\tR\bthumbUrl\x12\x14\n" +
+	"\x05width\x18\x05 \x01(\x05R\x05width\x12\x16\n" +
+	"\x06height\x18\x06 \x01(\x05R\x06height\"p\n" +
 	"\x14CreateProfileRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
 	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12\x1c\n" +
@@ -1079,9 +1116,10 @@ const file_social_v1_profile_proto_rawDesc = "" +
 	"\v_occupationB\t\n" +
 	"\a_genderB\f\n" +
 	"\n" +
-	"_education\"*\n" +
-	"\x16AddProfilePhotoRequest\x12\x10\n" +
-	"\x03url\x18\x01 \x01(\tR\x03url\"6\n" +
+	"_education\"I\n" +
+	"\x16AddProfilePhotoRequest\x12\x14\n" +
+	"\x03url\x18\x01 \x01(\tB\x02\x18\x01R\x03url\x12\x19\n" +
+	"\bmedia_id\x18\x02 \x01(\tR\amediaId\"6\n" +
 	"\x19DeleteProfilePhotoRequest\x12\x19\n" +
 	"\bphoto_id\x18\x01 \x01(\tR\aphotoId\"\x1c\n" +
 	"\x1aDeleteProfilePhotoResponse\":\n" +

@@ -3,6 +3,7 @@ syntax = "proto3";
 package social.v1;
 
 import "google/protobuf/timestamp.proto";
+import "social/v1/common.proto";
 
 option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
 
@@ -35,15 +36,21 @@ message Story {
   bool keep_archive = 8;
   google.protobuf.Timestamp created_at = 9;
   google.protobuf.Timestamp expires_at = 10;
+  MediaAsset media = 11;
+  // Non-destructive edits (filter id + text/emoji overlays, normalised
+  // coordinates) applied when rendering — see the mobile StoryCanvas.
+  string edits_json = 12;
 }
 
 message CreateStoryRequest {
-  string media_url = 1; // https only
-  string media_type = 2; // image | video; default image
+  string media_url = 1 [deprecated = true];  // ignored: upload with POST /v1/media and send media_id
+  string media_type = 2 [deprecated = true]; // ignored: the upload knows its kind
   string caption = 3;
   StoryAudience audience = 4;
   string community_id = 5; // required for (and only for) the community audience; caller must be a member
   bool keep_archive = 6;
+  string media_id = 7;   // required; must be the caller's own upload
+  string edits_json = 8; // optional, <= 8 KB JSON object
 }
 
 message StoryGroup {

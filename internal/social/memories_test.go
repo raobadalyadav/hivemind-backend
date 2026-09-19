@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/hivemind/backend/pkg/media/mediatest"
 )
 
 type nopScreener struct{}
@@ -43,7 +45,8 @@ func TestMemories_GroupingCountsAndAttachGate(t *testing.T) {
 	pool := testPool(t)
 	defer pool.Close()
 	ctx := context.Background()
-	svc := NewService(NewRepository(pool), nil, nopScreener{})
+	fm := mediatest.New(pool)
+	svc := NewService(NewRepository(pool), nil, nopScreener{}).WithMedia(fm)
 
 	host, me, other, outsider := seedUser(t, pool, "h"), seedUser(t, pool, "me"), seedUser(t, pool, "o"), seedUser(t, pool, "x")
 	mkPlan := func(title string, startsAgo time.Duration) string {
@@ -70,7 +73,7 @@ func TestMemories_GroupingCountsAndAttachGate(t *testing.T) {
 		t.Fatalf("a non-attendee can't tag a plan, got %v", err)
 	}
 	if _, err := svc.CreatePost(ctx, &Post{AuthorID: me, PlanID: recent, Body: "great", Visibility: "public",
-		MediaURLs: []string{"https://cdn.example/1.jpg", "https://cdn.example/2.jpg"}}); err != nil {
+		Media: []Media{{ID: fm.Add(me, "image").ID}, {ID: fm.Add(me, "image").ID}}}); err != nil {
 		t.Fatalf("an attendee can: %v", err)
 	}
 

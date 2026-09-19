@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"strings"
+
+	"github.com/hivemind/backend/pkg/media"
 )
 
 var (
-	ErrInvalidInput    = errors.New("chat: invalid input")
-	ErrContentRejected = errors.New("chat: message violates content policy")
+	ErrInvalidInput     = errors.New("chat: invalid input")
+	ErrContentRejected  = errors.New("chat: message violates content policy")
+	ErrMediaUnavailable = errors.New("chat: media uploads are not configured")
 )
 
 const defaultMessagePageSize = 50
@@ -28,10 +31,17 @@ type ContentScreener interface {
 }
 
 type Service struct {
+	media      media.Resolver
 	repo       *Repository
 	reporter   ReportSubmitter
 	screener   ContentScreener
 	icebreaker IcebreakerGenerator
+}
+
+// WithMedia enables photo/video messages (attached by upload id).
+func (s *Service) WithMedia(m media.Resolver) *Service {
+	s.media = m
+	return s
 }
 
 func NewService(repo *Repository, reporter ReportSubmitter, screener ContentScreener, icebreaker IcebreakerGenerator) *Service {
@@ -148,24 +158,19 @@ func (m *Message) validate() error {
 	if m.Type == "" {
 		m.Type = "text"
 	}
-	for _, u := range m.MediaURLs {
-		if !validHTTPS(u) {
-			return ErrInvalidInput
-		}
-	}
 	switch m.Type {
 	case "text", "announcement":
-		if strings.TrimSpace(m.Body) == "" || len(m.MediaURLs) > 0 || m.Location != nil {
+		if strings.TrimSpace(m.Body) == "" || len(m.MediaIDs) > 0 || m.Location != nil {
 			return ErrInvalidInput
 		}
 	case "image":
-		if len(m.MediaURLs) < 1 || len(m.MediaURLs) > maxMedia {
+		if len(m.MediaIDs) < 1 || len(m.MediaIDs) > maxMedia {
 			return ErrInvalidInput
 		}
 	case "voice":
-		if len(m.MediaURLs) != 1 || m.DurationSeconds < 1 || m.DurationSeconds > maxVoiceSecs {
-			return ErrInvalidInput
-		}
+		// Voice notes need audio uploads, which the media service doesn't accept
+		// yet; refuse rather than accept an unplayable message.
+		return ErrInvalidInput
 	case "location":
 		l := m.Location
 		if l == nil || l.Latitude < -90 || l.Latitude > 90 || l.Longitude < -180 || l.Longitude > 180 || len(l.Label) > 200 {
@@ -237,6 +242,18 @@ func (s *Service) SendMessage(ctx context.Context, m *Message, senderRole string
 	severity, reason, err := s.screen(ctx, m.Body)
 	if err != nil {
 		return nil, err
+	}
+	if len(m.MediaIDs) > 0 {
+		if s.media == nil {
+			return nil, ErrMediaUnavailable
+		}
+		m.Media, err = s.media.Claim(ctx, m.SenderID, m.MediaIDs)
+		if err != nil {
+			if errors.Is(err, media.ErrNotFound) {
+				return nil, ErrInvalidInput
+			}
+			return nil, err
+		}
 	}
 	sent, err := s.repo.SendMessage(ctx, m)
 	if err != nil {

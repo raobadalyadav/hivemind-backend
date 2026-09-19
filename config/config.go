@@ -42,6 +42,9 @@ type Config struct {
 	CashfreeSandbox      bool
 	WebhookPort          string
 	PassSecret           string
+	MediaPublicBaseURL   string // where phones reach GET /media/... (this API's HTTP port)
+	MediaMaxImageMB      int
+	MediaMaxVideoMB      int
 	EmergencyNumber      string // shown in the Safety Center and SOS response
 }
 
@@ -71,8 +74,11 @@ func Load() Config {
 		WebhookPort:          getEnv("WEBHOOK_PORT", "8080"),
 		// Domain-separated from JWT_SECRET so a leaked pass can never be
 		// confused with (or used to forge) a session token.
-		EmergencyNumber: getEnv("EMERGENCY_NUMBER", "112"),
-		PassSecret:      getEnv("PASS_SECRET", getEnv("JWT_SECRET", "dev-secret-change-in-production")+":pass"),
+		MediaPublicBaseURL: getEnv("MEDIA_PUBLIC_BASE_URL", "http://localhost:"+getEnv("WEBHOOK_PORT", "8080")),
+		MediaMaxImageMB:    getEnvInt("MEDIA_MAX_IMAGE_MB", 10),
+		MediaMaxVideoMB:    getEnvInt("MEDIA_MAX_VIDEO_MB", 60),
+		EmergencyNumber:    getEnv("EMERGENCY_NUMBER", "112"),
+		PassSecret:         getEnv("PASS_SECRET", getEnv("JWT_SECRET", "dev-secret-change-in-production")+":pass"),
 	}
 }
 
@@ -105,4 +111,13 @@ func getEnvDuration(key string, fallback time.Duration) time.Duration {
 		return fallback
 	}
 	return d
+}
+
+func getEnvInt(key string, fallback int) int {
+	if v := os.Getenv(key); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			return n
+		}
+	}
+	return fallback
 }
