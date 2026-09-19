@@ -60,6 +60,17 @@ Identity is always derived from the authenticated JWT (`grpcmiddleware.UserIDFro
 
 The gRPC server listens on `:50051` by default; the Cashfree webhook HTTP listener runs alongside it on `:8080`.
 
+## Local development
+
+```bash
+cp .env.example .env     # once; every variable is optional, defaults match docker-compose
+make dev                 # docker compose up + migrations + API on :50051 (make run-worker in a second terminal)
+make dev-token           # user id + 24h access token for the mobile app's "Developer sign-in"
+make lan-ip              # the API_HOST a phone on the same Wi-Fi should use
+```
+
+`make` loads `.env` automatically. `cmd/devtoken` refuses to run unless `APP_ENV` is empty or `dev`.
+
 ## Configuration
 
 All configuration is via environment variables (see `config/config.go`), each with a sane local default:
