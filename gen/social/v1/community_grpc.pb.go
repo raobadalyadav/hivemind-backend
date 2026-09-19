@@ -19,10 +19,15 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CommunityService_CreateCommunity_FullMethodName    = "/social.v1.CommunityService/CreateCommunity"
-	CommunityService_GetCommunity_FullMethodName       = "/social.v1.CommunityService/GetCommunity"
-	CommunityService_JoinCommunity_FullMethodName      = "/social.v1.CommunityService/JoinCommunity"
-	CommunityService_ListCommunityPlans_FullMethodName = "/social.v1.CommunityService/ListCommunityPlans"
+	CommunityService_CreateCommunity_FullMethodName             = "/social.v1.CommunityService/CreateCommunity"
+	CommunityService_GetCommunity_FullMethodName                = "/social.v1.CommunityService/GetCommunity"
+	CommunityService_JoinCommunity_FullMethodName               = "/social.v1.CommunityService/JoinCommunity"
+	CommunityService_ListCommunityPlans_FullMethodName          = "/social.v1.CommunityService/ListCommunityPlans"
+	CommunityService_ListCommunities_FullMethodName             = "/social.v1.CommunityService/ListCommunities"
+	CommunityService_LeaveCommunity_FullMethodName              = "/social.v1.CommunityService/LeaveCommunity"
+	CommunityService_ListCommunityJoinRequests_FullMethodName   = "/social.v1.CommunityService/ListCommunityJoinRequests"
+	CommunityService_RespondCommunityJoinRequest_FullMethodName = "/social.v1.CommunityService/RespondCommunityJoinRequest"
+	CommunityService_InviteToCommunity_FullMethodName           = "/social.v1.CommunityService/InviteToCommunity"
 )
 
 // CommunityServiceClient is the client API for CommunityService service.
@@ -35,6 +40,12 @@ type CommunityServiceClient interface {
 	GetCommunity(ctx context.Context, in *GetCommunityRequest, opts ...grpc.CallOption) (*Community, error)
 	JoinCommunity(ctx context.Context, in *JoinCommunityRequest, opts ...grpc.CallOption) (*Membership, error)
 	ListCommunityPlans(ctx context.Context, in *ListCommunityPlansRequest, opts ...grpc.CallOption) (*ListPlansResponse, error)
+	// Community types (flow.md §22).
+	ListCommunities(ctx context.Context, in *ListCommunitiesRequest, opts ...grpc.CallOption) (*ListCommunitiesResponse, error)
+	LeaveCommunity(ctx context.Context, in *LeaveCommunityRequest, opts ...grpc.CallOption) (*LeaveCommunityResponse, error)
+	ListCommunityJoinRequests(ctx context.Context, in *ListCommunityJoinRequestsRequest, opts ...grpc.CallOption) (*ListCommunityJoinRequestsResponse, error)
+	RespondCommunityJoinRequest(ctx context.Context, in *RespondCommunityJoinRequestRequest, opts ...grpc.CallOption) (*CommunityJoinRequest, error)
+	InviteToCommunity(ctx context.Context, in *InviteToCommunityRequest, opts ...grpc.CallOption) (*InviteToCommunityResponse, error)
 }
 
 type communityServiceClient struct {
@@ -85,6 +96,56 @@ func (c *communityServiceClient) ListCommunityPlans(ctx context.Context, in *Lis
 	return out, nil
 }
 
+func (c *communityServiceClient) ListCommunities(ctx context.Context, in *ListCommunitiesRequest, opts ...grpc.CallOption) (*ListCommunitiesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListCommunitiesResponse)
+	err := c.cc.Invoke(ctx, CommunityService_ListCommunities_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *communityServiceClient) LeaveCommunity(ctx context.Context, in *LeaveCommunityRequest, opts ...grpc.CallOption) (*LeaveCommunityResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LeaveCommunityResponse)
+	err := c.cc.Invoke(ctx, CommunityService_LeaveCommunity_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *communityServiceClient) ListCommunityJoinRequests(ctx context.Context, in *ListCommunityJoinRequestsRequest, opts ...grpc.CallOption) (*ListCommunityJoinRequestsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListCommunityJoinRequestsResponse)
+	err := c.cc.Invoke(ctx, CommunityService_ListCommunityJoinRequests_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *communityServiceClient) RespondCommunityJoinRequest(ctx context.Context, in *RespondCommunityJoinRequestRequest, opts ...grpc.CallOption) (*CommunityJoinRequest, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommunityJoinRequest)
+	err := c.cc.Invoke(ctx, CommunityService_RespondCommunityJoinRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *communityServiceClient) InviteToCommunity(ctx context.Context, in *InviteToCommunityRequest, opts ...grpc.CallOption) (*InviteToCommunityResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InviteToCommunityResponse)
+	err := c.cc.Invoke(ctx, CommunityService_InviteToCommunity_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CommunityServiceServer is the server API for CommunityService service.
 // All implementations must embed UnimplementedCommunityServiceServer
 // for forward compatibility.
@@ -95,6 +156,12 @@ type CommunityServiceServer interface {
 	GetCommunity(context.Context, *GetCommunityRequest) (*Community, error)
 	JoinCommunity(context.Context, *JoinCommunityRequest) (*Membership, error)
 	ListCommunityPlans(context.Context, *ListCommunityPlansRequest) (*ListPlansResponse, error)
+	// Community types (flow.md §22).
+	ListCommunities(context.Context, *ListCommunitiesRequest) (*ListCommunitiesResponse, error)
+	LeaveCommunity(context.Context, *LeaveCommunityRequest) (*LeaveCommunityResponse, error)
+	ListCommunityJoinRequests(context.Context, *ListCommunityJoinRequestsRequest) (*ListCommunityJoinRequestsResponse, error)
+	RespondCommunityJoinRequest(context.Context, *RespondCommunityJoinRequestRequest) (*CommunityJoinRequest, error)
+	InviteToCommunity(context.Context, *InviteToCommunityRequest) (*InviteToCommunityResponse, error)
 	mustEmbedUnimplementedCommunityServiceServer()
 }
 
@@ -116,6 +183,21 @@ func (UnimplementedCommunityServiceServer) JoinCommunity(context.Context, *JoinC
 }
 func (UnimplementedCommunityServiceServer) ListCommunityPlans(context.Context, *ListCommunityPlansRequest) (*ListPlansResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListCommunityPlans not implemented")
+}
+func (UnimplementedCommunityServiceServer) ListCommunities(context.Context, *ListCommunitiesRequest) (*ListCommunitiesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListCommunities not implemented")
+}
+func (UnimplementedCommunityServiceServer) LeaveCommunity(context.Context, *LeaveCommunityRequest) (*LeaveCommunityResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method LeaveCommunity not implemented")
+}
+func (UnimplementedCommunityServiceServer) ListCommunityJoinRequests(context.Context, *ListCommunityJoinRequestsRequest) (*ListCommunityJoinRequestsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListCommunityJoinRequests not implemented")
+}
+func (UnimplementedCommunityServiceServer) RespondCommunityJoinRequest(context.Context, *RespondCommunityJoinRequestRequest) (*CommunityJoinRequest, error) {
+	return nil, status.Error(codes.Unimplemented, "method RespondCommunityJoinRequest not implemented")
+}
+func (UnimplementedCommunityServiceServer) InviteToCommunity(context.Context, *InviteToCommunityRequest) (*InviteToCommunityResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method InviteToCommunity not implemented")
 }
 func (UnimplementedCommunityServiceServer) mustEmbedUnimplementedCommunityServiceServer() {}
 func (UnimplementedCommunityServiceServer) testEmbeddedByValue()                          {}
@@ -210,6 +292,96 @@ func _CommunityService_ListCommunityPlans_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CommunityService_ListCommunities_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCommunitiesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CommunityServiceServer).ListCommunities(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CommunityService_ListCommunities_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CommunityServiceServer).ListCommunities(ctx, req.(*ListCommunitiesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CommunityService_LeaveCommunity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LeaveCommunityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CommunityServiceServer).LeaveCommunity(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CommunityService_LeaveCommunity_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CommunityServiceServer).LeaveCommunity(ctx, req.(*LeaveCommunityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CommunityService_ListCommunityJoinRequests_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCommunityJoinRequestsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CommunityServiceServer).ListCommunityJoinRequests(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CommunityService_ListCommunityJoinRequests_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CommunityServiceServer).ListCommunityJoinRequests(ctx, req.(*ListCommunityJoinRequestsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CommunityService_RespondCommunityJoinRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RespondCommunityJoinRequestRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CommunityServiceServer).RespondCommunityJoinRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CommunityService_RespondCommunityJoinRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CommunityServiceServer).RespondCommunityJoinRequest(ctx, req.(*RespondCommunityJoinRequestRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CommunityService_InviteToCommunity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InviteToCommunityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CommunityServiceServer).InviteToCommunity(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CommunityService_InviteToCommunity_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CommunityServiceServer).InviteToCommunity(ctx, req.(*InviteToCommunityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CommunityService_ServiceDesc is the grpc.ServiceDesc for CommunityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -232,6 +404,26 @@ var CommunityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListCommunityPlans",
 			Handler:    _CommunityService_ListCommunityPlans_Handler,
+		},
+		{
+			MethodName: "ListCommunities",
+			Handler:    _CommunityService_ListCommunities_Handler,
+		},
+		{
+			MethodName: "LeaveCommunity",
+			Handler:    _CommunityService_LeaveCommunity_Handler,
+		},
+		{
+			MethodName: "ListCommunityJoinRequests",
+			Handler:    _CommunityService_ListCommunityJoinRequests_Handler,
+		},
+		{
+			MethodName: "RespondCommunityJoinRequest",
+			Handler:    _CommunityService_RespondCommunityJoinRequest_Handler,
+		},
+		{
+			MethodName: "InviteToCommunity",
+			Handler:    _CommunityService_InviteToCommunity_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

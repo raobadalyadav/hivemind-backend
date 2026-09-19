@@ -79,7 +79,13 @@ func (r *Repository) Create(ctx context.Context, b *Booking) (*Booking, error) {
 	if planStatus != "published" {
 		return nil, ErrPlanNotFound
 	}
-	if confirmedCount >= capacity {
+	// Seats offered to other waitlisted users are held for them until the
+	// offer expires (expiry is lazy: only unexpired offers count).
+	holds, err := activeHolds(ctx, tx, b.PlanID, b.UserID)
+	if err != nil {
+		return nil, err
+	}
+	if confirmedCount+holds >= capacity {
 		return nil, ErrPlanFull
 	}
 
@@ -108,8 +114,14 @@ func (r *Repository) Create(ctx context.Context, b *Booking) (*Booking, error) {
 		return nil, err
 	}
 
-	if _, err := tx.Exec(ctx,
-		`INSERT INTO plan_participants (plan_id, user_id, booking_id) VALUES ($1, $2, $3)`,
+	// UNIQUE(plan_id,user_id) + a surviving 'cancelled' row would make a
+	// cancel-then-rebook (e.g. accepting a waitlist offer) fail with 23505,
+	// so a returning user re-activates their row instead.
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO plan_participants (plan_id, user_id, booking_id) VALUES ($1, $2, $3)
+		ON CONFLICT (plan_id, user_id) DO UPDATE SET
+			status = 'confirmed', booking_id = EXCLUDED.booking_id,
+			joined_at = now(), checked_in_at = NULL`,
 		b.PlanID, b.UserID, out.ID,
 	); err != nil {
 		return nil, err
@@ -117,6 +129,15 @@ func (r *Repository) Create(ctx context.Context, b *Booking) (*Booking, error) {
 
 	if _, err := tx.Exec(ctx,
 		`UPDATE plans SET confirmed_count = confirmed_count + 1 WHERE id = $1`, b.PlanID,
+	); err != nil {
+		return nil, err
+	}
+
+	// Booking a seat consumes the caller's waitlist entry (offered or waiting).
+	if _, err := tx.Exec(ctx, `
+		UPDATE waitlist_entries SET status = 'accepted'::waitlist_status, updated_at = now()
+		WHERE plan_id = $1 AND user_id = $2 AND status IN ('waiting','offered')`,
+		b.PlanID, b.UserID,
 	); err != nil {
 		return nil, err
 	}
@@ -272,6 +293,12 @@ func (r *Repository) Cancel(ctx context.Context, bookingID, reason string) (*Boo
 		return nil, err
 	}
 
+	// The UPDATE plans above holds the plan row lock for this tx, so the
+	// freed seat can be offered to the head of the waitlist race-free.
+	if err := offerFreedSeats(ctx, tx, b.PlanID, time.Now()); err != nil {
+		return nil, err
+	}
+
 	payload, err := json.Marshal(cancelOutboxPayload{BookingID: b.ID, PlanID: b.PlanID, UserID: b.UserID, Reason: reason})
 	if err != nil {
 		return nil, err
@@ -313,6 +340,12 @@ func (r *Repository) CheckIn(ctx context.Context, bookingID, checkedInBy string)
 	if _, err := tx.Exec(ctx,
 		`INSERT INTO checkins (booking_id, checked_in_by) VALUES ($1, NULLIF($2,'')::uuid)`,
 		bookingID, checkedInBy,
+	); err != nil {
+		return nil, err
+	}
+
+	if _, err := tx.Exec(ctx,
+		`UPDATE plan_participants SET checked_in_at = now() WHERE booking_id = $1`, bookingID,
 	); err != nil {
 		return nil, err
 	}

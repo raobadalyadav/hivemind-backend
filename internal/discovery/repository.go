@@ -29,7 +29,7 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 
 func (r *Repository) NearbyPlanIDs(ctx context.Context, lat, lng, radiusKM float64, limit int) ([]string, error) {
 	rows, err := r.pool.Query(ctx, `
-		SELECT id FROM plans
+		SELECT id FROM plans_discoverable
 		WHERE status = 'published'
 		  AND ST_DWithin(location, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, $3)
 		ORDER BY location <-> ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
@@ -111,7 +111,7 @@ func (r *Repository) HomeFeedPlanIDs(ctx context.Context, userID, section, trave
 	}
 
 	query := `
-		SELECT p.id FROM plans p
+		SELECT p.id FROM plans_discoverable p
 		LEFT JOIN cities c ON c.id = p.city_id
 		WHERE p.status = 'published' AND ` + dateFilter(section) + `
 		  AND (p.city_id = COALESCE(NULLIF($3,'')::uuid, (SELECT city_id FROM users WHERE id = $1))
@@ -155,7 +155,7 @@ func (r *Repository) nearYouPlanIDs(ctx context.Context, userID string, limit in
 
 	const defaultRadiusKM = 15.0
 	rows, err := r.pool.Query(ctx, `
-		SELECT p.id FROM plans p, users u
+		SELECT p.id FROM plans_discoverable p, users u
 		WHERE u.id = $1 AND p.status = 'published' AND p.starts_at > now()
 		  AND ST_DWithin(p.location, u.last_location, $2 * 1000)
 		ORDER BY p.location <-> u.last_location

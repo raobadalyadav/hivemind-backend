@@ -20,16 +20,41 @@ var (
 )
 
 type Room struct {
-	ID     string
-	PlanID string
+	ID              string
+	PlanID          string
+	PinnedMessageID string
+}
+
+type Location struct {
+	Latitude, Longitude float64
+	Label               string
+}
+
+type PollOption struct {
+	ID        string
+	Label     string
+	VoteCount int32
+}
+
+type Poll struct {
+	ID             string
+	Question       string
+	Options        []PollOption
+	MyVoteOptionID string
+	TotalVotes     int32
 }
 
 type Message struct {
-	ID       string
-	RoomID   string
-	SenderID string
-	Body     string
-	SentAt   time.Time
+	ID              string
+	RoomID          string
+	SenderID        string
+	Body            string
+	SentAt          time.Time
+	Type            string // text | image | voice | poll | announcement | location
+	MediaURLs       []string
+	Location        *Location
+	DurationSeconds int32
+	Poll            *Poll
 }
 
 type Repository struct {
@@ -113,41 +138,6 @@ func (r *Repository) IsMember(ctx context.Context, roomID, userID string) (bool,
 		roomID, userID,
 	).Scan(&exists)
 	return exists, err
-}
-
-func (r *Repository) SendMessage(ctx context.Context, m *Message) (*Message, error) {
-	out := *m
-	err := r.pool.QueryRow(ctx, `
-		INSERT INTO messages (room_id, sender_id, body) VALUES ($1, $2, $3)
-		RETURNING id, sent_at`,
-		m.RoomID, m.SenderID, m.Body,
-	).Scan(&out.ID, &out.SentAt)
-	if err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-func (r *Repository) ListMessages(ctx context.Context, roomID string, limit int) ([]*Message, error) {
-	rows, err := r.pool.Query(ctx, `
-		SELECT id, room_id, sender_id, body, sent_at FROM messages
-		WHERE room_id = $1 ORDER BY sent_at DESC LIMIT $2`,
-		roomID, limit,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var out []*Message
-	for rows.Next() {
-		var m Message
-		if err := rows.Scan(&m.ID, &m.RoomID, &m.SenderID, &m.Body, &m.SentAt); err != nil {
-			return nil, err
-		}
-		out = append(out, &m)
-	}
-	return out, rows.Err()
 }
 
 // MessageSubjectID resolves a message id to the (subject_id, subject-owner)

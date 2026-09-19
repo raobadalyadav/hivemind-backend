@@ -18,12 +18,48 @@ service ChatService {
   // GenerateIcebreaker — flow.md §42 "AI Icebreaker", rule-based shared-
   // interest suggestion (no LLM call, per the PRD's non-goal).
   rpc GenerateIcebreaker(GenerateIcebreakerRequest) returns (GenerateIcebreakerResponse);
+
+  // Rich chat (flow.md §19). Every RPC checks room membership; announcements
+  // and pins are limited to the plan's host (or an admin).
+  rpc CreatePoll(CreatePollRequest) returns (Message);
+  rpc VotePoll(VotePollRequest) returns (Poll);
+  rpc PinMessage(PinMessageRequest) returns (PinMessageResponse);
+}
+
+enum MessageType {
+  MESSAGE_TYPE_TEXT = 0;
+  MESSAGE_TYPE_IMAGE = 1;
+  MESSAGE_TYPE_VOICE = 2;
+  MESSAGE_TYPE_POLL = 3;
+  MESSAGE_TYPE_ANNOUNCEMENT = 4;
+  MESSAGE_TYPE_LOCATION = 5;
+}
+
+message Location {
+  double latitude = 1;
+  double longitude = 2;
+  string label = 3;
+}
+
+message PollOption {
+  string id = 1;
+  string label = 2;
+  int32 vote_count = 3;
+}
+
+message Poll {
+  string id = 1;
+  string question = 2;
+  repeated PollOption options = 3;
+  string my_vote_option_id = 4; // "" = not voted
+  int32 total_votes = 5;
 }
 
 message ChatRoom {
   string id = 1;
   string plan_id = 2;
   Audit audit = 3;
+  string pinned_message_id = 4;
 }
 
 message Message {
@@ -32,16 +68,50 @@ message Message {
   string sender_id = 3;
   string body = 4;
   google.protobuf.Timestamp sent_at = 5;
+  MessageType type = 6;
+  repeated string media_urls = 7;
+  Location location = 8;
+  int32 duration_seconds = 9; // voice
+  Poll poll = 10;
 }
 
 message CreateRoomRequest {
   string plan_id = 1;
 }
 
+// sender_id is ignored — the sender is always the authenticated caller.
+// text/announcement need body; image needs 1–10 https media_urls (body is the
+// caption); voice needs exactly 1 media_url + duration_seconds 1–300;
+// location needs a valid location.
 message SendMessageRequest {
   string room_id = 1;
   string sender_id = 2;
   string body = 3;
+  MessageType type = 4;
+  repeated string media_urls = 5;
+  Location location = 6;
+  int32 duration_seconds = 7;
+}
+
+message CreatePollRequest {
+  string room_id = 1;
+  string question = 2;
+  repeated string options = 3; // 2–6
+}
+
+message VotePollRequest {
+  string poll_id = 1;
+  string option_id = 2;
+}
+
+message PinMessageRequest {
+  string room_id = 1;
+  string message_id = 2;
+  bool unpin = 3;
+}
+
+message PinMessageResponse {
+  string pinned_message_id = 1; // "" after unpin
 }
 
 message ListMessagesRequest {
@@ -52,6 +122,7 @@ message ListMessagesRequest {
 message ListMessagesResponse {
   repeated Message messages = 1;
   PageResponse page = 2;
+  Message pinned_message = 3;
 }
 
 message ReportMessageRequest {

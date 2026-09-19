@@ -19,13 +19,20 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PlanService_CreatePlan_FullMethodName       = "/social.v1.PlanService/CreatePlan"
-	PlanService_GetPlan_FullMethodName          = "/social.v1.PlanService/GetPlan"
-	PlanService_SearchPlans_FullMethodName      = "/social.v1.PlanService/SearchPlans"
-	PlanService_JoinPlan_FullMethodName         = "/social.v1.PlanService/JoinPlan"
-	PlanService_LeavePlan_FullMethodName        = "/social.v1.PlanService/LeavePlan"
-	PlanService_CancelPlan_FullMethodName       = "/social.v1.PlanService/CancelPlan"
-	PlanService_SuggestPlanDraft_FullMethodName = "/social.v1.PlanService/SuggestPlanDraft"
+	PlanService_CreatePlan_FullMethodName               = "/social.v1.PlanService/CreatePlan"
+	PlanService_GetPlan_FullMethodName                  = "/social.v1.PlanService/GetPlan"
+	PlanService_SearchPlans_FullMethodName              = "/social.v1.PlanService/SearchPlans"
+	PlanService_JoinPlan_FullMethodName                 = "/social.v1.PlanService/JoinPlan"
+	PlanService_LeavePlan_FullMethodName                = "/social.v1.PlanService/LeavePlan"
+	PlanService_CancelPlan_FullMethodName               = "/social.v1.PlanService/CancelPlan"
+	PlanService_SuggestPlanDraft_FullMethodName         = "/social.v1.PlanService/SuggestPlanDraft"
+	PlanService_RequestToJoinPlan_FullMethodName        = "/social.v1.PlanService/RequestToJoinPlan"
+	PlanService_ListPlanJoinRequests_FullMethodName     = "/social.v1.PlanService/ListPlanJoinRequests"
+	PlanService_RespondPlanJoinRequest_FullMethodName   = "/social.v1.PlanService/RespondPlanJoinRequest"
+	PlanService_InvitePlanUsers_FullMethodName          = "/social.v1.PlanService/InvitePlanUsers"
+	PlanService_RevokePlanInvite_FullMethodName         = "/social.v1.PlanService/RevokePlanInvite"
+	PlanService_GetPlanParticipants_FullMethodName      = "/social.v1.PlanService/GetPlanParticipants"
+	PlanService_SetParticipantVisibility_FullMethodName = "/social.v1.PlanService/SetParticipantVisibility"
 )
 
 // PlanServiceClient is the client API for PlanService service.
@@ -46,6 +53,17 @@ type PlanServiceClient interface {
 	// call, per the PRD's non-goal). Purely advisory: the host still calls
 	// CreatePlan with whatever they choose.
 	SuggestPlanDraft(ctx context.Context, in *SuggestPlanDraftRequest, opts ...grpc.CallOption) (*PlanDraft, error)
+	// Plan types (flow.md §14): approval-mode join requests and invites. All
+	// host-side RPCs verify request → plan → host against the caller.
+	RequestToJoinPlan(ctx context.Context, in *RequestToJoinPlanRequest, opts ...grpc.CallOption) (*PlanJoinRequest, error)
+	ListPlanJoinRequests(ctx context.Context, in *ListPlanJoinRequestsRequest, opts ...grpc.CallOption) (*ListPlanJoinRequestsResponse, error)
+	RespondPlanJoinRequest(ctx context.Context, in *RespondPlanJoinRequestRequest, opts ...grpc.CallOption) (*PlanJoinRequest, error)
+	InvitePlanUsers(ctx context.Context, in *InvitePlanUsersRequest, opts ...grpc.CallOption) (*InvitePlanUsersResponse, error)
+	RevokePlanInvite(ctx context.Context, in *RevokePlanInviteRequest, opts ...grpc.CallOption) (*RevokePlanInviteResponse, error)
+	// Who's going (flow.md §11): privacy-filtered attendee cards, and the
+	// caller's own opt-out for one plan.
+	GetPlanParticipants(ctx context.Context, in *GetPlanParticipantsRequest, opts ...grpc.CallOption) (*GetPlanParticipantsResponse, error)
+	SetParticipantVisibility(ctx context.Context, in *SetParticipantVisibilityRequest, opts ...grpc.CallOption) (*SetParticipantVisibilityResponse, error)
 }
 
 type planServiceClient struct {
@@ -126,6 +144,76 @@ func (c *planServiceClient) SuggestPlanDraft(ctx context.Context, in *SuggestPla
 	return out, nil
 }
 
+func (c *planServiceClient) RequestToJoinPlan(ctx context.Context, in *RequestToJoinPlanRequest, opts ...grpc.CallOption) (*PlanJoinRequest, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PlanJoinRequest)
+	err := c.cc.Invoke(ctx, PlanService_RequestToJoinPlan_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *planServiceClient) ListPlanJoinRequests(ctx context.Context, in *ListPlanJoinRequestsRequest, opts ...grpc.CallOption) (*ListPlanJoinRequestsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPlanJoinRequestsResponse)
+	err := c.cc.Invoke(ctx, PlanService_ListPlanJoinRequests_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *planServiceClient) RespondPlanJoinRequest(ctx context.Context, in *RespondPlanJoinRequestRequest, opts ...grpc.CallOption) (*PlanJoinRequest, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PlanJoinRequest)
+	err := c.cc.Invoke(ctx, PlanService_RespondPlanJoinRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *planServiceClient) InvitePlanUsers(ctx context.Context, in *InvitePlanUsersRequest, opts ...grpc.CallOption) (*InvitePlanUsersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InvitePlanUsersResponse)
+	err := c.cc.Invoke(ctx, PlanService_InvitePlanUsers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *planServiceClient) RevokePlanInvite(ctx context.Context, in *RevokePlanInviteRequest, opts ...grpc.CallOption) (*RevokePlanInviteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RevokePlanInviteResponse)
+	err := c.cc.Invoke(ctx, PlanService_RevokePlanInvite_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *planServiceClient) GetPlanParticipants(ctx context.Context, in *GetPlanParticipantsRequest, opts ...grpc.CallOption) (*GetPlanParticipantsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPlanParticipantsResponse)
+	err := c.cc.Invoke(ctx, PlanService_GetPlanParticipants_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *planServiceClient) SetParticipantVisibility(ctx context.Context, in *SetParticipantVisibilityRequest, opts ...grpc.CallOption) (*SetParticipantVisibilityResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetParticipantVisibilityResponse)
+	err := c.cc.Invoke(ctx, PlanService_SetParticipantVisibility_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PlanServiceServer is the server API for PlanService service.
 // All implementations must embed UnimplementedPlanServiceServer
 // for forward compatibility.
@@ -144,6 +232,17 @@ type PlanServiceServer interface {
 	// call, per the PRD's non-goal). Purely advisory: the host still calls
 	// CreatePlan with whatever they choose.
 	SuggestPlanDraft(context.Context, *SuggestPlanDraftRequest) (*PlanDraft, error)
+	// Plan types (flow.md §14): approval-mode join requests and invites. All
+	// host-side RPCs verify request → plan → host against the caller.
+	RequestToJoinPlan(context.Context, *RequestToJoinPlanRequest) (*PlanJoinRequest, error)
+	ListPlanJoinRequests(context.Context, *ListPlanJoinRequestsRequest) (*ListPlanJoinRequestsResponse, error)
+	RespondPlanJoinRequest(context.Context, *RespondPlanJoinRequestRequest) (*PlanJoinRequest, error)
+	InvitePlanUsers(context.Context, *InvitePlanUsersRequest) (*InvitePlanUsersResponse, error)
+	RevokePlanInvite(context.Context, *RevokePlanInviteRequest) (*RevokePlanInviteResponse, error)
+	// Who's going (flow.md §11): privacy-filtered attendee cards, and the
+	// caller's own opt-out for one plan.
+	GetPlanParticipants(context.Context, *GetPlanParticipantsRequest) (*GetPlanParticipantsResponse, error)
+	SetParticipantVisibility(context.Context, *SetParticipantVisibilityRequest) (*SetParticipantVisibilityResponse, error)
 	mustEmbedUnimplementedPlanServiceServer()
 }
 
@@ -174,6 +273,27 @@ func (UnimplementedPlanServiceServer) CancelPlan(context.Context, *CancelPlanReq
 }
 func (UnimplementedPlanServiceServer) SuggestPlanDraft(context.Context, *SuggestPlanDraftRequest) (*PlanDraft, error) {
 	return nil, status.Error(codes.Unimplemented, "method SuggestPlanDraft not implemented")
+}
+func (UnimplementedPlanServiceServer) RequestToJoinPlan(context.Context, *RequestToJoinPlanRequest) (*PlanJoinRequest, error) {
+	return nil, status.Error(codes.Unimplemented, "method RequestToJoinPlan not implemented")
+}
+func (UnimplementedPlanServiceServer) ListPlanJoinRequests(context.Context, *ListPlanJoinRequestsRequest) (*ListPlanJoinRequestsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListPlanJoinRequests not implemented")
+}
+func (UnimplementedPlanServiceServer) RespondPlanJoinRequest(context.Context, *RespondPlanJoinRequestRequest) (*PlanJoinRequest, error) {
+	return nil, status.Error(codes.Unimplemented, "method RespondPlanJoinRequest not implemented")
+}
+func (UnimplementedPlanServiceServer) InvitePlanUsers(context.Context, *InvitePlanUsersRequest) (*InvitePlanUsersResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method InvitePlanUsers not implemented")
+}
+func (UnimplementedPlanServiceServer) RevokePlanInvite(context.Context, *RevokePlanInviteRequest) (*RevokePlanInviteResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RevokePlanInvite not implemented")
+}
+func (UnimplementedPlanServiceServer) GetPlanParticipants(context.Context, *GetPlanParticipantsRequest) (*GetPlanParticipantsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPlanParticipants not implemented")
+}
+func (UnimplementedPlanServiceServer) SetParticipantVisibility(context.Context, *SetParticipantVisibilityRequest) (*SetParticipantVisibilityResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetParticipantVisibility not implemented")
 }
 func (UnimplementedPlanServiceServer) mustEmbedUnimplementedPlanServiceServer() {}
 func (UnimplementedPlanServiceServer) testEmbeddedByValue()                     {}
@@ -322,6 +442,132 @@ func _PlanService_SuggestPlanDraft_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PlanService_RequestToJoinPlan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestToJoinPlanRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlanServiceServer).RequestToJoinPlan(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlanService_RequestToJoinPlan_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlanServiceServer).RequestToJoinPlan(ctx, req.(*RequestToJoinPlanRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlanService_ListPlanJoinRequests_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPlanJoinRequestsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlanServiceServer).ListPlanJoinRequests(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlanService_ListPlanJoinRequests_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlanServiceServer).ListPlanJoinRequests(ctx, req.(*ListPlanJoinRequestsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlanService_RespondPlanJoinRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RespondPlanJoinRequestRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlanServiceServer).RespondPlanJoinRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlanService_RespondPlanJoinRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlanServiceServer).RespondPlanJoinRequest(ctx, req.(*RespondPlanJoinRequestRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlanService_InvitePlanUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InvitePlanUsersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlanServiceServer).InvitePlanUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlanService_InvitePlanUsers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlanServiceServer).InvitePlanUsers(ctx, req.(*InvitePlanUsersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlanService_RevokePlanInvite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokePlanInviteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlanServiceServer).RevokePlanInvite(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlanService_RevokePlanInvite_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlanServiceServer).RevokePlanInvite(ctx, req.(*RevokePlanInviteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlanService_GetPlanParticipants_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPlanParticipantsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlanServiceServer).GetPlanParticipants(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlanService_GetPlanParticipants_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlanServiceServer).GetPlanParticipants(ctx, req.(*GetPlanParticipantsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlanService_SetParticipantVisibility_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetParticipantVisibilityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlanServiceServer).SetParticipantVisibility(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlanService_SetParticipantVisibility_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlanServiceServer).SetParticipantVisibility(ctx, req.(*SetParticipantVisibilityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PlanService_ServiceDesc is the grpc.ServiceDesc for PlanService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -356,6 +602,34 @@ var PlanService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SuggestPlanDraft",
 			Handler:    _PlanService_SuggestPlanDraft_Handler,
+		},
+		{
+			MethodName: "RequestToJoinPlan",
+			Handler:    _PlanService_RequestToJoinPlan_Handler,
+		},
+		{
+			MethodName: "ListPlanJoinRequests",
+			Handler:    _PlanService_ListPlanJoinRequests_Handler,
+		},
+		{
+			MethodName: "RespondPlanJoinRequest",
+			Handler:    _PlanService_RespondPlanJoinRequest_Handler,
+		},
+		{
+			MethodName: "InvitePlanUsers",
+			Handler:    _PlanService_InvitePlanUsers_Handler,
+		},
+		{
+			MethodName: "RevokePlanInvite",
+			Handler:    _PlanService_RevokePlanInvite_Handler,
+		},
+		{
+			MethodName: "GetPlanParticipants",
+			Handler:    _PlanService_GetPlanParticipants_Handler,
+		},
+		{
+			MethodName: "SetParticipantVisibility",
+			Handler:    _PlanService_SetParticipantVisibility_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

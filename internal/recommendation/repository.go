@@ -50,7 +50,7 @@ func (r *Repository) UpcomingPlanIDs(ctx context.Context, userID, travelCityID s
 		candidates AS (
 			SELECT p.id, p.host_id, p.category_id, p.starts_at, p.capacity, p.confirmed_count, p.location,
 				c.name AS category_name
-			FROM plans p
+			FROM plans_discoverable p
 			LEFT JOIN categories c ON c.id = p.category_id
 			WHERE p.status = 'published' AND p.starts_at > now()
 			  AND (p.city_id = (SELECT city_id FROM me) OR (SELECT city_id FROM me) IS NULL)
@@ -95,7 +95,8 @@ func (r *Repository) UpcomingPlanIDs(ctx context.Context, userID, travelCityID s
 }
 
 // PeopleRecommendationUserIDs ranks other users in the caller's city by
-// shared interests (same unnest/INTERSECT technique as SmartMatchUserIDs,
+// interest overlap + 2×shared social intents + matching personality answers
+// (flow.md §5/§6; same unnest/INTERSECT technique as SmartMatchUserIDs,
 // scoped city-wide instead of per-plan), excluding both-direction blocks.
 // Users with 3+ reports against them (an "under review" trust signal — see
 // internal/moderation's DeriveBadges) are sorted after everyone else
@@ -106,6 +107,8 @@ func (r *Repository) PeopleRecommendationUserIDs(ctx context.Context, callerID, 
 		SELECT u.id
 		FROM users u
 		JOIN user_profiles up ON up.user_id = u.id
+		LEFT JOIN user_preferences theirs ON theirs.user_id = u.id
+		LEFT JOIN user_preferences mine ON mine.user_id = $1
 		WHERE u.id != $1
 		  AND u.city_id = COALESCE(NULLIF($3,'')::uuid, (SELECT city_id FROM users WHERE id = $1))
 		  AND NOT EXISTS (
@@ -114,11 +117,23 @@ func (r *Repository) PeopleRecommendationUserIDs(ctx context.Context, callerID, 
 		  )
 		ORDER BY
 			(SELECT COUNT(*) FROM reports WHERE subject_type = 'user' AND subject_id = u.id) >= 3,
-			cardinality(ARRAY(
+			(
+			  cardinality(ARRAY(
 				SELECT unnest(up.interests)
 				INTERSECT
 				SELECT unnest((SELECT interests FROM user_profiles WHERE user_id = $1))
-			)) DESC
+			  ))
+			  + 2 * cardinality(ARRAY(
+				SELECT unnest(COALESCE(theirs.intents, '{}'))
+				INTERSECT
+				SELECT unnest(COALESCE(mine.intents, '{}'))
+			  ))
+			  + COALESCE((theirs.group_pref = mine.group_pref)::int, 0)
+			  + COALESCE((theirs.energy_pref = mine.energy_pref)::int, 0)
+			  + COALESCE((theirs.planning_pref = mine.planning_pref)::int, 0)
+			  + COALESCE((theirs.time_pref = mine.time_pref)::int, 0)
+			  + COALESCE((theirs.setting_pref = mine.setting_pref)::int, 0)
+			) DESC
 		LIMIT $2`,
 		callerID, limit, travelCityID,
 	)
@@ -136,6 +151,18 @@ func (r *Repository) PeopleRecommendationUserIDs(ctx context.Context, callerID, 
 		ids = append(ids, id)
 	}
 	return ids, rows.Err()
+}
+
+// IsParticipantOrHost gates GetSmartMatch: only someone attending (or
+// hosting) a plan may see who else is attending — previously any user could
+// list any plan's participants by id.
+func (r *Repository) IsParticipantOrHost(ctx context.Context, planID, userID string) (bool, error) {
+	var ok bool
+	err := r.pool.QueryRow(ctx, `
+		SELECT EXISTS(SELECT 1 FROM plan_participants WHERE plan_id = $1 AND user_id = $2 AND status = 'confirmed')
+		    OR EXISTS(SELECT 1 FROM plans WHERE id = $1 AND host_id = $2)`, planID, userID,
+	).Scan(&ok)
+	return ok, err
 }
 
 // SmartMatchUserIDs ranks a plan's other confirmed participants by shared

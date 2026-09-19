@@ -21,7 +21,50 @@ service PlanService {
   // call, per the PRD's non-goal). Purely advisory: the host still calls
   // CreatePlan with whatever they choose.
   rpc SuggestPlanDraft(SuggestPlanDraftRequest) returns (PlanDraft);
+
+  // Plan types (flow.md §14): approval-mode join requests and invites. All
+  // host-side RPCs verify request → plan → host against the caller.
+  rpc RequestToJoinPlan(RequestToJoinPlanRequest) returns (PlanJoinRequest);
+  rpc ListPlanJoinRequests(ListPlanJoinRequestsRequest) returns (ListPlanJoinRequestsResponse);
+  rpc RespondPlanJoinRequest(RespondPlanJoinRequestRequest) returns (PlanJoinRequest);
+  rpc InvitePlanUsers(InvitePlanUsersRequest) returns (InvitePlanUsersResponse);
+  rpc RevokePlanInvite(RevokePlanInviteRequest) returns (RevokePlanInviteResponse);
+
+  // Who's going (flow.md §11): privacy-filtered attendee cards, and the
+  // caller's own opt-out for one plan.
+  rpc GetPlanParticipants(GetPlanParticipantsRequest) returns (GetPlanParticipantsResponse);
+  rpc SetParticipantVisibility(SetParticipantVisibilityRequest) returns (SetParticipantVisibilityResponse);
 }
+
+message GetPlanParticipantsRequest {
+  string plan_id = 1;
+}
+
+message ParticipantCard {
+  string user_id = 1;
+  string display_name = 2;
+  string occupation = 3;
+  repeated string interests = 4;
+  string photo_url = 5;
+  int32 shared_interest_count = 6;
+  int32 mutual_connection_count = 7;
+  int32 shared_community_count = 8;
+}
+
+message GetPlanParticipantsResponse {
+  repeated ParticipantCard participants = 1; // capped at 50, caller excluded
+  int32 total_attending = 2;
+  // People not shown (opted out, hidden, or blocked — deliberately not
+  // distinguished so a block can't be inferred).
+  int32 hidden_count = 3;
+  int32 connections_attending = 4; // accepted connections of the caller attending
+}
+
+message SetParticipantVisibilityRequest {
+  string plan_id = 1;
+  bool visible = 2;
+}
+message SetParticipantVisibilityResponse {}
 
 enum PlanStatus {
   PLAN_STATUS_UNSPECIFIED = 0;
@@ -30,6 +73,28 @@ enum PlanStatus {
   PLAN_STATUS_FULL = 3;
   PLAN_STATUS_CANCELLED = 4;
   PLAN_STATUS_COMPLETED = 5;
+}
+
+enum PlanJoinMode {
+  PLAN_JOIN_MODE_UNSPECIFIED = 0;
+  PLAN_JOIN_MODE_OPEN = 1;
+  PLAN_JOIN_MODE_APPROVAL = 2;
+  PLAN_JOIN_MODE_INVITE_ONLY = 3;
+}
+
+enum PlanVisibility {
+  PLAN_VISIBILITY_UNSPECIFIED = 0;
+  PLAN_VISIBILITY_PUBLIC = 1;
+  PLAN_VISIBILITY_PRIVATE = 2;
+  PLAN_VISIBILITY_COMMUNITY = 3;
+}
+
+enum JoinRequestStatus {
+  JOIN_REQUEST_STATUS_UNSPECIFIED = 0;
+  JOIN_REQUEST_STATUS_PENDING = 1;
+  JOIN_REQUEST_STATUS_APPROVED = 2;
+  JOIN_REQUEST_STATUS_REJECTED = 3;
+  JOIN_REQUEST_STATUS_CANCELLED = 4;
 }
 
 message Plan {
@@ -48,13 +113,18 @@ message Plan {
   PlanStatus status = 13;
   GeoPoint location = 14;
   Audit audit = 15;
+  PlanJoinMode join_mode = 16;
+  PlanVisibility visibility = 17;
+  string community_id = 18;
+  string requires_entitlement = 19; // subscription product name (premium plans)
+  string series_id = 20;            // set on recurring-plan occurrences
 }
 
 message CreatePlanRequest {
   string title = 1;
   string description = 2;
   string category_id = 3;
-  string host_id = 4;
+  string host_id = 4; // IGNORED: the host is always the authenticated caller
   string city_id = 5;
   string venue_id = 6;
   google.protobuf.Timestamp starts_at = 7;
@@ -62,6 +132,12 @@ message CreatePlanRequest {
   int32 capacity = 9;
   Money price = 10;
   GeoPoint location = 11;
+  PlanJoinMode join_mode = 12;
+  PlanVisibility visibility = 13;
+  string community_id = 14;         // required for community plans; caller must own/moderate it
+  string requires_entitlement = 15; // must be an existing subscription product name
+  // recurrence_rule: FREQ=DAILY|WEEKLY|MONTHLY[;INTERVAL=n][;COUNT=n|;UNTIL=YYYYMMDD]
+  string recurrence_rule = 16;
 }
 
 message GetPlanRequest {
@@ -101,6 +177,7 @@ message LeavePlanResponse {}
 message CancelPlanRequest {
   string plan_id = 1;
   string reason = 2;
+  bool cancel_future = 3; // recurring plans: cancel this and all later occurrences
 }
 
 message SuggestPlanDraftRequest {
@@ -111,3 +188,46 @@ message PlanDraft {
   string title = 1;
   string description = 2;
 }
+
+message PlanJoinRequest {
+  string id = 1;
+  string plan_id = 2;
+  string user_id = 3;
+  JoinRequestStatus status = 4;
+  string message = 5;
+}
+
+message RequestToJoinPlanRequest {
+  string plan_id = 1;
+  string message = 2;
+}
+
+message ListPlanJoinRequestsRequest {
+  string plan_id = 1;
+  JoinRequestStatus status = 2; // unspecified = all
+}
+
+message ListPlanJoinRequestsResponse {
+  repeated PlanJoinRequest requests = 1;
+}
+
+message RespondPlanJoinRequestRequest {
+  string request_id = 1;
+  bool approve = 2;
+}
+
+message InvitePlanUsersRequest {
+  string plan_id = 1;
+  repeated string user_ids = 2; // max 50 per call
+}
+
+message InvitePlanUsersResponse {
+  int32 invited_count = 1; // newly invited (already-invited/unknown users skipped)
+}
+
+message RevokePlanInviteRequest {
+  string plan_id = 1;
+  string user_id = 2;
+}
+
+message RevokePlanInviteResponse {}

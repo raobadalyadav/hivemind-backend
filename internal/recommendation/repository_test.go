@@ -107,3 +107,44 @@ func containsID(ids []string, target string) bool {
 	}
 	return false
 }
+
+// TestPeopleRecommendations_IntentAndPersonalityRankFirst: with equal interest
+// overlap, the person who shares the caller's social intent and personality
+// answers outranks the one who doesn't (flow.md §5/§6).
+func TestPeopleRecommendations_IntentAndPersonalityRankFirst(t *testing.T) {
+	pool := testPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	repo := NewRepository(pool)
+
+	suffix := time.Now().Format("150405.000000000")
+	var city string
+	if err := pool.QueryRow(ctx, `INSERT INTO cities (name) VALUES ($1) RETURNING id`, "Intent City "+suffix).Scan(&city); err != nil {
+		t.Fatalf("seed city: %v", err)
+	}
+	mk := func(label string, intents []string, energy string) string {
+		var id string
+		if err := pool.QueryRow(ctx, `INSERT INTO users (email, city_id) VALUES ($1,$2) RETURNING id`,
+			"int-"+label+"-"+suffix+"@example.com", city).Scan(&id); err != nil {
+			t.Fatalf("seed user: %v", err)
+		}
+		if _, err := pool.Exec(ctx, `INSERT INTO user_profiles (user_id, display_name, interests) VALUES ($1,$2,'{Food}')`, id, label); err != nil {
+			t.Fatalf("seed profile: %v", err)
+		}
+		if _, err := pool.Exec(ctx, `INSERT INTO user_preferences (user_id, intents, energy_pref) VALUES ($1,$2,NULLIF($3,''))`, id, intents, energy); err != nil {
+			t.Fatalf("seed prefs: %v", err)
+		}
+		return id
+	}
+	caller := mk("caller", []string{"networking"}, "quiet")
+	mismatch := mk("mismatch", []string{"explore_city"}, "energetic")
+	match := mk("match", []string{"networking"}, "quiet")
+
+	ids, err := repo.PeopleRecommendationUserIDs(ctx, caller, "", 10)
+	if err != nil {
+		t.Fatalf("PeopleRecommendationUserIDs: %v", err)
+	}
+	if len(ids) != 2 || ids[0] != match || ids[1] != mismatch {
+		t.Fatalf("shared intent+personality should rank first: got %v (match=%s mismatch=%s)", ids, match, mismatch)
+	}
+}

@@ -16,6 +16,21 @@ service BookingService {
   rpc GetBooking(GetBookingRequest) returns (Booking);
   rpc CancelBooking(CancelBookingRequest) returns (Booking);
   rpc CheckIn(CheckInRequest) returns (CheckInResult);
+
+  // Waitlist (flow.md §16). Accepting an offer is just CreateBooking/JoinPlan —
+  // an offered seat is held for the user until offer_expires_at.
+  rpc JoinWaitlist(JoinWaitlistRequest) returns (WaitlistStatus);
+  rpc LeaveWaitlist(LeaveWaitlistRequest) returns (LeaveWaitlistResponse);
+  rpc GetWaitlistStatus(GetWaitlistStatusRequest) returns (WaitlistStatus);
+  rpc ListMyWaitlist(ListMyWaitlistRequest) returns (ListMyWaitlistResponse);
+
+  // My Bookings tabs (flow.md §17).
+  rpc ListMyBookings(ListMyBookingsRequest) returns (ListMyBookingsResponse);
+
+  // Digital pass (flow.md §18/§34): GetPass returns a signed payload the
+  // client renders as a QR code; the host's ScanPass verifies it and checks in.
+  rpc GetPass(GetPassRequest) returns (Pass);
+  rpc ScanPass(ScanPassRequest) returns (ScanPassResult);
 }
 
 enum BookingStatus {
@@ -73,4 +88,89 @@ message CheckInRequest {
 
 message CheckInResult {
   Booking booking = 1;
+}
+
+enum WaitlistState {
+  WAITLIST_STATE_UNSPECIFIED = 0;
+  WAITLIST_STATE_NONE = 1;
+  WAITLIST_STATE_WAITING = 2;
+  WAITLIST_STATE_OFFERED = 3;
+}
+
+message WaitlistStatus {
+  string plan_id = 1;
+  WaitlistState state = 2;
+  int32 position = 3; // 1-based, only while WAITING
+  int32 total_waiting = 4;
+  google.protobuf.Timestamp offer_expires_at = 5; // only while OFFERED
+}
+
+message JoinWaitlistRequest {
+  string plan_id = 1;
+}
+
+message LeaveWaitlistRequest {
+  string plan_id = 1;
+}
+
+message LeaveWaitlistResponse {}
+
+message GetWaitlistStatusRequest {
+  string plan_id = 1;
+}
+
+message ListMyWaitlistRequest {}
+
+message ListMyWaitlistResponse {
+  repeated WaitlistStatus entries = 1;
+}
+
+enum BookingTab {
+  BOOKING_TAB_UNSPECIFIED = 0;
+  BOOKING_TAB_UPCOMING = 1;
+  BOOKING_TAB_PAST = 2;
+  BOOKING_TAB_CANCELLED = 3;
+}
+
+message BookingSummary {
+  Booking booking = 1;
+  string plan_title = 2;
+  google.protobuf.Timestamp starts_at = 3;
+  google.protobuf.Timestamp ends_at = 4;
+}
+
+message ListMyBookingsRequest {
+  BookingTab tab = 1;
+}
+
+message ListMyBookingsResponse {
+  repeated BookingSummary bookings = 1;
+}
+
+message GetPassRequest {
+  string booking_id = 1;
+}
+
+message Pass {
+  string booking_id = 1;
+  string plan_id = 2;
+  string plan_title = 3;
+  string plan_description = 4;
+  string venue_name = 5;
+  string venue_address = 6;
+  google.protobuf.Timestamp starts_at = 7;
+  google.protobuf.Timestamp ends_at = 8;
+  string host_name = 9;
+  string payload = 10; // signed; render as QR
+  google.protobuf.Timestamp valid_until = 11;
+  BookingStatus status = 12;
+}
+
+message ScanPassRequest {
+  string payload = 1;
+}
+
+message ScanPassResult {
+  Booking booking = 1;
+  string attendee_name = 2;
 }

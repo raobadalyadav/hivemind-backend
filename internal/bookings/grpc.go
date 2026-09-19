@@ -2,9 +2,11 @@ package bookings
 
 import (
 	"context"
+	"errors"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
 	"github.com/hivemind/backend/pkg/grpcmiddleware"
@@ -47,6 +49,11 @@ func (h *Handler) CreateBooking(ctx context.Context, req *socialv1.CreateBooking
 	case err == idempotency.ErrDuplicateRequest:
 		return nil, status.Error(codes.AlreadyExists, "booking already requested")
 	default:
+		// Access errors (invite-only, approval, community, premium) carry
+		// their own gRPC status.
+		if _, ok := status.FromError(err); ok {
+			return nil, err
+		}
 		return nil, status.Error(codes.Internal, "failed to create booking")
 	}
 }
@@ -152,4 +159,173 @@ func statusToProto(s string) socialv1.BookingStatus {
 		return v
 	}
 	return socialv1.BookingStatus_BOOKING_STATUS_UNSPECIFIED
+}
+
+func waitlistErr(err error, fallback string) error {
+	switch {
+	case errors.Is(err, ErrInvalidInput):
+		return status.Error(codes.InvalidArgument, err.Error())
+	case errors.Is(err, ErrPlanNotFound):
+		return status.Error(codes.NotFound, "plan not found or not published")
+	case errors.Is(err, ErrAlreadyBooked):
+		return status.Error(codes.AlreadyExists, err.Error())
+	case errors.Is(err, ErrNotFull):
+		return status.Error(codes.FailedPrecondition, err.Error())
+	default:
+		if _, ok := status.FromError(err); ok {
+			return err
+		}
+		return status.Error(codes.Internal, fallback)
+	}
+}
+
+func waitlistToProto(w *WaitlistStatus) *socialv1.WaitlistStatus {
+	out := &socialv1.WaitlistStatus{PlanId: w.PlanID, Position: w.Position, TotalWaiting: w.TotalWaiting}
+	switch w.State {
+	case WaitlistWaiting:
+		out.State = socialv1.WaitlistState_WAITLIST_STATE_WAITING
+	case WaitlistOffered:
+		out.State = socialv1.WaitlistState_WAITLIST_STATE_OFFERED
+	default:
+		out.State = socialv1.WaitlistState_WAITLIST_STATE_NONE
+	}
+	if w.OfferExpiresAt != nil {
+		out.OfferExpiresAt = timestamppb.New(*w.OfferExpiresAt)
+	}
+	return out
+}
+
+func (h *Handler) JoinWaitlist(ctx context.Context, req *socialv1.JoinWaitlistRequest) (*socialv1.WaitlistStatus, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	w, err := h.svc.JoinWaitlist(ctx, req.GetPlanId(), userID)
+	if err != nil {
+		return nil, waitlistErr(err, "failed to join waitlist")
+	}
+	return waitlistToProto(w), nil
+}
+
+func (h *Handler) LeaveWaitlist(ctx context.Context, req *socialv1.LeaveWaitlistRequest) (*socialv1.LeaveWaitlistResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	if err := h.svc.LeaveWaitlist(ctx, req.GetPlanId(), userID); err != nil {
+		return nil, waitlistErr(err, "failed to leave waitlist")
+	}
+	return &socialv1.LeaveWaitlistResponse{}, nil
+}
+
+func (h *Handler) GetWaitlistStatus(ctx context.Context, req *socialv1.GetWaitlistStatusRequest) (*socialv1.WaitlistStatus, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	w, err := h.svc.GetWaitlistStatus(ctx, req.GetPlanId(), userID)
+	if err != nil {
+		return nil, waitlistErr(err, "failed to load waitlist status")
+	}
+	return waitlistToProto(w), nil
+}
+
+func (h *Handler) ListMyWaitlist(ctx context.Context, req *socialv1.ListMyWaitlistRequest) (*socialv1.ListMyWaitlistResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	list, err := h.svc.ListMyWaitlist(ctx, userID)
+	if err != nil {
+		return nil, waitlistErr(err, "failed to list waitlist")
+	}
+	out := make([]*socialv1.WaitlistStatus, 0, len(list))
+	for _, w := range list {
+		out = append(out, waitlistToProto(w))
+	}
+	return &socialv1.ListMyWaitlistResponse{Entries: out}, nil
+}
+
+func (h *Handler) ListMyBookings(ctx context.Context, req *socialv1.ListMyBookingsRequest) (*socialv1.ListMyBookingsResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	tab := TabUpcoming
+	switch req.GetTab() {
+	case socialv1.BookingTab_BOOKING_TAB_PAST:
+		tab = TabPast
+	case socialv1.BookingTab_BOOKING_TAB_CANCELLED:
+		tab = TabCancelled
+	}
+	list, err := h.svc.ListMyBookings(ctx, userID, tab)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list bookings")
+	}
+	out := make([]*socialv1.BookingSummary, 0, len(list))
+	for _, s := range list {
+		b := s.Booking
+		out = append(out, &socialv1.BookingSummary{
+			Booking:   toProto(&b),
+			PlanTitle: s.PlanTitle,
+			StartsAt:  timestamppb.New(s.StartsAt),
+			EndsAt:    timestamppb.New(s.EndsAt),
+		})
+	}
+	return &socialv1.ListMyBookingsResponse{Bookings: out}, nil
+}
+
+func passErr(err error, fallback string) error {
+	switch {
+	case errors.Is(err, ErrInvalidInput), errors.Is(err, ErrInvalidPass):
+		return status.Error(codes.InvalidArgument, err.Error())
+	case errors.Is(err, ErrForbidden):
+		return status.Error(codes.PermissionDenied, err.Error())
+	case errors.Is(err, ErrBookingNotFound):
+		return status.Error(codes.NotFound, "booking not found")
+	case errors.Is(err, ErrPassUnavailable), errors.Is(err, ErrOutsideWindow):
+		return status.Error(codes.FailedPrecondition, err.Error())
+	case errors.Is(err, ErrPassDisabled):
+		return status.Error(codes.Unavailable, err.Error())
+	default:
+		return status.Error(codes.Internal, fallback)
+	}
+}
+
+func (h *Handler) GetPass(ctx context.Context, req *socialv1.GetPassRequest) (*socialv1.Pass, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	info, payload, validUntil, err := h.svc.GetPass(ctx, req.GetBookingId(), userID)
+	if err != nil {
+		return nil, passErr(err, "failed to build pass")
+	}
+	return &socialv1.Pass{
+		BookingId:       info.BookingID,
+		PlanId:          info.PlanID,
+		PlanTitle:       info.PlanTitle,
+		PlanDescription: info.PlanDesc,
+		VenueName:       info.VenueName,
+		VenueAddress:    info.VenueAddress,
+		StartsAt:        timestamppb.New(info.StartsAt),
+		EndsAt:          timestamppb.New(info.EndsAt),
+		HostName:        info.HostName,
+		Payload:         payload,
+		ValidUntil:      timestamppb.New(validUntil),
+		Status:          statusToProto(info.Status),
+	}, nil
+}
+
+func (h *Handler) ScanPass(ctx context.Context, req *socialv1.ScanPassRequest) (*socialv1.ScanPassResult, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	role, _ := grpcmiddleware.RoleFromContext(ctx)
+	b, name, err := h.svc.ScanPass(ctx, req.GetPayload(), userID, role)
+	if err != nil {
+		return nil, passErr(err, "failed to scan pass")
+	}
+	return &socialv1.ScanPassResult{Booking: toProto(b), AttendeeName: name}, nil
 }

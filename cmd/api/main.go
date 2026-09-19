@@ -92,7 +92,7 @@ func main() {
 	// first so they can be injected into plans/chat via the
 	// BookingCreator/BookingCanceller/ReportSubmitter interfaces those
 	// packages declare (see internal/plans/service.go, internal/chat/service.go).
-	bookingsSvc := bookings.NewService(bookings.NewRepository(pool), guard)
+	bookingsSvc := bookings.NewService(bookings.NewRepository(pool), guard).WithPassSecret([]byte(cfg.PassSecret))
 	moderationSvc := moderation.NewService(moderation.NewRepository(pool))
 	contentScreener := moderation.NewScreener()
 
@@ -154,8 +154,10 @@ func main() {
 	// in their Register call below) so they can also be injected into
 	// promotions/host via the PlanHostChecker/EntitlementChecker interfaces
 	// those packages declare.
-	plansSvc := plans.NewService(plans.NewRepository(pool), bookingsSvc, bookingsSvc, plans.NewTemplateDraftGenerator())
 	subscriptionsSvc := subscriptions.NewService(subscriptions.NewRepository(pool))
+	communitiesSvc := communities.NewService(communities.NewRepository(pool)).WithEntitlements(subscriptionsSvc)
+	plansSvc := plans.NewService(plans.NewRepository(pool), bookingsSvc, bookingsSvc, plans.NewTemplateDraftGenerator()).WithCommunities(communitiesSvc)
+	bookingsSvc.WithEntitlements(subscriptionsSvc)
 
 	// Declared as the interface type for the same nil-interface reason as
 	// paymentGateway above.
@@ -176,9 +178,9 @@ func main() {
 	socialv1.RegisterBookingServiceServer(srv, bookings.NewHandler(bookingsSvc))
 	socialv1.RegisterPaymentServiceServer(srv, payments.NewHandler(paymentsSvc))
 	socialv1.RegisterSubscriptionServiceServer(srv, subscriptions.NewHandler(subscriptionsSvc))
-	socialv1.RegisterCommunityServiceServer(srv, communities.NewHandler(communities.NewService(communities.NewRepository(pool))))
-	socialv1.RegisterConnectionServiceServer(srv, connections.NewHandler(connections.NewService(connections.NewRepository(pool))))
+	socialv1.RegisterCommunityServiceServer(srv, communities.NewHandler(communitiesSvc))
 	chatSvc := chat.NewService(chat.NewRepository(pool), moderationSvc, contentScreener, chat.NewTemplateIcebreaker())
+	socialv1.RegisterConnectionServiceServer(srv, connections.NewHandler(connections.NewService(connections.NewRepository(pool)).WithMeetAgain(guard, chatSvc)))
 	availabilitySvc := availability.NewService(availability.NewRepository(pool), chatSvc)
 	socialv1.RegisterChatServiceServer(srv, chat.NewHandler(chatSvc))
 	socialv1.RegisterAvailabilityServiceServer(srv, availability.NewHandler(availabilitySvc))

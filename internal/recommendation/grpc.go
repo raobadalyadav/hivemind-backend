@@ -42,10 +42,14 @@ func (h *Handler) GetSmartMatch(ctx context.Context, req *socialv1.GetSmartMatch
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "auth required")
 	}
-	ids, err := h.svc.GetSmartMatch(ctx, userID, req.GetPlanId())
+	role, _ := grpcmiddleware.RoleFromContext(ctx)
+	ids, err := h.svc.GetSmartMatch(ctx, userID, role, req.GetPlanId())
 	if err != nil {
-		if err == ErrInvalidInput {
+		switch err {
+		case ErrInvalidInput:
 			return nil, status.Error(codes.InvalidArgument, err.Error())
+		case ErrForbidden:
+			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 		return nil, status.Error(codes.Internal, "failed to compute smart match")
 	}

@@ -9,7 +9,9 @@ import (
 	"github.com/hivemind/backend/internal/chat"
 	"github.com/hivemind/backend/internal/notifications"
 	"github.com/hivemind/backend/internal/payments"
+	"github.com/hivemind/backend/internal/plans"
 	"github.com/hivemind/backend/pkg/analytics"
+	"github.com/hivemind/backend/pkg/eventbus"
 )
 
 // deps holds the services worker event handlers call into — real business
@@ -19,6 +21,7 @@ type deps struct {
 	notificationsSvc *notifications.Service
 	paymentsSvc      *payments.Service
 	bookingsSvc      *bookings.Service
+	plansSvc         *plans.Service
 	analyticsRec     *analytics.Recorder
 	logger           *slog.Logger
 }
@@ -106,10 +109,45 @@ func (d *deps) handlePlanCancelled(ctx context.Context, data []byte) error {
 	if err := json.Unmarshal(data, &p); err != nil {
 		return err
 	}
+	// Nobody should be offered a seat on a plan that no longer exists.
+	if err := d.bookingsSvc.ExpireWaitlistForPlan(ctx, p.PlanID); err != nil {
+		return err
+	}
 	return d.bookingsSvc.CancelAllForPlan(ctx, p.PlanID, "plan cancelled: "+p.Reason)
 }
 
-// logOnly handles events nothing in this codebase emits yet (PLAN_COMPLETED,
+// handleNotifyUser delivers the generic NOTIFY_USER event (waitlist offers,
+// join requests, invites, referral rewards, ...) through the notification
+// service. Delivery failures are recorded on the notification row, not
+// returned, so a dead push token doesn't redeliver the event forever.
+func (d *deps) handleNotifyUser(ctx context.Context, data []byte) error {
+	var p eventbus.NotifyUserPayload
+	if err := json.Unmarshal(data, &p); err != nil {
+		return err
+	}
+	channel := p.Channel
+	if channel == "" {
+		channel = "push"
+	}
+	_, err := d.notificationsSvc.SendNotification(ctx, &notifications.Notification{
+		UserID: p.UserID, Channel: channel, Title: p.Title, Body: p.Body, DeepLink: p.DeepLink,
+	})
+	return err
+}
+
+func (d *deps) handleBookingNoShow(ctx context.Context, data []byte) error {
+	var p bookingConfirmedPayload // same {booking_id, plan_id, user_id} shape
+	if err := json.Unmarshal(data, &p); err != nil {
+		return err
+	}
+	if err := d.analyticsRec.Record(ctx, p.UserID, "booking_no_show", map[string]any{"booking_id": p.BookingID, "plan_id": p.PlanID}); err != nil {
+		d.logger.Error("record booking_no_show event", "error", err)
+	}
+	return nil
+}
+
+// logOnly handles events without a consumer yet (PLAN_COMPLETED is now
+// produced by the complete_plans job but nothing consumes it beyond a log;
 // USER_REPORTED, PAYMENT_CAPTURED, PAYOUT_PROCESSED) — no real gateway
 // webhook, review-prompt scheduler, or moderation-risk-engine trigger exists
 // to produce them. Logging honestly reflects that rather than pretending a

@@ -24,6 +24,9 @@ const (
 	ChatService_ListMessages_FullMethodName       = "/social.v1.ChatService/ListMessages"
 	ChatService_ReportMessage_FullMethodName      = "/social.v1.ChatService/ReportMessage"
 	ChatService_GenerateIcebreaker_FullMethodName = "/social.v1.ChatService/GenerateIcebreaker"
+	ChatService_CreatePoll_FullMethodName         = "/social.v1.ChatService/CreatePoll"
+	ChatService_VotePoll_FullMethodName           = "/social.v1.ChatService/VotePoll"
+	ChatService_PinMessage_FullMethodName         = "/social.v1.ChatService/PinMessage"
 )
 
 // ChatServiceClient is the client API for ChatService service.
@@ -41,6 +44,11 @@ type ChatServiceClient interface {
 	// GenerateIcebreaker — flow.md §42 "AI Icebreaker", rule-based shared-
 	// interest suggestion (no LLM call, per the PRD's non-goal).
 	GenerateIcebreaker(ctx context.Context, in *GenerateIcebreakerRequest, opts ...grpc.CallOption) (*GenerateIcebreakerResponse, error)
+	// Rich chat (flow.md §19). Every RPC checks room membership; announcements
+	// and pins are limited to the plan's host (or an admin).
+	CreatePoll(ctx context.Context, in *CreatePollRequest, opts ...grpc.CallOption) (*Message, error)
+	VotePoll(ctx context.Context, in *VotePollRequest, opts ...grpc.CallOption) (*Poll, error)
+	PinMessage(ctx context.Context, in *PinMessageRequest, opts ...grpc.CallOption) (*PinMessageResponse, error)
 }
 
 type chatServiceClient struct {
@@ -101,6 +109,36 @@ func (c *chatServiceClient) GenerateIcebreaker(ctx context.Context, in *Generate
 	return out, nil
 }
 
+func (c *chatServiceClient) CreatePoll(ctx context.Context, in *CreatePollRequest, opts ...grpc.CallOption) (*Message, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Message)
+	err := c.cc.Invoke(ctx, ChatService_CreatePoll_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatServiceClient) VotePoll(ctx context.Context, in *VotePollRequest, opts ...grpc.CallOption) (*Poll, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Poll)
+	err := c.cc.Invoke(ctx, ChatService_VotePoll_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatServiceClient) PinMessage(ctx context.Context, in *PinMessageRequest, opts ...grpc.CallOption) (*PinMessageResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PinMessageResponse)
+	err := c.cc.Invoke(ctx, ChatService_PinMessage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ChatServiceServer is the server API for ChatService service.
 // All implementations must embed UnimplementedChatServiceServer
 // for forward compatibility.
@@ -116,6 +154,11 @@ type ChatServiceServer interface {
 	// GenerateIcebreaker — flow.md §42 "AI Icebreaker", rule-based shared-
 	// interest suggestion (no LLM call, per the PRD's non-goal).
 	GenerateIcebreaker(context.Context, *GenerateIcebreakerRequest) (*GenerateIcebreakerResponse, error)
+	// Rich chat (flow.md §19). Every RPC checks room membership; announcements
+	// and pins are limited to the plan's host (or an admin).
+	CreatePoll(context.Context, *CreatePollRequest) (*Message, error)
+	VotePoll(context.Context, *VotePollRequest) (*Poll, error)
+	PinMessage(context.Context, *PinMessageRequest) (*PinMessageResponse, error)
 	mustEmbedUnimplementedChatServiceServer()
 }
 
@@ -140,6 +183,15 @@ func (UnimplementedChatServiceServer) ReportMessage(context.Context, *ReportMess
 }
 func (UnimplementedChatServiceServer) GenerateIcebreaker(context.Context, *GenerateIcebreakerRequest) (*GenerateIcebreakerResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GenerateIcebreaker not implemented")
+}
+func (UnimplementedChatServiceServer) CreatePoll(context.Context, *CreatePollRequest) (*Message, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreatePoll not implemented")
+}
+func (UnimplementedChatServiceServer) VotePoll(context.Context, *VotePollRequest) (*Poll, error) {
+	return nil, status.Error(codes.Unimplemented, "method VotePoll not implemented")
+}
+func (UnimplementedChatServiceServer) PinMessage(context.Context, *PinMessageRequest) (*PinMessageResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method PinMessage not implemented")
 }
 func (UnimplementedChatServiceServer) mustEmbedUnimplementedChatServiceServer() {}
 func (UnimplementedChatServiceServer) testEmbeddedByValue()                     {}
@@ -252,6 +304,60 @@ func _ChatService_GenerateIcebreaker_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ChatService_CreatePoll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreatePollRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServiceServer).CreatePoll(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatService_CreatePoll_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServiceServer).CreatePoll(ctx, req.(*CreatePollRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ChatService_VotePoll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VotePollRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServiceServer).VotePoll(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatService_VotePoll_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServiceServer).VotePoll(ctx, req.(*VotePollRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ChatService_PinMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PinMessageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServiceServer).PinMessage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatService_PinMessage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServiceServer).PinMessage(ctx, req.(*PinMessageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ChatService_ServiceDesc is the grpc.ServiceDesc for ChatService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -278,6 +384,18 @@ var ChatService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GenerateIcebreaker",
 			Handler:    _ChatService_GenerateIcebreaker_Handler,
+		},
+		{
+			MethodName: "CreatePoll",
+			Handler:    _ChatService_CreatePoll_Handler,
+		},
+		{
+			MethodName: "VotePoll",
+			Handler:    _ChatService_VotePoll_Handler,
+		},
+		{
+			MethodName: "PinMessage",
+			Handler:    _ChatService_PinMessage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -3,6 +3,7 @@ syntax = "proto3";
 package social.v1;
 
 import "social/v1/common.proto";
+import "social/v1/plan.proto";
 
 option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
 
@@ -12,6 +13,21 @@ service CommunityService {
   rpc GetCommunity(GetCommunityRequest) returns (Community);
   rpc JoinCommunity(JoinCommunityRequest) returns (Membership);
   rpc ListCommunityPlans(ListCommunityPlansRequest) returns (ListPlansResponse);
+
+  // Community types (flow.md §22).
+  rpc ListCommunities(ListCommunitiesRequest) returns (ListCommunitiesResponse);
+  rpc LeaveCommunity(LeaveCommunityRequest) returns (LeaveCommunityResponse);
+  rpc ListCommunityJoinRequests(ListCommunityJoinRequestsRequest) returns (ListCommunityJoinRequestsResponse);
+  rpc RespondCommunityJoinRequest(RespondCommunityJoinRequestRequest) returns (CommunityJoinRequest);
+  rpc InviteToCommunity(InviteToCommunityRequest) returns (InviteToCommunityResponse);
+}
+
+enum CommunityType {
+  COMMUNITY_TYPE_UNSPECIFIED = 0;
+  COMMUNITY_TYPE_PUBLIC = 1;
+  COMMUNITY_TYPE_PRIVATE = 2;   // invite only, hidden from discovery
+  COMMUNITY_TYPE_APPROVAL = 3;  // join requests approved by an owner/moderator
+  COMMUNITY_TYPE_PAID = 4;      // gated by a subscription entitlement (no billing here)
 }
 
 message Community {
@@ -21,19 +37,32 @@ message Community {
   string city_id = 4;
   string owner_id = 5;
   Audit audit = 6;
+  CommunityType membership_type = 7;
+  string cover_image_url = 8;
+  string rules = 9;
+  string category_id = 10;
+  string required_entitlement = 11;
+  int32 member_count = 12; // live count
+  int32 plan_count = 13;   // live count of published plans
 }
 
 message Membership {
   string community_id = 1;
   string user_id = 2;
   string role = 3; // member | moderator | owner
+  string status = 4; // active | pending | rejected
 }
 
 message CreateCommunityRequest {
   string name = 1;
   string description = 2;
   string city_id = 3;
-  string owner_id = 4;
+  string owner_id = 4; // IGNORED: the owner is always the authenticated caller
+  CommunityType membership_type = 5;
+  string cover_image_url = 6;
+  string rules = 7;
+  string category_id = 8;
+  string required_entitlement = 9; // required for PAID communities
 }
 
 message GetCommunityRequest {
@@ -42,7 +71,7 @@ message GetCommunityRequest {
 
 message JoinCommunityRequest {
   string community_id = 1;
-  string user_id = 2;
+  string user_id = 2; // IGNORED: always the authenticated caller
 }
 
 message ListCommunityPlansRequest {
@@ -54,3 +83,47 @@ message ListPlansResponse {
   repeated string plan_ids = 1;
   PageResponse page = 2;
 }
+
+message ListCommunitiesRequest {
+  string city_id = 1;
+  string category_id = 2;
+  string query = 3;
+}
+
+message ListCommunitiesResponse {
+  repeated Community communities = 1;
+}
+
+message LeaveCommunityRequest {
+  string community_id = 1;
+}
+
+message LeaveCommunityResponse {}
+
+message CommunityJoinRequest {
+  string id = 1;
+  string community_id = 2;
+  string user_id = 3;
+  JoinRequestStatus status = 4;
+}
+
+message ListCommunityJoinRequestsRequest {
+  string community_id = 1;
+  JoinRequestStatus status = 2;
+}
+
+message ListCommunityJoinRequestsResponse {
+  repeated CommunityJoinRequest requests = 1;
+}
+
+message RespondCommunityJoinRequestRequest {
+  string request_id = 1;
+  bool approve = 2;
+}
+
+message InviteToCommunityRequest {
+  string community_id = 1;
+  string user_id = 2;
+}
+
+message InviteToCommunityResponse {}

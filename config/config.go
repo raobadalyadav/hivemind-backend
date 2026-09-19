@@ -41,6 +41,7 @@ type Config struct {
 	CashfreeClientSecret string
 	CashfreeSandbox      bool
 	WebhookPort          string
+	PassSecret           string
 }
 
 func Load() Config {
@@ -67,6 +68,9 @@ func Load() Config {
 		CashfreeClientSecret: getEnv("CASHFREE_CLIENT_SECRET", ""),
 		CashfreeSandbox:      getEnvBool("CASHFREE_SANDBOX", true),
 		WebhookPort:          getEnv("WEBHOOK_PORT", "8080"),
+		// Domain-separated from JWT_SECRET so a leaked pass can never be
+		// confused with (or used to forge) a session token.
+		PassSecret: getEnv("PASS_SECRET", getEnv("JWT_SECRET", "dev-secret-change-in-production")+":pass"),
 	}
 }
 

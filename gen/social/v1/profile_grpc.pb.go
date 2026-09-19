@@ -19,10 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ProfileService_CreateProfile_FullMethodName = "/social.v1.ProfileService/CreateProfile"
-	ProfileService_GetProfile_FullMethodName    = "/social.v1.ProfileService/GetProfile"
-	ProfileService_UpdateProfile_FullMethodName = "/social.v1.ProfileService/UpdateProfile"
-	ProfileService_SetPrivacy_FullMethodName    = "/social.v1.ProfileService/SetPrivacy"
+	ProfileService_CreateProfile_FullMethodName        = "/social.v1.ProfileService/CreateProfile"
+	ProfileService_GetProfile_FullMethodName           = "/social.v1.ProfileService/GetProfile"
+	ProfileService_UpdateProfile_FullMethodName        = "/social.v1.ProfileService/UpdateProfile"
+	ProfileService_SetPrivacy_FullMethodName           = "/social.v1.ProfileService/SetPrivacy"
+	ProfileService_AddProfilePhoto_FullMethodName      = "/social.v1.ProfileService/AddProfilePhoto"
+	ProfileService_DeleteProfilePhoto_FullMethodName   = "/social.v1.ProfileService/DeleteProfilePhoto"
+	ProfileService_ReorderProfilePhotos_FullMethodName = "/social.v1.ProfileService/ReorderProfilePhotos"
+	ProfileService_ListInterestCatalog_FullMethodName  = "/social.v1.ProfileService/ListInterestCatalog"
+	ProfileService_SetSocialIntent_FullMethodName      = "/social.v1.ProfileService/SetSocialIntent"
+	ProfileService_SetPersonality_FullMethodName       = "/social.v1.ProfileService/SetPersonality"
+	ProfileService_GetMyPreferences_FullMethodName     = "/social.v1.ProfileService/GetMyPreferences"
 )
 
 // ProfileServiceClient is the client API for ProfileService service.
@@ -35,6 +42,16 @@ type ProfileServiceClient interface {
 	GetProfile(ctx context.Context, in *GetProfileRequest, opts ...grpc.CallOption) (*Profile, error)
 	UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*Profile, error)
 	SetPrivacy(ctx context.Context, in *SetPrivacyRequest, opts ...grpc.CallOption) (*Profile, error)
+	// Photos (flow.md §3): max 6, first = primary. All keyed to the caller.
+	AddProfilePhoto(ctx context.Context, in *AddProfilePhotoRequest, opts ...grpc.CallOption) (*ProfilePhoto, error)
+	DeleteProfilePhoto(ctx context.Context, in *DeleteProfilePhotoRequest, opts ...grpc.CallOption) (*DeleteProfilePhotoResponse, error)
+	ReorderProfilePhotos(ctx context.Context, in *ReorderProfilePhotosRequest, opts ...grpc.CallOption) (*ReorderProfilePhotosResponse, error)
+	// Interest catalog (flow.md §4): the 15 selectable interests + categories.
+	ListInterestCatalog(ctx context.Context, in *ListInterestCatalogRequest, opts ...grpc.CallOption) (*ListInterestCatalogResponse, error)
+	// Social intent + personality quiz (flow.md §5/§6). Optional, caller-only.
+	SetSocialIntent(ctx context.Context, in *SetSocialIntentRequest, opts ...grpc.CallOption) (*UserPreferences, error)
+	SetPersonality(ctx context.Context, in *SetPersonalityRequest, opts ...grpc.CallOption) (*UserPreferences, error)
+	GetMyPreferences(ctx context.Context, in *GetMyPreferencesRequest, opts ...grpc.CallOption) (*UserPreferences, error)
 }
 
 type profileServiceClient struct {
@@ -85,6 +102,76 @@ func (c *profileServiceClient) SetPrivacy(ctx context.Context, in *SetPrivacyReq
 	return out, nil
 }
 
+func (c *profileServiceClient) AddProfilePhoto(ctx context.Context, in *AddProfilePhotoRequest, opts ...grpc.CallOption) (*ProfilePhoto, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ProfilePhoto)
+	err := c.cc.Invoke(ctx, ProfileService_AddProfilePhoto_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) DeleteProfilePhoto(ctx context.Context, in *DeleteProfilePhotoRequest, opts ...grpc.CallOption) (*DeleteProfilePhotoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteProfilePhotoResponse)
+	err := c.cc.Invoke(ctx, ProfileService_DeleteProfilePhoto_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) ReorderProfilePhotos(ctx context.Context, in *ReorderProfilePhotosRequest, opts ...grpc.CallOption) (*ReorderProfilePhotosResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReorderProfilePhotosResponse)
+	err := c.cc.Invoke(ctx, ProfileService_ReorderProfilePhotos_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) ListInterestCatalog(ctx context.Context, in *ListInterestCatalogRequest, opts ...grpc.CallOption) (*ListInterestCatalogResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListInterestCatalogResponse)
+	err := c.cc.Invoke(ctx, ProfileService_ListInterestCatalog_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) SetSocialIntent(ctx context.Context, in *SetSocialIntentRequest, opts ...grpc.CallOption) (*UserPreferences, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserPreferences)
+	err := c.cc.Invoke(ctx, ProfileService_SetSocialIntent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) SetPersonality(ctx context.Context, in *SetPersonalityRequest, opts ...grpc.CallOption) (*UserPreferences, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserPreferences)
+	err := c.cc.Invoke(ctx, ProfileService_SetPersonality_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) GetMyPreferences(ctx context.Context, in *GetMyPreferencesRequest, opts ...grpc.CallOption) (*UserPreferences, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserPreferences)
+	err := c.cc.Invoke(ctx, ProfileService_GetMyPreferences_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProfileServiceServer is the server API for ProfileService service.
 // All implementations must embed UnimplementedProfileServiceServer
 // for forward compatibility.
@@ -95,6 +182,16 @@ type ProfileServiceServer interface {
 	GetProfile(context.Context, *GetProfileRequest) (*Profile, error)
 	UpdateProfile(context.Context, *UpdateProfileRequest) (*Profile, error)
 	SetPrivacy(context.Context, *SetPrivacyRequest) (*Profile, error)
+	// Photos (flow.md §3): max 6, first = primary. All keyed to the caller.
+	AddProfilePhoto(context.Context, *AddProfilePhotoRequest) (*ProfilePhoto, error)
+	DeleteProfilePhoto(context.Context, *DeleteProfilePhotoRequest) (*DeleteProfilePhotoResponse, error)
+	ReorderProfilePhotos(context.Context, *ReorderProfilePhotosRequest) (*ReorderProfilePhotosResponse, error)
+	// Interest catalog (flow.md §4): the 15 selectable interests + categories.
+	ListInterestCatalog(context.Context, *ListInterestCatalogRequest) (*ListInterestCatalogResponse, error)
+	// Social intent + personality quiz (flow.md §5/§6). Optional, caller-only.
+	SetSocialIntent(context.Context, *SetSocialIntentRequest) (*UserPreferences, error)
+	SetPersonality(context.Context, *SetPersonalityRequest) (*UserPreferences, error)
+	GetMyPreferences(context.Context, *GetMyPreferencesRequest) (*UserPreferences, error)
 	mustEmbedUnimplementedProfileServiceServer()
 }
 
@@ -116,6 +213,27 @@ func (UnimplementedProfileServiceServer) UpdateProfile(context.Context, *UpdateP
 }
 func (UnimplementedProfileServiceServer) SetPrivacy(context.Context, *SetPrivacyRequest) (*Profile, error) {
 	return nil, status.Error(codes.Unimplemented, "method SetPrivacy not implemented")
+}
+func (UnimplementedProfileServiceServer) AddProfilePhoto(context.Context, *AddProfilePhotoRequest) (*ProfilePhoto, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddProfilePhoto not implemented")
+}
+func (UnimplementedProfileServiceServer) DeleteProfilePhoto(context.Context, *DeleteProfilePhotoRequest) (*DeleteProfilePhotoResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteProfilePhoto not implemented")
+}
+func (UnimplementedProfileServiceServer) ReorderProfilePhotos(context.Context, *ReorderProfilePhotosRequest) (*ReorderProfilePhotosResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReorderProfilePhotos not implemented")
+}
+func (UnimplementedProfileServiceServer) ListInterestCatalog(context.Context, *ListInterestCatalogRequest) (*ListInterestCatalogResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListInterestCatalog not implemented")
+}
+func (UnimplementedProfileServiceServer) SetSocialIntent(context.Context, *SetSocialIntentRequest) (*UserPreferences, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetSocialIntent not implemented")
+}
+func (UnimplementedProfileServiceServer) SetPersonality(context.Context, *SetPersonalityRequest) (*UserPreferences, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetPersonality not implemented")
+}
+func (UnimplementedProfileServiceServer) GetMyPreferences(context.Context, *GetMyPreferencesRequest) (*UserPreferences, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetMyPreferences not implemented")
 }
 func (UnimplementedProfileServiceServer) mustEmbedUnimplementedProfileServiceServer() {}
 func (UnimplementedProfileServiceServer) testEmbeddedByValue()                        {}
@@ -210,6 +328,132 @@ func _ProfileService_SetPrivacy_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProfileService_AddProfilePhoto_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddProfilePhotoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).AddProfilePhoto(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_AddProfilePhoto_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).AddProfilePhoto(ctx, req.(*AddProfilePhotoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_DeleteProfilePhoto_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteProfilePhotoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).DeleteProfilePhoto(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_DeleteProfilePhoto_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).DeleteProfilePhoto(ctx, req.(*DeleteProfilePhotoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_ReorderProfilePhotos_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReorderProfilePhotosRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).ReorderProfilePhotos(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_ReorderProfilePhotos_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).ReorderProfilePhotos(ctx, req.(*ReorderProfilePhotosRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_ListInterestCatalog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListInterestCatalogRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).ListInterestCatalog(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_ListInterestCatalog_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).ListInterestCatalog(ctx, req.(*ListInterestCatalogRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_SetSocialIntent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetSocialIntentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).SetSocialIntent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_SetSocialIntent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).SetSocialIntent(ctx, req.(*SetSocialIntentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_SetPersonality_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetPersonalityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).SetPersonality(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_SetPersonality_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).SetPersonality(ctx, req.(*SetPersonalityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_GetMyPreferences_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMyPreferencesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).GetMyPreferences(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_GetMyPreferences_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).GetMyPreferences(ctx, req.(*GetMyPreferencesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProfileService_ServiceDesc is the grpc.ServiceDesc for ProfileService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -232,6 +476,34 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetPrivacy",
 			Handler:    _ProfileService_SetPrivacy_Handler,
+		},
+		{
+			MethodName: "AddProfilePhoto",
+			Handler:    _ProfileService_AddProfilePhoto_Handler,
+		},
+		{
+			MethodName: "DeleteProfilePhoto",
+			Handler:    _ProfileService_DeleteProfilePhoto_Handler,
+		},
+		{
+			MethodName: "ReorderProfilePhotos",
+			Handler:    _ProfileService_ReorderProfilePhotos_Handler,
+		},
+		{
+			MethodName: "ListInterestCatalog",
+			Handler:    _ProfileService_ListInterestCatalog_Handler,
+		},
+		{
+			MethodName: "SetSocialIntent",
+			Handler:    _ProfileService_SetSocialIntent_Handler,
+		},
+		{
+			MethodName: "SetPersonality",
+			Handler:    _ProfileService_SetPersonality_Handler,
+		},
+		{
+			MethodName: "GetMyPreferences",
+			Handler:    _ProfileService_GetMyPreferences_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

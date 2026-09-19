@@ -8,6 +8,7 @@ import (
 
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
 	"github.com/hivemind/backend/pkg/grpcmiddleware"
+	"github.com/hivemind/backend/pkg/idempotency"
 )
 
 // Handler implements socialv1.ConnectionServiceServer — every RPC is fully
@@ -33,10 +34,7 @@ func (h *Handler) RequestConnection(ctx context.Context, req *socialv1.RequestCo
 	}
 	created, err := h.svc.RequestConnection(ctx, c)
 	if err != nil {
-		if err == ErrInvalidInput {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-		return nil, status.Error(codes.Internal, "failed to request connection")
+		return nil, connErr(err, "failed to request connection")
 	}
 	return toProto(created), nil
 }
@@ -67,16 +65,7 @@ func (h *Handler) RespondConnection(ctx context.Context, req *socialv1.RespondCo
 	}
 	c, err := h.svc.RespondConnection(ctx, req.GetConnectionId(), callerID, req.GetAccept())
 	if err != nil {
-		switch err {
-		case ErrInvalidInput:
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		case ErrForbidden:
-			return nil, status.Error(codes.PermissionDenied, err.Error())
-		case ErrConnectionNotFound:
-			return nil, status.Error(codes.NotFound, err.Error())
-		default:
-			return nil, status.Error(codes.Internal, "failed to respond to connection")
-		}
+		return nil, connErr(err, "failed to respond to connection")
 	}
 	return toProto(c), nil
 }
@@ -99,4 +88,57 @@ func toProto(c *Connection) *socialv1.Connection {
 		OriginPlanId: c.OriginPlanID,
 		Status:       st,
 	}
+}
+
+func connErr(err error, fallback string) error {
+	switch err {
+	case ErrInvalidInput, ErrBadOriginPlan:
+		return status.Error(codes.InvalidArgument, err.Error())
+	case ErrForbidden, ErrNotAttendee, ErrInviteeRules:
+		return status.Error(codes.PermissionDenied, err.Error())
+	case ErrConnectionNotFound, ErrUserNotFound:
+		return status.Error(codes.NotFound, err.Error())
+	case ErrAlreadyDecided:
+		return status.Error(codes.FailedPrecondition, err.Error())
+	case idempotency.ErrDuplicateRequest:
+		return status.Error(codes.AlreadyExists, err.Error())
+	}
+	return status.Error(codes.Internal, fallback)
+}
+
+var stateToProto = map[string]socialv1.ConnectionState{
+	"none":      socialv1.ConnectionState_CONNECTION_STATE_NONE,
+	"pending":   socialv1.ConnectionState_CONNECTION_STATE_PENDING,
+	"connected": socialv1.ConnectionState_CONNECTION_STATE_CONNECTED,
+}
+
+func (h *Handler) ListPeopleMet(ctx context.Context, req *socialv1.ListPeopleMetRequest) (*socialv1.ListPeopleMetResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	people, err := h.svc.ListPeopleMet(ctx, req.GetPlanId(), userID)
+	if err != nil {
+		return nil, connErr(err, "failed to list people met")
+	}
+	out := make([]*socialv1.PersonMet, 0, len(people))
+	for _, p := range people {
+		out = append(out, &socialv1.PersonMet{
+			UserId: p.UserID, DisplayName: p.DisplayName, Occupation: p.Occupation,
+			PhotoUrl: p.PhotoURL, State: stateToProto[p.State],
+		})
+	}
+	return &socialv1.ListPeopleMetResponse{People: out}, nil
+}
+
+func (h *Handler) CreateMeetAgainGroup(ctx context.Context, req *socialv1.CreateMeetAgainGroupRequest) (*socialv1.CreateMeetAgainGroupResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	roomID, err := h.svc.CreateMeetAgainGroup(ctx, req.GetPlanId(), userID, req.GetInviteeIds(), req.GetIdempotencyKey())
+	if err != nil {
+		return nil, connErr(err, "failed to create group")
+	}
+	return &socialv1.CreateMeetAgainGroupResponse{RoomId: roomID}, nil
 }

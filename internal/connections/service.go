@@ -3,6 +3,8 @@ package connections
 import (
 	"context"
 	"errors"
+
+	"github.com/hivemind/backend/pkg/idempotency"
 )
 
 var (
@@ -13,7 +15,9 @@ var (
 const defaultPageSize = 20
 
 type Service struct {
-	repo *Repository
+	repo  *Repository
+	guard *idempotency.Guard
+	rooms RoomCreator
 }
 
 func NewService(repo *Repository) *Service {

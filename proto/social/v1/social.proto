@@ -13,6 +13,42 @@ service SocialService {
   rpc ListPosts(ListPostsRequest) returns (ListPostsResponse);
   rpc CommentOnPost(CommentOnPostRequest) returns (Comment);
   rpc LikePost(LikePostRequest) returns (LikePostResponse);
+
+  // Feed (flow.md §38). Every read/write of a post goes through one
+  // visibility rule: author, public, connections (accepted), community
+  // members — never across a block. A hidden post is indistinguishable from
+  // a missing one (NotFound).
+  rpc GetFeed(GetFeedRequest) returns (GetFeedResponse);
+  rpc SavePost(SavePostRequest) returns (SavePostResponse);
+  rpc UnsavePost(UnsavePostRequest) returns (UnsavePostResponse);
+  rpc ListSavedPosts(ListSavedPostsRequest) returns (ListSavedPostsResponse);
+  // SharePost returns a deep link to a post the caller may view. It is a link,
+  // not a repost — the post is not copied or re-published.
+  rpc SharePost(SharePostRequest) returns (SharePostResponse);
+  // Memories (flow.md §37): attended plans grouped by year with photo/people counts.
+  rpc ListMyMemories(ListMyMemoriesRequest) returns (ListMyMemoriesResponse);
+}
+
+message ListMyMemoriesRequest {
+  int32 year = 1; // 0 = all years
+}
+
+message Memory {
+  string plan_id = 1;
+  string title = 2;
+  string starts_at = 3; // RFC 3339
+  string city_name = 4;
+  int32 photo_count = 5;
+  int32 people_count = 6;
+}
+
+message MemoryYear {
+  int32 year = 1;
+  repeated Memory memories = 2;
+}
+
+message ListMyMemoriesResponse {
+  repeated MemoryYear years = 1; // newest year first
 }
 
 message Post {
@@ -21,8 +57,19 @@ message Post {
   string plan_id = 3; // memory origin, per PRD §9
   string body = 4;
   repeated string media_urls = 5;
-  string visibility = 6; // private | public
+  string visibility = 6; // private | public | connections | community
   Audit audit = 7;
+  string community_id = 8;
+  repeated PostMedia media = 9;
+  int32 like_count = 10;
+  int32 comment_count = 11;
+  bool liked_by_me = 12;
+  bool saved_by_me = 13;
+}
+
+message PostMedia {
+  string url = 1;        // https only
+  string media_type = 2; // image | video
 }
 
 message Comment {
@@ -36,8 +83,10 @@ message CreatePostRequest {
   string author_id = 1;
   string plan_id = 2;
   string body = 3;
-  repeated string media_urls = 4;
-  string visibility = 5;
+  repeated string media_urls = 4; // images; kept for compatibility
+  string visibility = 5;          // default private
+  string community_id = 6;        // required for (and only for) visibility=community; caller must be a member
+  repeated PostMedia media = 7;   // typed media (image|video)
 }
 
 message GetPostRequest {
@@ -68,3 +117,30 @@ message LikePostRequest {
 message LikePostResponse {
   int32 like_count = 1;
 }
+
+enum FeedScope {
+  FEED_SCOPE_GLOBAL = 0;      // everything the caller may see that isn't private
+  FEED_SCOPE_CONNECTIONS = 1; // posts by the caller's accepted connections
+  FEED_SCOPE_COMMUNITY = 2;   // one community's posts (community_id required)
+}
+
+message GetFeedRequest {
+  FeedScope scope = 1;
+  string community_id = 2;
+  PageRequest page = 3; // keyset paging: pass back next_page_token
+}
+
+message GetFeedResponse {
+  repeated Post posts = 1;
+  PageResponse page = 2;
+}
+
+message SavePostRequest { string post_id = 1; }
+message SavePostResponse {}
+message UnsavePostRequest { string post_id = 1; }
+message UnsavePostResponse {}
+message ListSavedPostsRequest {}
+message ListSavedPostsResponse { repeated Post posts = 1; }
+
+message SharePostRequest { string post_id = 1; }
+message SharePostResponse { string link = 1; }

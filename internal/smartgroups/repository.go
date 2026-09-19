@@ -25,11 +25,19 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
 
+// Interests carry trait tokens (energy:quiet, intent:networking, …) after the
+// real interests, so the existing sort-then-deal grouping also balances
+// personality and intent with no algorithm change.
 func (r *Repository) ConfirmedParticipantsWithInterests(ctx context.Context, planID string) ([]Participant, error) {
 	rows, err := r.pool.Query(ctx, `
-		SELECT pp.user_id, COALESCE(up.interests, '{}')
+		SELECT pp.user_id,
+			COALESCE(up.interests, '{}')
+			|| array_remove(ARRAY['group:'||pr.group_pref, 'energy:'||pr.energy_pref, 'planning:'||pr.planning_pref,
+			                      'time:'||pr.time_pref, 'setting:'||pr.setting_pref], NULL)
+			|| ARRAY(SELECT 'intent:'||i FROM unnest(COALESCE(pr.intents, '{}')) i)
 		FROM plan_participants pp
 		LEFT JOIN user_profiles up ON up.user_id = pp.user_id
+		LEFT JOIN user_preferences pr ON pr.user_id = pp.user_id
 		WHERE pp.plan_id = $1 AND pp.status = 'confirmed'`,
 		planID,
 	)

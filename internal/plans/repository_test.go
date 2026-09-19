@@ -50,7 +50,7 @@ func TestRepository_CreateAndGet(t *testing.T) {
 		Currency:  "INR",
 		Latitude:  &lat,
 		Longitude: &lng,
-	})
+	}, "")
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}

@@ -16,6 +16,25 @@ type Profile struct {
 	Languages          []string
 	Occupation         string
 	VerificationStatus string
+	Gender             string
+	Education          string
+	Hobbies            []string
+	Photos             []Photo
+}
+
+// Update is a partial update: nil pointer / nil slice = leave unchanged.
+// ponytail: an empty repeated field can't be told apart from an omitted one
+// over proto3, so interests/languages/hobbies can be replaced but not
+// cleared; add StringList wrappers if clearing is ever needed.
+type Update struct {
+	UserID     string
+	Bio        *string
+	Occupation *string
+	Gender     *string
+	Education  *string
+	Interests  []string
+	Languages  []string
+	Hobbies    []string
 }
 
 type Repository struct {
@@ -26,16 +45,24 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
 
-// Create upserts the profile row created (empty) during signup — see
-// internal/auth.Repository.CreateUser — with the caller-supplied fields.
+const profileCols = `display_name, bio, interests, languages, occupation, verification_status,
+	COALESCE(gender,''), education, hobbies`
+
+func scanProfile(row interface{ Scan(...any) error }, p *Profile) error {
+	return row.Scan(&p.DisplayName, &p.Bio, &p.Interests, &p.Languages, &p.Occupation,
+		&p.VerificationStatus, &p.Gender, &p.Education, &p.Hobbies)
+}
+
+// Create fills in the (empty) profile row created during signup — see
+// internal/auth.Repository.CreateUser.
 func (r *Repository) Create(ctx context.Context, p *Profile) (*Profile, error) {
-	out := *p
-	err := r.pool.QueryRow(ctx, `
+	out := Profile{UserID: p.UserID}
+	err := scanProfile(r.pool.QueryRow(ctx, `
 		UPDATE user_profiles SET display_name = $2, interests = $3, updated_at = now()
 		WHERE user_id = $1
-		RETURNING display_name, interests, languages, occupation, verification_status`,
+		RETURNING `+profileCols,
 		p.UserID, p.DisplayName, p.Interests,
-	).Scan(&out.DisplayName, &out.Interests, &out.Languages, &out.Occupation, &out.VerificationStatus)
+	), &out)
 	if err != nil {
 		return nil, err
 	}
@@ -43,42 +70,52 @@ func (r *Repository) Create(ctx context.Context, p *Profile) (*Profile, error) {
 }
 
 func (r *Repository) Get(ctx context.Context, userID string) (*Profile, error) {
-	var p Profile
-	p.UserID = userID
-	err := r.pool.QueryRow(ctx, `
-		SELECT display_name, bio, interests, languages, occupation, verification_status
-		FROM user_profiles WHERE user_id = $1`, userID,
-	).Scan(&p.DisplayName, &p.Bio, &p.Interests, &p.Languages, &p.Occupation, &p.VerificationStatus)
+	p := Profile{UserID: userID}
+	if err := scanProfile(r.pool.QueryRow(ctx,
+		`SELECT `+profileCols+` FROM user_profiles WHERE user_id = $1`, userID), &p); err != nil {
+		return nil, err
+	}
+	photos, err := r.ListPhotos(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
+	p.Photos = photos
 	return &p, nil
 }
 
-func (r *Repository) Update(ctx context.Context, p *Profile) (*Profile, error) {
-	out := *p
-	out.UserID = p.UserID
-	err := r.pool.QueryRow(ctx, `
-		UPDATE user_profiles SET bio = $2, interests = $3, languages = $4, occupation = $5, updated_at = now()
+func (r *Repository) Update(ctx context.Context, u *Update) (*Profile, error) {
+	p := Profile{UserID: u.UserID}
+	err := scanProfile(r.pool.QueryRow(ctx, `
+		UPDATE user_profiles SET
+			bio        = COALESCE($2, bio),
+			occupation = COALESCE($3, occupation),
+			gender     = COALESCE(NULLIF($4::text,''), gender),
+			education  = COALESCE($5, education),
+			interests  = COALESCE($6::text[], interests),
+			languages  = COALESCE($7::text[], languages),
+			hobbies    = COALESCE($8::text[], hobbies),
+			updated_at = now()
 		WHERE user_id = $1
-		RETURNING display_name, verification_status`,
-		p.UserID, p.Bio, p.Interests, p.Languages, p.Occupation,
-	).Scan(&out.DisplayName, &out.VerificationStatus)
+		RETURNING `+profileCols,
+		u.UserID, u.Bio, u.Occupation, u.Gender, u.Education, u.Interests, u.Languages, u.Hobbies,
+	), &p)
 	if err != nil {
 		return nil, err
 	}
-	return &out, nil
+	photos, err := r.ListPhotos(ctx, u.UserID)
+	if err != nil {
+		return nil, err
+	}
+	p.Photos = photos
+	return &p, nil
 }
 
 func (r *Repository) SetPrivacy(ctx context.Context, userID string, showInPreviews bool) (*Profile, error) {
-	var p Profile
-	p.UserID = userID
-	err := r.pool.QueryRow(ctx, `
+	p := Profile{UserID: userID}
+	err := scanProfile(r.pool.QueryRow(ctx, `
 		UPDATE user_profiles SET show_in_participant_previews = $2, updated_at = now()
 		WHERE user_id = $1
-		RETURNING display_name, bio, interests, languages, occupation, verification_status`,
-		userID, showInPreviews,
-	).Scan(&p.DisplayName, &p.Bio, &p.Interests, &p.Languages, &p.Occupation, &p.VerificationStatus)
+		RETURNING `+profileCols, userID, showInPreviews), &p)
 	if err != nil {
 		return nil, err
 	}

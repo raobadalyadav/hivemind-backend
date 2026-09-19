@@ -19,11 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SocialService_CreatePost_FullMethodName    = "/social.v1.SocialService/CreatePost"
-	SocialService_GetPost_FullMethodName       = "/social.v1.SocialService/GetPost"
-	SocialService_ListPosts_FullMethodName     = "/social.v1.SocialService/ListPosts"
-	SocialService_CommentOnPost_FullMethodName = "/social.v1.SocialService/CommentOnPost"
-	SocialService_LikePost_FullMethodName      = "/social.v1.SocialService/LikePost"
+	SocialService_CreatePost_FullMethodName     = "/social.v1.SocialService/CreatePost"
+	SocialService_GetPost_FullMethodName        = "/social.v1.SocialService/GetPost"
+	SocialService_ListPosts_FullMethodName      = "/social.v1.SocialService/ListPosts"
+	SocialService_CommentOnPost_FullMethodName  = "/social.v1.SocialService/CommentOnPost"
+	SocialService_LikePost_FullMethodName       = "/social.v1.SocialService/LikePost"
+	SocialService_GetFeed_FullMethodName        = "/social.v1.SocialService/GetFeed"
+	SocialService_SavePost_FullMethodName       = "/social.v1.SocialService/SavePost"
+	SocialService_UnsavePost_FullMethodName     = "/social.v1.SocialService/UnsavePost"
+	SocialService_ListSavedPosts_FullMethodName = "/social.v1.SocialService/ListSavedPosts"
+	SocialService_SharePost_FullMethodName      = "/social.v1.SocialService/SharePost"
+	SocialService_ListMyMemories_FullMethodName = "/social.v1.SocialService/ListMyMemories"
 )
 
 // SocialServiceClient is the client API for SocialService service.
@@ -37,6 +43,19 @@ type SocialServiceClient interface {
 	ListPosts(ctx context.Context, in *ListPostsRequest, opts ...grpc.CallOption) (*ListPostsResponse, error)
 	CommentOnPost(ctx context.Context, in *CommentOnPostRequest, opts ...grpc.CallOption) (*Comment, error)
 	LikePost(ctx context.Context, in *LikePostRequest, opts ...grpc.CallOption) (*LikePostResponse, error)
+	// Feed (flow.md §38). Every read/write of a post goes through one
+	// visibility rule: author, public, connections (accepted), community
+	// members — never across a block. A hidden post is indistinguishable from
+	// a missing one (NotFound).
+	GetFeed(ctx context.Context, in *GetFeedRequest, opts ...grpc.CallOption) (*GetFeedResponse, error)
+	SavePost(ctx context.Context, in *SavePostRequest, opts ...grpc.CallOption) (*SavePostResponse, error)
+	UnsavePost(ctx context.Context, in *UnsavePostRequest, opts ...grpc.CallOption) (*UnsavePostResponse, error)
+	ListSavedPosts(ctx context.Context, in *ListSavedPostsRequest, opts ...grpc.CallOption) (*ListSavedPostsResponse, error)
+	// SharePost returns a deep link to a post the caller may view. It is a link,
+	// not a repost — the post is not copied or re-published.
+	SharePost(ctx context.Context, in *SharePostRequest, opts ...grpc.CallOption) (*SharePostResponse, error)
+	// Memories (flow.md §37): attended plans grouped by year with photo/people counts.
+	ListMyMemories(ctx context.Context, in *ListMyMemoriesRequest, opts ...grpc.CallOption) (*ListMyMemoriesResponse, error)
 }
 
 type socialServiceClient struct {
@@ -97,6 +116,66 @@ func (c *socialServiceClient) LikePost(ctx context.Context, in *LikePostRequest,
 	return out, nil
 }
 
+func (c *socialServiceClient) GetFeed(ctx context.Context, in *GetFeedRequest, opts ...grpc.CallOption) (*GetFeedResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetFeedResponse)
+	err := c.cc.Invoke(ctx, SocialService_GetFeed_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *socialServiceClient) SavePost(ctx context.Context, in *SavePostRequest, opts ...grpc.CallOption) (*SavePostResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SavePostResponse)
+	err := c.cc.Invoke(ctx, SocialService_SavePost_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *socialServiceClient) UnsavePost(ctx context.Context, in *UnsavePostRequest, opts ...grpc.CallOption) (*UnsavePostResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UnsavePostResponse)
+	err := c.cc.Invoke(ctx, SocialService_UnsavePost_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *socialServiceClient) ListSavedPosts(ctx context.Context, in *ListSavedPostsRequest, opts ...grpc.CallOption) (*ListSavedPostsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListSavedPostsResponse)
+	err := c.cc.Invoke(ctx, SocialService_ListSavedPosts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *socialServiceClient) SharePost(ctx context.Context, in *SharePostRequest, opts ...grpc.CallOption) (*SharePostResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SharePostResponse)
+	err := c.cc.Invoke(ctx, SocialService_SharePost_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *socialServiceClient) ListMyMemories(ctx context.Context, in *ListMyMemoriesRequest, opts ...grpc.CallOption) (*ListMyMemoriesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListMyMemoriesResponse)
+	err := c.cc.Invoke(ctx, SocialService_ListMyMemories_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SocialServiceServer is the server API for SocialService service.
 // All implementations must embed UnimplementedSocialServiceServer
 // for forward compatibility.
@@ -108,6 +187,19 @@ type SocialServiceServer interface {
 	ListPosts(context.Context, *ListPostsRequest) (*ListPostsResponse, error)
 	CommentOnPost(context.Context, *CommentOnPostRequest) (*Comment, error)
 	LikePost(context.Context, *LikePostRequest) (*LikePostResponse, error)
+	// Feed (flow.md §38). Every read/write of a post goes through one
+	// visibility rule: author, public, connections (accepted), community
+	// members — never across a block. A hidden post is indistinguishable from
+	// a missing one (NotFound).
+	GetFeed(context.Context, *GetFeedRequest) (*GetFeedResponse, error)
+	SavePost(context.Context, *SavePostRequest) (*SavePostResponse, error)
+	UnsavePost(context.Context, *UnsavePostRequest) (*UnsavePostResponse, error)
+	ListSavedPosts(context.Context, *ListSavedPostsRequest) (*ListSavedPostsResponse, error)
+	// SharePost returns a deep link to a post the caller may view. It is a link,
+	// not a repost — the post is not copied or re-published.
+	SharePost(context.Context, *SharePostRequest) (*SharePostResponse, error)
+	// Memories (flow.md §37): attended plans grouped by year with photo/people counts.
+	ListMyMemories(context.Context, *ListMyMemoriesRequest) (*ListMyMemoriesResponse, error)
 	mustEmbedUnimplementedSocialServiceServer()
 }
 
@@ -132,6 +224,24 @@ func (UnimplementedSocialServiceServer) CommentOnPost(context.Context, *CommentO
 }
 func (UnimplementedSocialServiceServer) LikePost(context.Context, *LikePostRequest) (*LikePostResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method LikePost not implemented")
+}
+func (UnimplementedSocialServiceServer) GetFeed(context.Context, *GetFeedRequest) (*GetFeedResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetFeed not implemented")
+}
+func (UnimplementedSocialServiceServer) SavePost(context.Context, *SavePostRequest) (*SavePostResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SavePost not implemented")
+}
+func (UnimplementedSocialServiceServer) UnsavePost(context.Context, *UnsavePostRequest) (*UnsavePostResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UnsavePost not implemented")
+}
+func (UnimplementedSocialServiceServer) ListSavedPosts(context.Context, *ListSavedPostsRequest) (*ListSavedPostsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListSavedPosts not implemented")
+}
+func (UnimplementedSocialServiceServer) SharePost(context.Context, *SharePostRequest) (*SharePostResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SharePost not implemented")
+}
+func (UnimplementedSocialServiceServer) ListMyMemories(context.Context, *ListMyMemoriesRequest) (*ListMyMemoriesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListMyMemories not implemented")
 }
 func (UnimplementedSocialServiceServer) mustEmbedUnimplementedSocialServiceServer() {}
 func (UnimplementedSocialServiceServer) testEmbeddedByValue()                       {}
@@ -244,6 +354,114 @@ func _SocialService_LikePost_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SocialService_GetFeed_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFeedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SocialServiceServer).GetFeed(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SocialService_GetFeed_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SocialServiceServer).GetFeed(ctx, req.(*GetFeedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SocialService_SavePost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SavePostRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SocialServiceServer).SavePost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SocialService_SavePost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SocialServiceServer).SavePost(ctx, req.(*SavePostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SocialService_UnsavePost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnsavePostRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SocialServiceServer).UnsavePost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SocialService_UnsavePost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SocialServiceServer).UnsavePost(ctx, req.(*UnsavePostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SocialService_ListSavedPosts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSavedPostsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SocialServiceServer).ListSavedPosts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SocialService_ListSavedPosts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SocialServiceServer).ListSavedPosts(ctx, req.(*ListSavedPostsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SocialService_SharePost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SharePostRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SocialServiceServer).SharePost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SocialService_SharePost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SocialServiceServer).SharePost(ctx, req.(*SharePostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SocialService_ListMyMemories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListMyMemoriesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SocialServiceServer).ListMyMemories(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SocialService_ListMyMemories_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SocialServiceServer).ListMyMemories(ctx, req.(*ListMyMemoriesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SocialService_ServiceDesc is the grpc.ServiceDesc for SocialService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -270,6 +488,30 @@ var SocialService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LikePost",
 			Handler:    _SocialService_LikePost_Handler,
+		},
+		{
+			MethodName: "GetFeed",
+			Handler:    _SocialService_GetFeed_Handler,
+		},
+		{
+			MethodName: "SavePost",
+			Handler:    _SocialService_SavePost_Handler,
+		},
+		{
+			MethodName: "UnsavePost",
+			Handler:    _SocialService_UnsavePost_Handler,
+		},
+		{
+			MethodName: "ListSavedPosts",
+			Handler:    _SocialService_ListSavedPosts_Handler,
+		},
+		{
+			MethodName: "SharePost",
+			Handler:    _SocialService_SharePost_Handler,
+		},
+		{
+			MethodName: "ListMyMemories",
+			Handler:    _SocialService_ListMyMemories_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

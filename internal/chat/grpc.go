@@ -22,15 +22,48 @@ func NewHandler(svc *Service) *Handler {
 	return &Handler{svc: svc}
 }
 
-func (h *Handler) CreateRoom(ctx context.Context, req *socialv1.CreateRoomRequest) (*socialv1.ChatRoom, error) {
-	room, err := h.svc.CreateRoom(ctx, req.GetPlanId())
-	if err != nil {
-		if err == ErrInvalidInput {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-		return nil, status.Error(codes.Internal, "failed to create room")
+var msgTypeToDB = map[socialv1.MessageType]string{
+	socialv1.MessageType_MESSAGE_TYPE_TEXT:         "text",
+	socialv1.MessageType_MESSAGE_TYPE_IMAGE:        "image",
+	socialv1.MessageType_MESSAGE_TYPE_VOICE:        "voice",
+	socialv1.MessageType_MESSAGE_TYPE_ANNOUNCEMENT: "announcement",
+	socialv1.MessageType_MESSAGE_TYPE_LOCATION:     "location",
+}
+
+var msgTypeToProto = map[string]socialv1.MessageType{
+	"text":         socialv1.MessageType_MESSAGE_TYPE_TEXT,
+	"image":        socialv1.MessageType_MESSAGE_TYPE_IMAGE,
+	"voice":        socialv1.MessageType_MESSAGE_TYPE_VOICE,
+	"poll":         socialv1.MessageType_MESSAGE_TYPE_POLL,
+	"announcement": socialv1.MessageType_MESSAGE_TYPE_ANNOUNCEMENT,
+	"location":     socialv1.MessageType_MESSAGE_TYPE_LOCATION,
+}
+
+func chatErr(err error, fallback string) error {
+	switch err {
+	case ErrInvalidInput:
+		return status.Error(codes.InvalidArgument, err.Error())
+	case ErrNotAMember, ErrNotHost:
+		return status.Error(codes.PermissionDenied, err.Error())
+	case ErrContentRejected:
+		return status.Error(codes.FailedPrecondition, err.Error())
+	case ErrMessageNotFound, ErrPollNotFound, ErrRoomNotFound:
+		return status.Error(codes.NotFound, err.Error())
 	}
-	return &socialv1.ChatRoom{Id: room.ID, PlanId: room.PlanID}, nil
+	return status.Error(codes.Internal, fallback)
+}
+
+func (h *Handler) CreateRoom(ctx context.Context, req *socialv1.CreateRoomRequest) (*socialv1.ChatRoom, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	role, _ := grpcmiddleware.RoleFromContext(ctx)
+	room, err := h.svc.CreateRoom(ctx, req.GetPlanId(), userID, role)
+	if err != nil {
+		return nil, chatErr(err, "failed to create room")
+	}
+	return &socialv1.ChatRoom{Id: room.ID, PlanId: room.PlanID, PinnedMessageId: room.PinnedMessageID}, nil
 }
 
 func (h *Handler) SendMessage(ctx context.Context, req *socialv1.SendMessageRequest) (*socialv1.Message, error) {
@@ -38,19 +71,21 @@ func (h *Handler) SendMessage(ctx context.Context, req *socialv1.SendMessageRequ
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "auth required")
 	}
-	m := &Message{RoomID: req.GetRoomId(), SenderID: senderID, Body: req.GetBody()}
-	sent, err := h.svc.SendMessage(ctx, m)
+	role, _ := grpcmiddleware.RoleFromContext(ctx)
+	t, known := msgTypeToDB[req.GetType()]
+	if !known { // POLL (or an unknown value) can't be sent as a plain message
+		return nil, status.Error(codes.InvalidArgument, ErrInvalidInput.Error())
+	}
+	m := &Message{
+		RoomID: req.GetRoomId(), SenderID: senderID, Body: req.GetBody(), Type: t,
+		MediaURLs: req.GetMediaUrls(), DurationSeconds: req.GetDurationSeconds(),
+	}
+	if l := req.GetLocation(); l != nil {
+		m.Location = &Location{Latitude: l.GetLatitude(), Longitude: l.GetLongitude(), Label: l.GetLabel()}
+	}
+	sent, err := h.svc.SendMessage(ctx, m, role)
 	if err != nil {
-		switch err {
-		case ErrInvalidInput:
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		case ErrNotAMember:
-			return nil, status.Error(codes.PermissionDenied, err.Error())
-		case ErrContentRejected:
-			return nil, status.Error(codes.FailedPrecondition, err.Error())
-		default:
-			return nil, status.Error(codes.Internal, "failed to send message")
-		}
+		return nil, chatErr(err, "failed to send message")
 	}
 	return toProtoMessage(sent), nil
 }
@@ -60,22 +95,56 @@ func (h *Handler) ListMessages(ctx context.Context, req *socialv1.ListMessagesRe
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "auth required")
 	}
-	list, err := h.svc.ListMessages(ctx, req.GetRoomId(), userID)
+	list, pinned, err := h.svc.ListMessages(ctx, req.GetRoomId(), userID)
 	if err != nil {
-		switch err {
-		case ErrInvalidInput:
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		case ErrNotAMember:
-			return nil, status.Error(codes.PermissionDenied, err.Error())
-		default:
-			return nil, status.Error(codes.Internal, "failed to list messages")
-		}
+		return nil, chatErr(err, "failed to list messages")
 	}
 	out := make([]*socialv1.Message, 0, len(list))
 	for _, m := range list {
 		out = append(out, toProtoMessage(m))
 	}
-	return &socialv1.ListMessagesResponse{Messages: out}, nil
+	resp := &socialv1.ListMessagesResponse{Messages: out}
+	if pinned != nil {
+		resp.PinnedMessage = toProtoMessage(pinned)
+	}
+	return resp, nil
+}
+
+func (h *Handler) CreatePoll(ctx context.Context, req *socialv1.CreatePollRequest) (*socialv1.Message, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	m, err := h.svc.CreatePoll(ctx, req.GetRoomId(), userID, req.GetQuestion(), req.GetOptions())
+	if err != nil {
+		return nil, chatErr(err, "failed to create poll")
+	}
+	return toProtoMessage(m), nil
+}
+
+func (h *Handler) VotePoll(ctx context.Context, req *socialv1.VotePollRequest) (*socialv1.Poll, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	p, err := h.svc.VotePoll(ctx, req.GetPollId(), req.GetOptionId(), userID)
+	if err != nil {
+		return nil, chatErr(err, "failed to vote")
+	}
+	return pollToProto(p), nil
+}
+
+func (h *Handler) PinMessage(ctx context.Context, req *socialv1.PinMessageRequest) (*socialv1.PinMessageResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	role, _ := grpcmiddleware.RoleFromContext(ctx)
+	id, err := h.svc.PinMessage(ctx, req.GetRoomId(), req.GetMessageId(), req.GetUnpin(), userID, role)
+	if err != nil {
+		return nil, chatErr(err, "failed to pin message")
+	}
+	return &socialv1.PinMessageResponse{PinnedMessageId: id}, nil
 }
 
 func (h *Handler) ReportMessage(ctx context.Context, req *socialv1.ReportMessageRequest) (*socialv1.ReportMessageResponse, error) {
@@ -85,35 +154,47 @@ func (h *Handler) ReportMessage(ctx context.Context, req *socialv1.ReportMessage
 	}
 	caseID, err := h.svc.ReportMessage(ctx, req.GetMessageId(), reporterID, req.GetReason())
 	if err != nil {
-		switch err {
-		case ErrInvalidInput:
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		case ErrMessageNotFound:
-			return nil, status.Error(codes.NotFound, err.Error())
-		default:
-			return nil, status.Error(codes.Internal, "failed to report message")
-		}
+		return nil, chatErr(err, "failed to report message")
 	}
 	return &socialv1.ReportMessageResponse{ModerationCaseId: caseID}, nil
 }
 
 func (h *Handler) GenerateIcebreaker(ctx context.Context, req *socialv1.GenerateIcebreakerRequest) (*socialv1.GenerateIcebreakerResponse, error) {
-	text, err := h.svc.GenerateIcebreaker(ctx, req.GetRoomId())
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	text, err := h.svc.GenerateIcebreaker(ctx, req.GetRoomId(), userID)
 	if err != nil {
-		if err == ErrInvalidInput {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-		return nil, status.Error(codes.Internal, "failed to generate icebreaker")
+		return nil, chatErr(err, "failed to generate icebreaker")
 	}
 	return &socialv1.GenerateIcebreakerResponse{Text: text}, nil
 }
 
-func toProtoMessage(m *Message) *socialv1.Message {
-	return &socialv1.Message{
-		Id:       m.ID,
-		RoomId:   m.RoomID,
-		SenderId: m.SenderID,
-		Body:     m.Body,
-		SentAt:   timestamppb.New(m.SentAt),
+func pollToProto(p *Poll) *socialv1.Poll {
+	out := &socialv1.Poll{Id: p.ID, Question: p.Question, MyVoteOptionId: p.MyVoteOptionID, TotalVotes: p.TotalVotes}
+	for _, o := range p.Options {
+		out.Options = append(out.Options, &socialv1.PollOption{Id: o.ID, Label: o.Label, VoteCount: o.VoteCount})
 	}
+	return out
+}
+
+func toProtoMessage(m *Message) *socialv1.Message {
+	out := &socialv1.Message{
+		Id:              m.ID,
+		RoomId:          m.RoomID,
+		SenderId:        m.SenderID,
+		Body:            m.Body,
+		SentAt:          timestamppb.New(m.SentAt),
+		Type:            msgTypeToProto[m.Type],
+		MediaUrls:       m.MediaURLs,
+		DurationSeconds: m.DurationSeconds,
+	}
+	if m.Location != nil {
+		out.Location = &socialv1.Location{Latitude: m.Location.Latitude, Longitude: m.Location.Longitude, Label: m.Location.Label}
+	}
+	if m.Poll != nil {
+		out.Poll = pollToProto(m.Poll)
+	}
+	return out
 }

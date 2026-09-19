@@ -3,6 +3,7 @@ package chat
 import (
 	"context"
 	"errors"
+	"strings"
 )
 
 var (
@@ -37,9 +38,26 @@ func NewService(repo *Repository, reporter ReportSubmitter, screener ContentScre
 	return &Service{repo: repo, reporter: reporter, screener: screener, icebreaker: icebreaker}
 }
 
-func (s *Service) GenerateIcebreaker(ctx context.Context, roomID string) (string, error) {
-	if roomID == "" {
+func isAdmin(role string) bool { return role == "admin" || role == "super_admin" }
+
+func (s *Service) requireMember(ctx context.Context, roomID, userID string) error {
+	ok, err := s.repo.IsMember(ctx, roomID, userID)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return ErrNotAMember
+	}
+	return nil
+}
+
+// GenerateIcebreaker: members only (it reveals the room's shared interests).
+func (s *Service) GenerateIcebreaker(ctx context.Context, roomID, callerID string) (string, error) {
+	if roomID == "" || callerID == "" {
 		return "", ErrInvalidInput
+	}
+	if err := s.requireMember(ctx, roomID, callerID); err != nil {
+		return "", err
 	}
 	interests, err := s.repo.MemberInterests(ctx, roomID)
 	if err != nil {
@@ -48,11 +66,34 @@ func (s *Service) GenerateIcebreaker(ctx context.Context, roomID string) (string
 	return s.icebreaker.Generate(ctx, interests)
 }
 
-func (s *Service) CreateRoom(ctx context.Context, planID string) (*Room, error) {
-	if planID == "" {
+// CreateRoom opens (idempotently) the plan's room, but only for the plan's
+// host or a confirmed participant — previously any caller could create a
+// room for any plan id. Non-admin callers are also added as members, which
+// is how a host (who never books) gets into their own room.
+func (s *Service) CreateRoom(ctx context.Context, planID, callerID, callerRole string) (*Room, error) {
+	if planID == "" || callerID == "" {
 		return nil, ErrInvalidInput
 	}
-	return s.repo.GetOrCreateRoomForPlan(ctx, planID)
+	if !isAdmin(callerRole) {
+		ok, err := s.repo.CanUsePlanRoom(ctx, planID, callerID)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, ErrNotAMember
+		}
+	}
+	room, err := s.repo.GetOrCreateRoomForPlan(ctx, planID)
+	if err != nil {
+		return nil, err
+	}
+	if !isAdmin(callerRole) {
+		if err := s.repo.AddMember(ctx, room.ID, callerID); err != nil {
+			return nil, err
+		}
+	}
+	room.PinnedMessageID, _ = s.repo.PinnedMessageID(ctx, room.ID)
+	return room, nil
 }
 
 // CreateAdHocRoomWithMembers satisfies the RoomCreator interface declared
@@ -89,63 +130,223 @@ func (s *Service) EnsureMembership(ctx context.Context, planID, userID string) e
 	return s.repo.AddMember(ctx, room.ID, userID)
 }
 
-// SendMessage rejects senders who aren't a member of the room — the PRD §31
-// "unauthorized users cannot read/send" guarantee, closing the TODO the
-// scaffold left here. Membership rows are populated by cmd/worker on
-// BOOKING_CONFIRMED, not by this method.
-func (s *Service) SendMessage(ctx context.Context, m *Message) (*Message, error) {
-	if m.RoomID == "" || m.SenderID == "" || m.Body == "" {
-		return nil, ErrInvalidInput
+const (
+	maxBodyLen   = 2000
+	maxMedia     = 10
+	maxVoiceSecs = 300
+)
+
+func validHTTPS(u string) bool {
+	return len(u) > len("https://") && len(u) <= 2048 && strings.HasPrefix(u, "https://")
+}
+
+// validate enforces the per-type shape of a message before any DB work.
+func (m *Message) validate() error {
+	if m.RoomID == "" || m.SenderID == "" || len(m.Body) > maxBodyLen {
+		return ErrInvalidInput
 	}
-	isMember, err := s.repo.IsMember(ctx, m.RoomID, m.SenderID)
+	if m.Type == "" {
+		m.Type = "text"
+	}
+	for _, u := range m.MediaURLs {
+		if !validHTTPS(u) {
+			return ErrInvalidInput
+		}
+	}
+	switch m.Type {
+	case "text", "announcement":
+		if strings.TrimSpace(m.Body) == "" || len(m.MediaURLs) > 0 || m.Location != nil {
+			return ErrInvalidInput
+		}
+	case "image":
+		if len(m.MediaURLs) < 1 || len(m.MediaURLs) > maxMedia {
+			return ErrInvalidInput
+		}
+	case "voice":
+		if len(m.MediaURLs) != 1 || m.DurationSeconds < 1 || m.DurationSeconds > maxVoiceSecs {
+			return ErrInvalidInput
+		}
+	case "location":
+		l := m.Location
+		if l == nil || l.Latitude < -90 || l.Latitude > 90 || l.Longitude < -180 || l.Longitude > 180 || len(l.Label) > 200 {
+			return ErrInvalidInput
+		}
+	default: // "poll" only via CreatePoll
+		return ErrInvalidInput
+	}
+	return nil
+}
+
+// requireHost: the room's plan host or an admin. Ad-hoc rooms have no host,
+// so only admins could announce there — effectively never.
+func (s *Service) requireHost(ctx context.Context, roomID, userID, role string) error {
+	if isAdmin(role) {
+		return nil
+	}
+	host, err := s.repo.RoomHostID(ctx, roomID)
+	if err != nil {
+		return err
+	}
+	if host == "" || host != userID {
+		return ErrNotHost
+	}
+	return nil
+}
+
+// screen returns ErrContentRejected for severe text and the auto-flag
+// severity/reason for borderline text.
+func (s *Service) screen(ctx context.Context, texts ...string) (severity, reason string, err error) {
+	for _, t := range texts {
+		if t == "" {
+			continue
+		}
+		sev, why := s.screener.Screen(ctx, t)
+		if sev == "severe" {
+			return "", "", ErrContentRejected
+		}
+		if sev == "review" {
+			severity, reason = sev, why
+		}
+	}
+	return severity, reason, nil
+}
+
+func (s *Service) flag(ctx context.Context, messageID, senderID, severity, reason string) {
+	if severity == "review" {
+		// Fire-and-forget: a screening/queue failure must never block the
+		// message the user already sent.
+		_, _ = s.reporter.AutoFlagForSubject(ctx, "message", messageID, senderID, severity, reason)
+	}
+}
+
+// SendMessage rejects senders who aren't a member of the room — the PRD §31
+// "unauthorized users cannot read/send" guarantee. Membership rows are
+// populated by cmd/worker on BOOKING_CONFIRMED (and by CreateRoom for hosts).
+func (s *Service) SendMessage(ctx context.Context, m *Message, senderRole string) (*Message, error) {
+	if err := m.validate(); err != nil {
+		return nil, err
+	}
+	if err := s.requireMember(ctx, m.RoomID, m.SenderID); err != nil {
+		return nil, err
+	}
+	if m.Type == "announcement" {
+		if err := s.requireHost(ctx, m.RoomID, m.SenderID, senderRole); err != nil {
+			return nil, err
+		}
+	}
+	severity, reason, err := s.screen(ctx, m.Body)
 	if err != nil {
 		return nil, err
 	}
-	if !isMember {
-		return nil, ErrNotAMember
-	}
-
-	severity, reason := s.screener.Screen(ctx, m.Body)
-	if severity == "severe" {
-		return nil, ErrContentRejected
-	}
-
 	sent, err := s.repo.SendMessage(ctx, m)
 	if err != nil {
 		return nil, err
 	}
-	if severity == "review" {
-		// Fire-and-forget: a screening/queue failure must never block the
-		// message the user already sent.
-		_, _ = s.reporter.AutoFlagForSubject(ctx, "message", sent.ID, m.SenderID, severity, reason)
-	}
+	s.flag(ctx, sent.ID, m.SenderID, severity, reason)
 	return sent, nil
 }
 
-func (s *Service) ListMessages(ctx context.Context, roomID, callerID string) ([]*Message, error) {
-	if roomID == "" || callerID == "" {
+func (s *Service) CreatePoll(ctx context.Context, roomID, senderID, question string, options []string) (*Message, error) {
+	question = strings.TrimSpace(question)
+	if roomID == "" || senderID == "" || question == "" || len(question) > 300 || len(options) < 2 || len(options) > 6 {
 		return nil, ErrInvalidInput
 	}
-	isMember, err := s.repo.IsMember(ctx, roomID, callerID)
+	seen := map[string]bool{}
+	clean := make([]string, 0, len(options))
+	for _, o := range options {
+		o = strings.TrimSpace(o)
+		if o == "" || len(o) > 100 || seen[strings.ToLower(o)] {
+			return nil, ErrInvalidInput
+		}
+		seen[strings.ToLower(o)] = true
+		clean = append(clean, o)
+	}
+	if err := s.requireMember(ctx, roomID, senderID); err != nil {
+		return nil, err
+	}
+	severity, reason, err := s.screen(ctx, append([]string{question}, clean...)...)
 	if err != nil {
 		return nil, err
 	}
-	if !isMember {
-		return nil, ErrNotAMember
+	msg, err := s.repo.CreatePoll(ctx, roomID, senderID, question, clean)
+	if err != nil {
+		return nil, err
 	}
-	return s.repo.ListMessages(ctx, roomID, defaultMessagePageSize)
+	s.flag(ctx, msg.ID, senderID, severity, reason)
+	return msg, nil
 }
 
+// VotePoll checks membership of the room the poll actually belongs to.
+func (s *Service) VotePoll(ctx context.Context, pollID, optionID, userID string) (*Poll, error) {
+	if pollID == "" || optionID == "" || userID == "" {
+		return nil, ErrInvalidInput
+	}
+	room, err := s.repo.PollRoom(ctx, pollID)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.requireMember(ctx, room, userID); err != nil {
+		return nil, err
+	}
+	if err := s.repo.Vote(ctx, pollID, userID, optionID); err != nil {
+		return nil, err
+	}
+	return s.repo.GetPoll(ctx, pollID, userID)
+}
+
+// PinMessage: members who are the plan's host (or admins). The message must
+// belong to the same room (enforced in SQL).
+func (s *Service) PinMessage(ctx context.Context, roomID, messageID string, unpin bool, callerID, callerRole string) (string, error) {
+	if roomID == "" || callerID == "" || (!unpin && messageID == "") {
+		return "", ErrInvalidInput
+	}
+	if !isAdmin(callerRole) {
+		if err := s.requireMember(ctx, roomID, callerID); err != nil {
+			return "", err
+		}
+	}
+	if err := s.requireHost(ctx, roomID, callerID, callerRole); err != nil {
+		return "", err
+	}
+	if unpin {
+		messageID = ""
+	}
+	if err := s.repo.SetPinned(ctx, roomID, messageID); err != nil {
+		return "", err
+	}
+	return messageID, nil
+}
+
+func (s *Service) ListMessages(ctx context.Context, roomID, callerID string) ([]*Message, *Message, error) {
+	if roomID == "" || callerID == "" {
+		return nil, nil, ErrInvalidInput
+	}
+	if err := s.requireMember(ctx, roomID, callerID); err != nil {
+		return nil, nil, err
+	}
+	msgs, err := s.repo.ListMessages(ctx, roomID, callerID, defaultMessagePageSize)
+	if err != nil {
+		return nil, nil, err
+	}
+	var pinned *Message
+	if id, err := s.repo.PinnedMessageID(ctx, roomID); err == nil && id != "" {
+		pinned, _ = s.repo.GetMessage(ctx, id, callerID)
+	}
+	return msgs, pinned, nil
+}
+
+// ReportMessage requires the reporter to be a member of the message's room —
+// otherwise message ids could be probed by anyone.
 func (s *Service) ReportMessage(ctx context.Context, messageID, reporterID, reason string) (string, error) {
 	if messageID == "" || reporterID == "" || reason == "" {
 		return "", ErrInvalidInput
 	}
-	exists, err := s.repo.MessageExists(ctx, messageID)
+	room, err := s.repo.MessageRoom(ctx, messageID)
 	if err != nil {
 		return "", err
 	}
-	if !exists {
-		return "", ErrMessageNotFound
+	if err := s.requireMember(ctx, room, reporterID); err != nil {
+		return "", ErrMessageNotFound // don't confirm the message exists to non-members
 	}
 	return s.reporter.SubmitReportForSubject(ctx, reporterID, "message", messageID, reason)
 }

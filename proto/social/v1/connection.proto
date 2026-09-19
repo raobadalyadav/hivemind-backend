@@ -11,6 +11,43 @@ service ConnectionService {
   rpc RequestConnection(RequestConnectionRequest) returns (Connection);
   rpc RespondConnection(RespondConnectionRequest) returns (Connection);
   rpc ListConnections(ListConnectionsRequest) returns (ListConnectionsResponse);
+
+  // Meet Again (flow.md §26). Both require the caller to have attended the plan.
+  rpc ListPeopleMet(ListPeopleMetRequest) returns (ListPeopleMetResponse);
+  rpc CreateMeetAgainGroup(CreateMeetAgainGroupRequest) returns (CreateMeetAgainGroupResponse);
+}
+
+enum ConnectionState {
+  CONNECTION_STATE_NONE = 0;
+  CONNECTION_STATE_PENDING = 1;
+  CONNECTION_STATE_CONNECTED = 2;
+}
+
+message PersonMet {
+  string user_id = 1;
+  string display_name = 2;
+  string occupation = 3;
+  string photo_url = 4;
+  ConnectionState state = 5;
+}
+
+message ListPeopleMetRequest {
+  string plan_id = 1;
+}
+message ListPeopleMetResponse {
+  repeated PersonMet people = 1;
+}
+
+// Invitees must have attended the same plan AND already be the caller's
+// accepted connections (consent). Max 5. Replays of the same
+// idempotency_key return AlreadyExists.
+message CreateMeetAgainGroupRequest {
+  string plan_id = 1;
+  repeated string invitee_ids = 2;
+  string idempotency_key = 3;
+}
+message CreateMeetAgainGroupResponse {
+  string room_id = 1;
 }
 
 enum ConnectionStatus {

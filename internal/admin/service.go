@@ -34,7 +34,11 @@ func (s *Service) ListReports(ctx context.Context, statusFilter string) ([]strin
 }
 
 func (s *Service) OverrideBookingStatus(ctx context.Context, bookingID, newStatus, reason, actorID string) error {
-	if bookingID == "" || newStatus == "" {
+	// Only terminal bookkeeping statuses: this writes bookings.status
+	// directly and does not touch confirmed_count, plan_participants or the
+	// waitlist, so overriding to 'cancelled'/'confirmed' would leak or
+	// double-count a seat. Cancellation must go through bookings.Cancel.
+	if bookingID == "" || (newStatus != "refunded" && newStatus != "no_show" && newStatus != "attended") {
 		return ErrInvalidInput
 	}
 	return s.repo.OverrideBookingStatus(ctx, bookingID, newStatus, reason, actorID)

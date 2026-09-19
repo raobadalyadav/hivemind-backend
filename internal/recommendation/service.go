@@ -5,7 +5,10 @@ import (
 	"errors"
 )
 
-var ErrInvalidInput = errors.New("recommendation: invalid input")
+var (
+	ErrInvalidInput = errors.New("recommendation: invalid input")
+	ErrForbidden    = errors.New("recommendation: only attendees of a plan can see its matches")
+)
 
 const defaultPageSize = 20
 
@@ -26,9 +29,18 @@ func (s *Service) GetRecommendedPlans(ctx context.Context, userID, travelCityID 
 
 const defaultMatchLimit = 10
 
-func (s *Service) GetSmartMatch(ctx context.Context, callerID, planID string) ([]string, error) {
+func (s *Service) GetSmartMatch(ctx context.Context, callerID, callerRole, planID string) ([]string, error) {
 	if callerID == "" || planID == "" {
 		return nil, ErrInvalidInput
+	}
+	if callerRole != "admin" && callerRole != "super_admin" {
+		ok, err := s.repo.IsParticipantOrHost(ctx, planID, callerID)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, ErrForbidden
+		}
 	}
 	return s.repo.SmartMatchUserIDs(ctx, callerID, planID, defaultMatchLimit)
 }

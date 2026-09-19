@@ -19,9 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ConnectionService_RequestConnection_FullMethodName = "/social.v1.ConnectionService/RequestConnection"
-	ConnectionService_RespondConnection_FullMethodName = "/social.v1.ConnectionService/RespondConnection"
-	ConnectionService_ListConnections_FullMethodName   = "/social.v1.ConnectionService/ListConnections"
+	ConnectionService_RequestConnection_FullMethodName    = "/social.v1.ConnectionService/RequestConnection"
+	ConnectionService_RespondConnection_FullMethodName    = "/social.v1.ConnectionService/RespondConnection"
+	ConnectionService_ListConnections_FullMethodName      = "/social.v1.ConnectionService/ListConnections"
+	ConnectionService_ListPeopleMet_FullMethodName        = "/social.v1.ConnectionService/ListPeopleMet"
+	ConnectionService_CreateMeetAgainGroup_FullMethodName = "/social.v1.ConnectionService/CreateMeetAgainGroup"
 )
 
 // ConnectionServiceClient is the client API for ConnectionService service.
@@ -33,6 +35,9 @@ type ConnectionServiceClient interface {
 	RequestConnection(ctx context.Context, in *RequestConnectionRequest, opts ...grpc.CallOption) (*Connection, error)
 	RespondConnection(ctx context.Context, in *RespondConnectionRequest, opts ...grpc.CallOption) (*Connection, error)
 	ListConnections(ctx context.Context, in *ListConnectionsRequest, opts ...grpc.CallOption) (*ListConnectionsResponse, error)
+	// Meet Again (flow.md §26). Both require the caller to have attended the plan.
+	ListPeopleMet(ctx context.Context, in *ListPeopleMetRequest, opts ...grpc.CallOption) (*ListPeopleMetResponse, error)
+	CreateMeetAgainGroup(ctx context.Context, in *CreateMeetAgainGroupRequest, opts ...grpc.CallOption) (*CreateMeetAgainGroupResponse, error)
 }
 
 type connectionServiceClient struct {
@@ -73,6 +78,26 @@ func (c *connectionServiceClient) ListConnections(ctx context.Context, in *ListC
 	return out, nil
 }
 
+func (c *connectionServiceClient) ListPeopleMet(ctx context.Context, in *ListPeopleMetRequest, opts ...grpc.CallOption) (*ListPeopleMetResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPeopleMetResponse)
+	err := c.cc.Invoke(ctx, ConnectionService_ListPeopleMet_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *connectionServiceClient) CreateMeetAgainGroup(ctx context.Context, in *CreateMeetAgainGroupRequest, opts ...grpc.CallOption) (*CreateMeetAgainGroupResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateMeetAgainGroupResponse)
+	err := c.cc.Invoke(ctx, ConnectionService_CreateMeetAgainGroup_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConnectionServiceServer is the server API for ConnectionService service.
 // All implementations must embed UnimplementedConnectionServiceServer
 // for forward compatibility.
@@ -82,6 +107,9 @@ type ConnectionServiceServer interface {
 	RequestConnection(context.Context, *RequestConnectionRequest) (*Connection, error)
 	RespondConnection(context.Context, *RespondConnectionRequest) (*Connection, error)
 	ListConnections(context.Context, *ListConnectionsRequest) (*ListConnectionsResponse, error)
+	// Meet Again (flow.md §26). Both require the caller to have attended the plan.
+	ListPeopleMet(context.Context, *ListPeopleMetRequest) (*ListPeopleMetResponse, error)
+	CreateMeetAgainGroup(context.Context, *CreateMeetAgainGroupRequest) (*CreateMeetAgainGroupResponse, error)
 	mustEmbedUnimplementedConnectionServiceServer()
 }
 
@@ -100,6 +128,12 @@ func (UnimplementedConnectionServiceServer) RespondConnection(context.Context, *
 }
 func (UnimplementedConnectionServiceServer) ListConnections(context.Context, *ListConnectionsRequest) (*ListConnectionsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListConnections not implemented")
+}
+func (UnimplementedConnectionServiceServer) ListPeopleMet(context.Context, *ListPeopleMetRequest) (*ListPeopleMetResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListPeopleMet not implemented")
+}
+func (UnimplementedConnectionServiceServer) CreateMeetAgainGroup(context.Context, *CreateMeetAgainGroupRequest) (*CreateMeetAgainGroupResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateMeetAgainGroup not implemented")
 }
 func (UnimplementedConnectionServiceServer) mustEmbedUnimplementedConnectionServiceServer() {}
 func (UnimplementedConnectionServiceServer) testEmbeddedByValue()                           {}
@@ -176,6 +210,42 @@ func _ConnectionService_ListConnections_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConnectionService_ListPeopleMet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPeopleMetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConnectionServiceServer).ListPeopleMet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConnectionService_ListPeopleMet_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConnectionServiceServer).ListPeopleMet(ctx, req.(*ListPeopleMetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConnectionService_CreateMeetAgainGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateMeetAgainGroupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConnectionServiceServer).CreateMeetAgainGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConnectionService_CreateMeetAgainGroup_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConnectionServiceServer).CreateMeetAgainGroup(ctx, req.(*CreateMeetAgainGroupRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ConnectionService_ServiceDesc is the grpc.ServiceDesc for ConnectionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -194,6 +264,14 @@ var ConnectionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListConnections",
 			Handler:    _ConnectionService_ListConnections_Handler,
+		},
+		{
+			MethodName: "ListPeopleMet",
+			Handler:    _ConnectionService_ListPeopleMet_Handler,
+		},
+		{
+			MethodName: "CreateMeetAgainGroup",
+			Handler:    _ConnectionService_CreateMeetAgainGroup_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

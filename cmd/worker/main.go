@@ -21,6 +21,7 @@ import (
 	"github.com/hivemind/backend/internal/moderation"
 	"github.com/hivemind/backend/internal/notifications"
 	"github.com/hivemind/backend/internal/payments"
+	"github.com/hivemind/backend/internal/plans"
 	"github.com/hivemind/backend/pkg/analytics"
 	"github.com/hivemind/backend/pkg/email"
 	"github.com/hivemind/backend/pkg/eventbus"
@@ -80,19 +81,22 @@ func main() {
 		// RefundBookingIfCaptured, never CreateOrder — those params exist
 		// for the gRPC-facing Service constructed in cmd/api.
 		paymentsSvc:  payments.NewService(payments.NewRepository(pool), nil, nil, logger),
+		plansSvc:     plans.NewService(plans.NewRepository(pool), nil, nil, nil),
 		bookingsSvc:  bookings.NewService(bookings.NewRepository(pool), idempotency.NewGuard(rdb)),
 		analyticsRec: analytics.NewRecorder(pool),
 		logger:       logger,
 	}
 
 	handlers := map[string]func(context.Context, []byte) error{
-		"BOOKING_CONFIRMED": d.handleBookingConfirmed,
-		"BOOKING_CANCELLED": d.handleBookingCancelled,
-		"PLAN_CANCELLED":    d.handlePlanCancelled,
-		"PLAN_COMPLETED":    d.logOnly("PLAN_COMPLETED"),
-		"USER_REPORTED":     d.logOnly("USER_REPORTED"),
-		"PAYMENT_CAPTURED":  d.logOnly("PAYMENT_CAPTURED"),
-		"PAYOUT_PROCESSED":  d.logOnly("PAYOUT_PROCESSED"),
+		"BOOKING_CONFIRMED":      d.handleBookingConfirmed,
+		"BOOKING_CANCELLED":      d.handleBookingCancelled,
+		"PLAN_CANCELLED":         d.handlePlanCancelled,
+		"PLAN_COMPLETED":         d.logOnly("PLAN_COMPLETED"),
+		"BOOKING_NO_SHOW":        d.handleBookingNoShow,
+		eventbus.EventNotifyUser: d.handleNotifyUser,
+		"USER_REPORTED":          d.logOnly("USER_REPORTED"),
+		"PAYMENT_CAPTURED":       d.logOnly("PAYMENT_CAPTURED"),
+		"PAYOUT_PROCESSED":       d.logOnly("PAYOUT_PROCESSED"),
 	}
 
 	for eventType, handle := range handlers {
@@ -110,7 +114,9 @@ func main() {
 		}
 	}
 
-	logger.Info("worker started", "poll_interval", outboxPollInterval.String())
+	go d.runJobs(ctx)
+
+	logger.Info("worker started", "poll_interval", outboxPollInterval.String(), "jobs_tick", jobsTickInterval.String())
 	ticker := time.NewTicker(outboxPollInterval)
 	defer ticker.Stop()
 

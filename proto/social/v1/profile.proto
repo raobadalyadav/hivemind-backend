@@ -12,6 +12,19 @@ service ProfileService {
   rpc GetProfile(GetProfileRequest) returns (Profile);
   rpc UpdateProfile(UpdateProfileRequest) returns (Profile);
   rpc SetPrivacy(SetPrivacyRequest) returns (Profile);
+
+  // Photos (flow.md §3): max 6, first = primary. All keyed to the caller.
+  rpc AddProfilePhoto(AddProfilePhotoRequest) returns (ProfilePhoto);
+  rpc DeleteProfilePhoto(DeleteProfilePhotoRequest) returns (DeleteProfilePhotoResponse);
+  rpc ReorderProfilePhotos(ReorderProfilePhotosRequest) returns (ReorderProfilePhotosResponse);
+
+  // Interest catalog (flow.md §4): the 15 selectable interests + categories.
+  rpc ListInterestCatalog(ListInterestCatalogRequest) returns (ListInterestCatalogResponse);
+
+  // Social intent + personality quiz (flow.md §5/§6). Optional, caller-only.
+  rpc SetSocialIntent(SetSocialIntentRequest) returns (UserPreferences);
+  rpc SetPersonality(SetPersonalityRequest) returns (UserPreferences);
+  rpc GetMyPreferences(GetMyPreferencesRequest) returns (UserPreferences);
 }
 
 message Profile {
@@ -23,6 +36,16 @@ message Profile {
   string occupation = 6;
   string verification_status = 7; // unverified | email | phone | id
   Audit audit = 8;
+  string gender = 9;    // male | female | non_binary | prefer_not_to_say | ""
+  string education = 10;
+  repeated string hobbies = 11;
+  repeated ProfilePhoto photos = 12;
+}
+
+message ProfilePhoto {
+  string id = 1;
+  string url = 2;
+  int32 position = 3;
 }
 
 message CreateProfileRequest {
@@ -35,13 +58,71 @@ message GetProfileRequest {
   string user_id = 1;
 }
 
+// UpdateProfileRequest is a partial update: an unset optional field, or an
+// empty repeated field, leaves the stored value unchanged (a client that only
+// sends `bio` no longer wipes interests). user_id is ignored — the caller is
+// always the authenticated user. Interests, when sent, must be 5–15 catalog
+// names.
 message UpdateProfileRequest {
   string user_id = 1;
-  string bio = 2;
+  optional string bio = 2;
   repeated string interests = 3;
   repeated string languages = 4;
-  string occupation = 5;
+  optional string occupation = 5;
+  optional string gender = 6;
+  optional string education = 7;
+  repeated string hobbies = 8;
 }
+
+message AddProfilePhotoRequest {
+  string url = 1; // https only, <= 2048 chars; the server never fetches it
+}
+
+message DeleteProfilePhotoRequest {
+  string photo_id = 1;
+}
+message DeleteProfilePhotoResponse {}
+
+message ReorderProfilePhotosRequest {
+  repeated string photo_ids = 1; // must be exactly the caller's photo ids
+}
+message ReorderProfilePhotosResponse {
+  repeated ProfilePhoto photos = 1;
+}
+
+message ListInterestCatalogRequest {}
+message ListInterestCatalogResponse {
+  repeated string interests = 1;
+  repeated string categories = 2;
+  int32 min_selectable = 3;
+  int32 max_selectable = 4;
+}
+
+message UserPreferences {
+  // make_friends | activity_partners | networking | explore_city |
+  // new_in_city | travel_companions | join_communities | attend_experiences
+  repeated string intents = 1;
+  string group_pref = 2;    // small | large | "" (unanswered)
+  string energy_pref = 3;   // quiet | energetic
+  string planning_pref = 4; // planned | spontaneous
+  string time_pref = 5;     // morning | evening
+  string setting_pref = 6;  // indoor | outdoor
+}
+
+message SetSocialIntentRequest {
+  repeated string intents = 1; // replaces the stored set; empty clears it
+}
+
+// SetPersonalityRequest replaces all five answers; "" clears one (skipped).
+message SetPersonalityRequest {
+  string group_pref = 1;
+  string energy_pref = 2;
+  string planning_pref = 3;
+  string time_pref = 4;
+  string setting_pref = 5;
+}
+
+message GetMyPreferencesRequest {}
 
 message SetPrivacyRequest {
   string user_id = 1;

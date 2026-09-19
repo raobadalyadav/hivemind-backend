@@ -20,12 +20,12 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 
 func (r *Repository) SearchPlanIDs(ctx context.Context, query, cityID string, limit int) ([]string, error) {
 	rows, err := r.pool.Query(ctx, `
-		SELECT id FROM plans
+		SELECT id FROM plans_discoverable
 		WHERE status = 'published'
 		  AND (city_id = NULLIF($2,'')::uuid OR $2 = '')
 		  AND (title ILIKE '%' || $1 || '%' OR description ILIKE '%' || $1 || '%')
 		ORDER BY
-		  (EXISTS(SELECT 1 FROM promoted_listings pl WHERE pl.plan_id = plans.id
+		  (EXISTS(SELECT 1 FROM promoted_listings pl WHERE pl.plan_id = plans_discoverable.id
 		     AND pl.status = 'paid'::promoted_listing_status AND now() BETWEEN pl.starts_at AND pl.ends_at)) DESC,
 		  starts_at
 		LIMIT $3`,

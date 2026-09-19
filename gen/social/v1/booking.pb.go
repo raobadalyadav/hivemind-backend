@@ -86,6 +86,110 @@ func (BookingStatus) EnumDescriptor() ([]byte, []int) {
 	return file_social_v1_booking_proto_rawDescGZIP(), []int{0}
 }
 
+type WaitlistState int32
+
+const (
+	WaitlistState_WAITLIST_STATE_UNSPECIFIED WaitlistState = 0
+	WaitlistState_WAITLIST_STATE_NONE        WaitlistState = 1
+	WaitlistState_WAITLIST_STATE_WAITING     WaitlistState = 2
+	WaitlistState_WAITLIST_STATE_OFFERED     WaitlistState = 3
+)
+
+// Enum value maps for WaitlistState.
+var (
+	WaitlistState_name = map[int32]string{
+		0: "WAITLIST_STATE_UNSPECIFIED",
+		1: "WAITLIST_STATE_NONE",
+		2: "WAITLIST_STATE_WAITING",
+		3: "WAITLIST_STATE_OFFERED",
+	}
+	WaitlistState_value = map[string]int32{
+		"WAITLIST_STATE_UNSPECIFIED": 0,
+		"WAITLIST_STATE_NONE":        1,
+		"WAITLIST_STATE_WAITING":     2,
+		"WAITLIST_STATE_OFFERED":     3,
+	}
+)
+
+func (x WaitlistState) Enum() *WaitlistState {
+	p := new(WaitlistState)
+	*p = x
+	return p
+}
+
+func (x WaitlistState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (WaitlistState) Descriptor() protoreflect.EnumDescriptor {
+	return file_social_v1_booking_proto_enumTypes[1].Descriptor()
+}
+
+func (WaitlistState) Type() protoreflect.EnumType {
+	return &file_social_v1_booking_proto_enumTypes[1]
+}
+
+func (x WaitlistState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use WaitlistState.Descriptor instead.
+func (WaitlistState) EnumDescriptor() ([]byte, []int) {
+	return file_social_v1_booking_proto_rawDescGZIP(), []int{1}
+}
+
+type BookingTab int32
+
+const (
+	BookingTab_BOOKING_TAB_UNSPECIFIED BookingTab = 0
+	BookingTab_BOOKING_TAB_UPCOMING    BookingTab = 1
+	BookingTab_BOOKING_TAB_PAST        BookingTab = 2
+	BookingTab_BOOKING_TAB_CANCELLED   BookingTab = 3
+)
+
+// Enum value maps for BookingTab.
+var (
+	BookingTab_name = map[int32]string{
+		0: "BOOKING_TAB_UNSPECIFIED",
+		1: "BOOKING_TAB_UPCOMING",
+		2: "BOOKING_TAB_PAST",
+		3: "BOOKING_TAB_CANCELLED",
+	}
+	BookingTab_value = map[string]int32{
+		"BOOKING_TAB_UNSPECIFIED": 0,
+		"BOOKING_TAB_UPCOMING":    1,
+		"BOOKING_TAB_PAST":        2,
+		"BOOKING_TAB_CANCELLED":   3,
+	}
+)
+
+func (x BookingTab) Enum() *BookingTab {
+	p := new(BookingTab)
+	*p = x
+	return p
+}
+
+func (x BookingTab) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (BookingTab) Descriptor() protoreflect.EnumDescriptor {
+	return file_social_v1_booking_proto_enumTypes[2].Descriptor()
+}
+
+func (BookingTab) Type() protoreflect.EnumType {
+	return &file_social_v1_booking_proto_enumTypes[2]
+}
+
+func (x BookingTab) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use BookingTab.Descriptor instead.
+func (BookingTab) EnumDescriptor() ([]byte, []int) {
+	return file_social_v1_booking_proto_rawDescGZIP(), []int{2}
+}
+
 type Booking struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -550,6 +654,758 @@ func (x *CheckInResult) GetBooking() *Booking {
 	return nil
 }
 
+type WaitlistStatus struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	PlanId         string                 `protobuf:"bytes,1,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	State          WaitlistState          `protobuf:"varint,2,opt,name=state,proto3,enum=social.v1.WaitlistState" json:"state,omitempty"`
+	Position       int32                  `protobuf:"varint,3,opt,name=position,proto3" json:"position,omitempty"` // 1-based, only while WAITING
+	TotalWaiting   int32                  `protobuf:"varint,4,opt,name=total_waiting,json=totalWaiting,proto3" json:"total_waiting,omitempty"`
+	OfferExpiresAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=offer_expires_at,json=offerExpiresAt,proto3" json:"offer_expires_at,omitempty"` // only while OFFERED
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *WaitlistStatus) Reset() {
+	*x = WaitlistStatus{}
+	mi := &file_social_v1_booking_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WaitlistStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WaitlistStatus) ProtoMessage() {}
+
+func (x *WaitlistStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_booking_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WaitlistStatus.ProtoReflect.Descriptor instead.
+func (*WaitlistStatus) Descriptor() ([]byte, []int) {
+	return file_social_v1_booking_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *WaitlistStatus) GetPlanId() string {
+	if x != nil {
+		return x.PlanId
+	}
+	return ""
+}
+
+func (x *WaitlistStatus) GetState() WaitlistState {
+	if x != nil {
+		return x.State
+	}
+	return WaitlistState_WAITLIST_STATE_UNSPECIFIED
+}
+
+func (x *WaitlistStatus) GetPosition() int32 {
+	if x != nil {
+		return x.Position
+	}
+	return 0
+}
+
+func (x *WaitlistStatus) GetTotalWaiting() int32 {
+	if x != nil {
+		return x.TotalWaiting
+	}
+	return 0
+}
+
+func (x *WaitlistStatus) GetOfferExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.OfferExpiresAt
+	}
+	return nil
+}
+
+type JoinWaitlistRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PlanId        string                 `protobuf:"bytes,1,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *JoinWaitlistRequest) Reset() {
+	*x = JoinWaitlistRequest{}
+	mi := &file_social_v1_booking_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JoinWaitlistRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JoinWaitlistRequest) ProtoMessage() {}
+
+func (x *JoinWaitlistRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_booking_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JoinWaitlistRequest.ProtoReflect.Descriptor instead.
+func (*JoinWaitlistRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_booking_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *JoinWaitlistRequest) GetPlanId() string {
+	if x != nil {
+		return x.PlanId
+	}
+	return ""
+}
+
+type LeaveWaitlistRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PlanId        string                 `protobuf:"bytes,1,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LeaveWaitlistRequest) Reset() {
+	*x = LeaveWaitlistRequest{}
+	mi := &file_social_v1_booking_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LeaveWaitlistRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LeaveWaitlistRequest) ProtoMessage() {}
+
+func (x *LeaveWaitlistRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_booking_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LeaveWaitlistRequest.ProtoReflect.Descriptor instead.
+func (*LeaveWaitlistRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_booking_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *LeaveWaitlistRequest) GetPlanId() string {
+	if x != nil {
+		return x.PlanId
+	}
+	return ""
+}
+
+type LeaveWaitlistResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LeaveWaitlistResponse) Reset() {
+	*x = LeaveWaitlistResponse{}
+	mi := &file_social_v1_booking_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LeaveWaitlistResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LeaveWaitlistResponse) ProtoMessage() {}
+
+func (x *LeaveWaitlistResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_booking_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LeaveWaitlistResponse.ProtoReflect.Descriptor instead.
+func (*LeaveWaitlistResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_booking_proto_rawDescGZIP(), []int{11}
+}
+
+type GetWaitlistStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PlanId        string                 `protobuf:"bytes,1,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetWaitlistStatusRequest) Reset() {
+	*x = GetWaitlistStatusRequest{}
+	mi := &file_social_v1_booking_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetWaitlistStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetWaitlistStatusRequest) ProtoMessage() {}
+
+func (x *GetWaitlistStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_booking_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetWaitlistStatusRequest.ProtoReflect.Descriptor instead.
+func (*GetWaitlistStatusRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_booking_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *GetWaitlistStatusRequest) GetPlanId() string {
+	if x != nil {
+		return x.PlanId
+	}
+	return ""
+}
+
+type ListMyWaitlistRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListMyWaitlistRequest) Reset() {
+	*x = ListMyWaitlistRequest{}
+	mi := &file_social_v1_booking_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListMyWaitlistRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListMyWaitlistRequest) ProtoMessage() {}
+
+func (x *ListMyWaitlistRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_booking_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListMyWaitlistRequest.ProtoReflect.Descriptor instead.
+func (*ListMyWaitlistRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_booking_proto_rawDescGZIP(), []int{13}
+}
+
+type ListMyWaitlistResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Entries       []*WaitlistStatus      `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListMyWaitlistResponse) Reset() {
+	*x = ListMyWaitlistResponse{}
+	mi := &file_social_v1_booking_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListMyWaitlistResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListMyWaitlistResponse) ProtoMessage() {}
+
+func (x *ListMyWaitlistResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_booking_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListMyWaitlistResponse.ProtoReflect.Descriptor instead.
+func (*ListMyWaitlistResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_booking_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ListMyWaitlistResponse) GetEntries() []*WaitlistStatus {
+	if x != nil {
+		return x.Entries
+	}
+	return nil
+}
+
+type BookingSummary struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Booking       *Booking               `protobuf:"bytes,1,opt,name=booking,proto3" json:"booking,omitempty"`
+	PlanTitle     string                 `protobuf:"bytes,2,opt,name=plan_title,json=planTitle,proto3" json:"plan_title,omitempty"`
+	StartsAt      *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=starts_at,json=startsAt,proto3" json:"starts_at,omitempty"`
+	EndsAt        *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=ends_at,json=endsAt,proto3" json:"ends_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BookingSummary) Reset() {
+	*x = BookingSummary{}
+	mi := &file_social_v1_booking_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BookingSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BookingSummary) ProtoMessage() {}
+
+func (x *BookingSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_booking_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BookingSummary.ProtoReflect.Descriptor instead.
+func (*BookingSummary) Descriptor() ([]byte, []int) {
+	return file_social_v1_booking_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *BookingSummary) GetBooking() *Booking {
+	if x != nil {
+		return x.Booking
+	}
+	return nil
+}
+
+func (x *BookingSummary) GetPlanTitle() string {
+	if x != nil {
+		return x.PlanTitle
+	}
+	return ""
+}
+
+func (x *BookingSummary) GetStartsAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartsAt
+	}
+	return nil
+}
+
+func (x *BookingSummary) GetEndsAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.EndsAt
+	}
+	return nil
+}
+
+type ListMyBookingsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tab           BookingTab             `protobuf:"varint,1,opt,name=tab,proto3,enum=social.v1.BookingTab" json:"tab,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListMyBookingsRequest) Reset() {
+	*x = ListMyBookingsRequest{}
+	mi := &file_social_v1_booking_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListMyBookingsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListMyBookingsRequest) ProtoMessage() {}
+
+func (x *ListMyBookingsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_booking_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListMyBookingsRequest.ProtoReflect.Descriptor instead.
+func (*ListMyBookingsRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_booking_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *ListMyBookingsRequest) GetTab() BookingTab {
+	if x != nil {
+		return x.Tab
+	}
+	return BookingTab_BOOKING_TAB_UNSPECIFIED
+}
+
+type ListMyBookingsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Bookings      []*BookingSummary      `protobuf:"bytes,1,rep,name=bookings,proto3" json:"bookings,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListMyBookingsResponse) Reset() {
+	*x = ListMyBookingsResponse{}
+	mi := &file_social_v1_booking_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListMyBookingsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListMyBookingsResponse) ProtoMessage() {}
+
+func (x *ListMyBookingsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_booking_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListMyBookingsResponse.ProtoReflect.Descriptor instead.
+func (*ListMyBookingsResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_booking_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ListMyBookingsResponse) GetBookings() []*BookingSummary {
+	if x != nil {
+		return x.Bookings
+	}
+	return nil
+}
+
+type GetPassRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BookingId     string                 `protobuf:"bytes,1,opt,name=booking_id,json=bookingId,proto3" json:"booking_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPassRequest) Reset() {
+	*x = GetPassRequest{}
+	mi := &file_social_v1_booking_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPassRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPassRequest) ProtoMessage() {}
+
+func (x *GetPassRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_booking_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPassRequest.ProtoReflect.Descriptor instead.
+func (*GetPassRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_booking_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *GetPassRequest) GetBookingId() string {
+	if x != nil {
+		return x.BookingId
+	}
+	return ""
+}
+
+type Pass struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	BookingId       string                 `protobuf:"bytes,1,opt,name=booking_id,json=bookingId,proto3" json:"booking_id,omitempty"`
+	PlanId          string                 `protobuf:"bytes,2,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	PlanTitle       string                 `protobuf:"bytes,3,opt,name=plan_title,json=planTitle,proto3" json:"plan_title,omitempty"`
+	PlanDescription string                 `protobuf:"bytes,4,opt,name=plan_description,json=planDescription,proto3" json:"plan_description,omitempty"`
+	VenueName       string                 `protobuf:"bytes,5,opt,name=venue_name,json=venueName,proto3" json:"venue_name,omitempty"`
+	VenueAddress    string                 `protobuf:"bytes,6,opt,name=venue_address,json=venueAddress,proto3" json:"venue_address,omitempty"`
+	StartsAt        *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=starts_at,json=startsAt,proto3" json:"starts_at,omitempty"`
+	EndsAt          *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=ends_at,json=endsAt,proto3" json:"ends_at,omitempty"`
+	HostName        string                 `protobuf:"bytes,9,opt,name=host_name,json=hostName,proto3" json:"host_name,omitempty"`
+	Payload         string                 `protobuf:"bytes,10,opt,name=payload,proto3" json:"payload,omitempty"` // signed; render as QR
+	ValidUntil      *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=valid_until,json=validUntil,proto3" json:"valid_until,omitempty"`
+	Status          BookingStatus          `protobuf:"varint,12,opt,name=status,proto3,enum=social.v1.BookingStatus" json:"status,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *Pass) Reset() {
+	*x = Pass{}
+	mi := &file_social_v1_booking_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Pass) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Pass) ProtoMessage() {}
+
+func (x *Pass) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_booking_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Pass.ProtoReflect.Descriptor instead.
+func (*Pass) Descriptor() ([]byte, []int) {
+	return file_social_v1_booking_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *Pass) GetBookingId() string {
+	if x != nil {
+		return x.BookingId
+	}
+	return ""
+}
+
+func (x *Pass) GetPlanId() string {
+	if x != nil {
+		return x.PlanId
+	}
+	return ""
+}
+
+func (x *Pass) GetPlanTitle() string {
+	if x != nil {
+		return x.PlanTitle
+	}
+	return ""
+}
+
+func (x *Pass) GetPlanDescription() string {
+	if x != nil {
+		return x.PlanDescription
+	}
+	return ""
+}
+
+func (x *Pass) GetVenueName() string {
+	if x != nil {
+		return x.VenueName
+	}
+	return ""
+}
+
+func (x *Pass) GetVenueAddress() string {
+	if x != nil {
+		return x.VenueAddress
+	}
+	return ""
+}
+
+func (x *Pass) GetStartsAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartsAt
+	}
+	return nil
+}
+
+func (x *Pass) GetEndsAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.EndsAt
+	}
+	return nil
+}
+
+func (x *Pass) GetHostName() string {
+	if x != nil {
+		return x.HostName
+	}
+	return ""
+}
+
+func (x *Pass) GetPayload() string {
+	if x != nil {
+		return x.Payload
+	}
+	return ""
+}
+
+func (x *Pass) GetValidUntil() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ValidUntil
+	}
+	return nil
+}
+
+func (x *Pass) GetStatus() BookingStatus {
+	if x != nil {
+		return x.Status
+	}
+	return BookingStatus_BOOKING_STATUS_UNSPECIFIED
+}
+
+type ScanPassRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Payload       string                 `protobuf:"bytes,1,opt,name=payload,proto3" json:"payload,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ScanPassRequest) Reset() {
+	*x = ScanPassRequest{}
+	mi := &file_social_v1_booking_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ScanPassRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ScanPassRequest) ProtoMessage() {}
+
+func (x *ScanPassRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_booking_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ScanPassRequest.ProtoReflect.Descriptor instead.
+func (*ScanPassRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_booking_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ScanPassRequest) GetPayload() string {
+	if x != nil {
+		return x.Payload
+	}
+	return ""
+}
+
+type ScanPassResult struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Booking       *Booking               `protobuf:"bytes,1,opt,name=booking,proto3" json:"booking,omitempty"`
+	AttendeeName  string                 `protobuf:"bytes,2,opt,name=attendee_name,json=attendeeName,proto3" json:"attendee_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ScanPassResult) Reset() {
+	*x = ScanPassResult{}
+	mi := &file_social_v1_booking_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ScanPassResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ScanPassResult) ProtoMessage() {}
+
+func (x *ScanPassResult) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_booking_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ScanPassResult.ProtoReflect.Descriptor instead.
+func (*ScanPassResult) Descriptor() ([]byte, []int) {
+	return file_social_v1_booking_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *ScanPassResult) GetBooking() *Booking {
+	if x != nil {
+		return x.Booking
+	}
+	return nil
+}
+
+func (x *ScanPassResult) GetAttendeeName() string {
+	if x != nil {
+		return x.AttendeeName
+	}
+	return ""
+}
+
 var File_social_v1_booking_proto protoreflect.FileDescriptor
 
 const file_social_v1_booking_proto_rawDesc = "" +
@@ -586,7 +1442,59 @@ const file_social_v1_booking_proto_rawDesc = "" +
 	"booking_id\x18\x01 \x01(\tR\tbookingId\x12\"\n" +
 	"\rchecked_in_by\x18\x02 \x01(\tR\vcheckedInBy\"=\n" +
 	"\rCheckInResult\x12,\n" +
-	"\abooking\x18\x01 \x01(\v2\x12.social.v1.BookingR\abooking*\xd2\x01\n" +
+	"\abooking\x18\x01 \x01(\v2\x12.social.v1.BookingR\abooking\"\xe0\x01\n" +
+	"\x0eWaitlistStatus\x12\x17\n" +
+	"\aplan_id\x18\x01 \x01(\tR\x06planId\x12.\n" +
+	"\x05state\x18\x02 \x01(\x0e2\x18.social.v1.WaitlistStateR\x05state\x12\x1a\n" +
+	"\bposition\x18\x03 \x01(\x05R\bposition\x12#\n" +
+	"\rtotal_waiting\x18\x04 \x01(\x05R\ftotalWaiting\x12D\n" +
+	"\x10offer_expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x0eofferExpiresAt\".\n" +
+	"\x13JoinWaitlistRequest\x12\x17\n" +
+	"\aplan_id\x18\x01 \x01(\tR\x06planId\"/\n" +
+	"\x14LeaveWaitlistRequest\x12\x17\n" +
+	"\aplan_id\x18\x01 \x01(\tR\x06planId\"\x17\n" +
+	"\x15LeaveWaitlistResponse\"3\n" +
+	"\x18GetWaitlistStatusRequest\x12\x17\n" +
+	"\aplan_id\x18\x01 \x01(\tR\x06planId\"\x17\n" +
+	"\x15ListMyWaitlistRequest\"M\n" +
+	"\x16ListMyWaitlistResponse\x123\n" +
+	"\aentries\x18\x01 \x03(\v2\x19.social.v1.WaitlistStatusR\aentries\"\xcb\x01\n" +
+	"\x0eBookingSummary\x12,\n" +
+	"\abooking\x18\x01 \x01(\v2\x12.social.v1.BookingR\abooking\x12\x1d\n" +
+	"\n" +
+	"plan_title\x18\x02 \x01(\tR\tplanTitle\x127\n" +
+	"\tstarts_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\bstartsAt\x123\n" +
+	"\aends_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x06endsAt\"@\n" +
+	"\x15ListMyBookingsRequest\x12'\n" +
+	"\x03tab\x18\x01 \x01(\x0e2\x15.social.v1.BookingTabR\x03tab\"O\n" +
+	"\x16ListMyBookingsResponse\x125\n" +
+	"\bbookings\x18\x01 \x03(\v2\x19.social.v1.BookingSummaryR\bbookings\"/\n" +
+	"\x0eGetPassRequest\x12\x1d\n" +
+	"\n" +
+	"booking_id\x18\x01 \x01(\tR\tbookingId\"\xe0\x03\n" +
+	"\x04Pass\x12\x1d\n" +
+	"\n" +
+	"booking_id\x18\x01 \x01(\tR\tbookingId\x12\x17\n" +
+	"\aplan_id\x18\x02 \x01(\tR\x06planId\x12\x1d\n" +
+	"\n" +
+	"plan_title\x18\x03 \x01(\tR\tplanTitle\x12)\n" +
+	"\x10plan_description\x18\x04 \x01(\tR\x0fplanDescription\x12\x1d\n" +
+	"\n" +
+	"venue_name\x18\x05 \x01(\tR\tvenueName\x12#\n" +
+	"\rvenue_address\x18\x06 \x01(\tR\fvenueAddress\x127\n" +
+	"\tstarts_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\bstartsAt\x123\n" +
+	"\aends_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\x06endsAt\x12\x1b\n" +
+	"\thost_name\x18\t \x01(\tR\bhostName\x12\x18\n" +
+	"\apayload\x18\n" +
+	" \x01(\tR\apayload\x12;\n" +
+	"\vvalid_until\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"validUntil\x120\n" +
+	"\x06status\x18\f \x01(\x0e2\x18.social.v1.BookingStatusR\x06status\"+\n" +
+	"\x0fScanPassRequest\x12\x18\n" +
+	"\apayload\x18\x01 \x01(\tR\apayload\"c\n" +
+	"\x0eScanPassResult\x12,\n" +
+	"\abooking\x18\x01 \x01(\v2\x12.social.v1.BookingR\abooking\x12#\n" +
+	"\rattendee_name\x18\x02 \x01(\tR\fattendeeName*\xd2\x01\n" +
 	"\rBookingStatus\x12\x1e\n" +
 	"\x1aBOOKING_STATUS_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11BOOKING_INITIATED\x10\x01\x12\x1b\n" +
@@ -595,14 +1503,32 @@ const file_social_v1_booking_proto_rawDesc = "" +
 	"\x11BOOKING_CANCELLED\x10\x04\x12\x14\n" +
 	"\x10BOOKING_REFUNDED\x10\x05\x12\x13\n" +
 	"\x0fBOOKING_NO_SHOW\x10\x06\x12\x14\n" +
-	"\x10BOOKING_ATTENDED\x10\a2\xe5\x02\n" +
+	"\x10BOOKING_ATTENDED\x10\a*\x80\x01\n" +
+	"\rWaitlistState\x12\x1e\n" +
+	"\x1aWAITLIST_STATE_UNSPECIFIED\x10\x00\x12\x17\n" +
+	"\x13WAITLIST_STATE_NONE\x10\x01\x12\x1a\n" +
+	"\x16WAITLIST_STATE_WAITING\x10\x02\x12\x1a\n" +
+	"\x16WAITLIST_STATE_OFFERED\x10\x03*t\n" +
+	"\n" +
+	"BookingTab\x12\x1b\n" +
+	"\x17BOOKING_TAB_UNSPECIFIED\x10\x00\x12\x18\n" +
+	"\x14BOOKING_TAB_UPCOMING\x10\x01\x12\x14\n" +
+	"\x10BOOKING_TAB_PAST\x10\x02\x12\x19\n" +
+	"\x15BOOKING_TAB_CANCELLED\x10\x032\x81\a\n" +
 	"\x0eBookingService\x12G\n" +
 	"\fQuoteBooking\x12\x1e.social.v1.QuoteBookingRequest\x1a\x17.social.v1.BookingQuote\x12D\n" +
 	"\rCreateBooking\x12\x1f.social.v1.CreateBookingRequest\x1a\x12.social.v1.Booking\x12>\n" +
 	"\n" +
 	"GetBooking\x12\x1c.social.v1.GetBookingRequest\x1a\x12.social.v1.Booking\x12D\n" +
 	"\rCancelBooking\x12\x1f.social.v1.CancelBookingRequest\x1a\x12.social.v1.Booking\x12>\n" +
-	"\aCheckIn\x12\x19.social.v1.CheckInRequest\x1a\x18.social.v1.CheckInResultB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
+	"\aCheckIn\x12\x19.social.v1.CheckInRequest\x1a\x18.social.v1.CheckInResult\x12I\n" +
+	"\fJoinWaitlist\x12\x1e.social.v1.JoinWaitlistRequest\x1a\x19.social.v1.WaitlistStatus\x12R\n" +
+	"\rLeaveWaitlist\x12\x1f.social.v1.LeaveWaitlistRequest\x1a .social.v1.LeaveWaitlistResponse\x12S\n" +
+	"\x11GetWaitlistStatus\x12#.social.v1.GetWaitlistStatusRequest\x1a\x19.social.v1.WaitlistStatus\x12U\n" +
+	"\x0eListMyWaitlist\x12 .social.v1.ListMyWaitlistRequest\x1a!.social.v1.ListMyWaitlistResponse\x12U\n" +
+	"\x0eListMyBookings\x12 .social.v1.ListMyBookingsRequest\x1a!.social.v1.ListMyBookingsResponse\x125\n" +
+	"\aGetPass\x12\x19.social.v1.GetPassRequest\x1a\x0f.social.v1.Pass\x12A\n" +
+	"\bScanPass\x12\x1a.social.v1.ScanPassRequest\x1a\x19.social.v1.ScanPassResultB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
 var (
 	file_social_v1_booking_proto_rawDescOnce sync.Once
@@ -616,46 +1542,89 @@ func file_social_v1_booking_proto_rawDescGZIP() []byte {
 	return file_social_v1_booking_proto_rawDescData
 }
 
-var file_social_v1_booking_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_social_v1_booking_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_social_v1_booking_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_social_v1_booking_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_social_v1_booking_proto_goTypes = []any{
-	(BookingStatus)(0),            // 0: social.v1.BookingStatus
-	(*Booking)(nil),               // 1: social.v1.Booking
-	(*QuoteBookingRequest)(nil),   // 2: social.v1.QuoteBookingRequest
-	(*BookingQuote)(nil),          // 3: social.v1.BookingQuote
-	(*CreateBookingRequest)(nil),  // 4: social.v1.CreateBookingRequest
-	(*GetBookingRequest)(nil),     // 5: social.v1.GetBookingRequest
-	(*CancelBookingRequest)(nil),  // 6: social.v1.CancelBookingRequest
-	(*CheckInRequest)(nil),        // 7: social.v1.CheckInRequest
-	(*CheckInResult)(nil),         // 8: social.v1.CheckInResult
-	(*Money)(nil),                 // 9: social.v1.Money
-	(*timestamppb.Timestamp)(nil), // 10: google.protobuf.Timestamp
-	(*Audit)(nil),                 // 11: social.v1.Audit
+	(BookingStatus)(0),               // 0: social.v1.BookingStatus
+	(WaitlistState)(0),               // 1: social.v1.WaitlistState
+	(BookingTab)(0),                  // 2: social.v1.BookingTab
+	(*Booking)(nil),                  // 3: social.v1.Booking
+	(*QuoteBookingRequest)(nil),      // 4: social.v1.QuoteBookingRequest
+	(*BookingQuote)(nil),             // 5: social.v1.BookingQuote
+	(*CreateBookingRequest)(nil),     // 6: social.v1.CreateBookingRequest
+	(*GetBookingRequest)(nil),        // 7: social.v1.GetBookingRequest
+	(*CancelBookingRequest)(nil),     // 8: social.v1.CancelBookingRequest
+	(*CheckInRequest)(nil),           // 9: social.v1.CheckInRequest
+	(*CheckInResult)(nil),            // 10: social.v1.CheckInResult
+	(*WaitlistStatus)(nil),           // 11: social.v1.WaitlistStatus
+	(*JoinWaitlistRequest)(nil),      // 12: social.v1.JoinWaitlistRequest
+	(*LeaveWaitlistRequest)(nil),     // 13: social.v1.LeaveWaitlistRequest
+	(*LeaveWaitlistResponse)(nil),    // 14: social.v1.LeaveWaitlistResponse
+	(*GetWaitlistStatusRequest)(nil), // 15: social.v1.GetWaitlistStatusRequest
+	(*ListMyWaitlistRequest)(nil),    // 16: social.v1.ListMyWaitlistRequest
+	(*ListMyWaitlistResponse)(nil),   // 17: social.v1.ListMyWaitlistResponse
+	(*BookingSummary)(nil),           // 18: social.v1.BookingSummary
+	(*ListMyBookingsRequest)(nil),    // 19: social.v1.ListMyBookingsRequest
+	(*ListMyBookingsResponse)(nil),   // 20: social.v1.ListMyBookingsResponse
+	(*GetPassRequest)(nil),           // 21: social.v1.GetPassRequest
+	(*Pass)(nil),                     // 22: social.v1.Pass
+	(*ScanPassRequest)(nil),          // 23: social.v1.ScanPassRequest
+	(*ScanPassResult)(nil),           // 24: social.v1.ScanPassResult
+	(*Money)(nil),                    // 25: social.v1.Money
+	(*timestamppb.Timestamp)(nil),    // 26: google.protobuf.Timestamp
+	(*Audit)(nil),                    // 27: social.v1.Audit
 }
 var file_social_v1_booking_proto_depIdxs = []int32{
 	0,  // 0: social.v1.Booking.status:type_name -> social.v1.BookingStatus
-	9,  // 1: social.v1.Booking.price:type_name -> social.v1.Money
-	10, // 2: social.v1.Booking.checked_in_at:type_name -> google.protobuf.Timestamp
-	11, // 3: social.v1.Booking.audit:type_name -> social.v1.Audit
-	9,  // 4: social.v1.BookingQuote.price:type_name -> social.v1.Money
-	9,  // 5: social.v1.BookingQuote.service_fee:type_name -> social.v1.Money
-	9,  // 6: social.v1.BookingQuote.total:type_name -> social.v1.Money
-	1,  // 7: social.v1.CheckInResult.booking:type_name -> social.v1.Booking
-	2,  // 8: social.v1.BookingService.QuoteBooking:input_type -> social.v1.QuoteBookingRequest
-	4,  // 9: social.v1.BookingService.CreateBooking:input_type -> social.v1.CreateBookingRequest
-	5,  // 10: social.v1.BookingService.GetBooking:input_type -> social.v1.GetBookingRequest
-	6,  // 11: social.v1.BookingService.CancelBooking:input_type -> social.v1.CancelBookingRequest
-	7,  // 12: social.v1.BookingService.CheckIn:input_type -> social.v1.CheckInRequest
-	3,  // 13: social.v1.BookingService.QuoteBooking:output_type -> social.v1.BookingQuote
-	1,  // 14: social.v1.BookingService.CreateBooking:output_type -> social.v1.Booking
-	1,  // 15: social.v1.BookingService.GetBooking:output_type -> social.v1.Booking
-	1,  // 16: social.v1.BookingService.CancelBooking:output_type -> social.v1.Booking
-	8,  // 17: social.v1.BookingService.CheckIn:output_type -> social.v1.CheckInResult
-	13, // [13:18] is the sub-list for method output_type
-	8,  // [8:13] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	25, // 1: social.v1.Booking.price:type_name -> social.v1.Money
+	26, // 2: social.v1.Booking.checked_in_at:type_name -> google.protobuf.Timestamp
+	27, // 3: social.v1.Booking.audit:type_name -> social.v1.Audit
+	25, // 4: social.v1.BookingQuote.price:type_name -> social.v1.Money
+	25, // 5: social.v1.BookingQuote.service_fee:type_name -> social.v1.Money
+	25, // 6: social.v1.BookingQuote.total:type_name -> social.v1.Money
+	3,  // 7: social.v1.CheckInResult.booking:type_name -> social.v1.Booking
+	1,  // 8: social.v1.WaitlistStatus.state:type_name -> social.v1.WaitlistState
+	26, // 9: social.v1.WaitlistStatus.offer_expires_at:type_name -> google.protobuf.Timestamp
+	11, // 10: social.v1.ListMyWaitlistResponse.entries:type_name -> social.v1.WaitlistStatus
+	3,  // 11: social.v1.BookingSummary.booking:type_name -> social.v1.Booking
+	26, // 12: social.v1.BookingSummary.starts_at:type_name -> google.protobuf.Timestamp
+	26, // 13: social.v1.BookingSummary.ends_at:type_name -> google.protobuf.Timestamp
+	2,  // 14: social.v1.ListMyBookingsRequest.tab:type_name -> social.v1.BookingTab
+	18, // 15: social.v1.ListMyBookingsResponse.bookings:type_name -> social.v1.BookingSummary
+	26, // 16: social.v1.Pass.starts_at:type_name -> google.protobuf.Timestamp
+	26, // 17: social.v1.Pass.ends_at:type_name -> google.protobuf.Timestamp
+	26, // 18: social.v1.Pass.valid_until:type_name -> google.protobuf.Timestamp
+	0,  // 19: social.v1.Pass.status:type_name -> social.v1.BookingStatus
+	3,  // 20: social.v1.ScanPassResult.booking:type_name -> social.v1.Booking
+	4,  // 21: social.v1.BookingService.QuoteBooking:input_type -> social.v1.QuoteBookingRequest
+	6,  // 22: social.v1.BookingService.CreateBooking:input_type -> social.v1.CreateBookingRequest
+	7,  // 23: social.v1.BookingService.GetBooking:input_type -> social.v1.GetBookingRequest
+	8,  // 24: social.v1.BookingService.CancelBooking:input_type -> social.v1.CancelBookingRequest
+	9,  // 25: social.v1.BookingService.CheckIn:input_type -> social.v1.CheckInRequest
+	12, // 26: social.v1.BookingService.JoinWaitlist:input_type -> social.v1.JoinWaitlistRequest
+	13, // 27: social.v1.BookingService.LeaveWaitlist:input_type -> social.v1.LeaveWaitlistRequest
+	15, // 28: social.v1.BookingService.GetWaitlistStatus:input_type -> social.v1.GetWaitlistStatusRequest
+	16, // 29: social.v1.BookingService.ListMyWaitlist:input_type -> social.v1.ListMyWaitlistRequest
+	19, // 30: social.v1.BookingService.ListMyBookings:input_type -> social.v1.ListMyBookingsRequest
+	21, // 31: social.v1.BookingService.GetPass:input_type -> social.v1.GetPassRequest
+	23, // 32: social.v1.BookingService.ScanPass:input_type -> social.v1.ScanPassRequest
+	5,  // 33: social.v1.BookingService.QuoteBooking:output_type -> social.v1.BookingQuote
+	3,  // 34: social.v1.BookingService.CreateBooking:output_type -> social.v1.Booking
+	3,  // 35: social.v1.BookingService.GetBooking:output_type -> social.v1.Booking
+	3,  // 36: social.v1.BookingService.CancelBooking:output_type -> social.v1.Booking
+	10, // 37: social.v1.BookingService.CheckIn:output_type -> social.v1.CheckInResult
+	11, // 38: social.v1.BookingService.JoinWaitlist:output_type -> social.v1.WaitlistStatus
+	14, // 39: social.v1.BookingService.LeaveWaitlist:output_type -> social.v1.LeaveWaitlistResponse
+	11, // 40: social.v1.BookingService.GetWaitlistStatus:output_type -> social.v1.WaitlistStatus
+	17, // 41: social.v1.BookingService.ListMyWaitlist:output_type -> social.v1.ListMyWaitlistResponse
+	20, // 42: social.v1.BookingService.ListMyBookings:output_type -> social.v1.ListMyBookingsResponse
+	22, // 43: social.v1.BookingService.GetPass:output_type -> social.v1.Pass
+	24, // 44: social.v1.BookingService.ScanPass:output_type -> social.v1.ScanPassResult
+	33, // [33:45] is the sub-list for method output_type
+	21, // [21:33] is the sub-list for method input_type
+	21, // [21:21] is the sub-list for extension type_name
+	21, // [21:21] is the sub-list for extension extendee
+	0,  // [0:21] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_booking_proto_init() }
@@ -669,8 +1638,8 @@ func file_social_v1_booking_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_booking_proto_rawDesc), len(file_social_v1_booking_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   8,
+			NumEnums:      3,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

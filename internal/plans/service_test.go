@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 )
 
 type fakeBookingCreator struct {
@@ -70,5 +71,23 @@ func TestService_JoinPlan_RejectsMissingInput(t *testing.T) {
 	svc := NewService(nil, &fakeBookingCreator{}, &fakeBookingCanceller{}, nil)
 	if _, err := svc.JoinPlan(context.Background(), "", "user-1", ""); err != ErrInvalidInput {
 		t.Errorf("expected ErrInvalidInput, got %v", err)
+	}
+}
+
+// A plan with a missing or inverted end would make the completion/no-show
+// jobs fire immediately (ends_at defaults to year 1), so it must be rejected
+// before it reaches the repository.
+func TestService_CreatePlan_RejectsInvalidWindow(t *testing.T) {
+	svc := NewService(nil, &fakeBookingCreator{}, &fakeBookingCanceller{}, nil)
+	now := time.Now()
+
+	cases := map[string]*Plan{
+		"ends before starts": {Title: "x", HostID: "h", Capacity: 5, StartsAt: now.Add(time.Hour), EndsAt: now},
+		"starts long ago":    {Title: "x", HostID: "h", Capacity: 5, StartsAt: now.Add(-2 * time.Hour), EndsAt: now.Add(time.Hour)},
+	}
+	for name, p := range cases {
+		if _, err := svc.CreatePlan(context.Background(), p, ""); err != ErrInvalidInput {
+			t.Errorf("%s: expected ErrInvalidInput, got %v", name, err)
+		}
 	}
 }

@@ -31,6 +31,10 @@ type Profile struct {
 	Occupation         string                 `protobuf:"bytes,6,opt,name=occupation,proto3" json:"occupation,omitempty"`
 	VerificationStatus string                 `protobuf:"bytes,7,opt,name=verification_status,json=verificationStatus,proto3" json:"verification_status,omitempty"` // unverified | email | phone | id
 	Audit              *Audit                 `protobuf:"bytes,8,opt,name=audit,proto3" json:"audit,omitempty"`
+	Gender             string                 `protobuf:"bytes,9,opt,name=gender,proto3" json:"gender,omitempty"` // male | female | non_binary | prefer_not_to_say | ""
+	Education          string                 `protobuf:"bytes,10,opt,name=education,proto3" json:"education,omitempty"`
+	Hobbies            []string               `protobuf:"bytes,11,rep,name=hobbies,proto3" json:"hobbies,omitempty"`
+	Photos             []*ProfilePhoto        `protobuf:"bytes,12,rep,name=photos,proto3" json:"photos,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -121,6 +125,94 @@ func (x *Profile) GetAudit() *Audit {
 	return nil
 }
 
+func (x *Profile) GetGender() string {
+	if x != nil {
+		return x.Gender
+	}
+	return ""
+}
+
+func (x *Profile) GetEducation() string {
+	if x != nil {
+		return x.Education
+	}
+	return ""
+}
+
+func (x *Profile) GetHobbies() []string {
+	if x != nil {
+		return x.Hobbies
+	}
+	return nil
+}
+
+func (x *Profile) GetPhotos() []*ProfilePhoto {
+	if x != nil {
+		return x.Photos
+	}
+	return nil
+}
+
+type ProfilePhoto struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Url           string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
+	Position      int32                  `protobuf:"varint,3,opt,name=position,proto3" json:"position,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ProfilePhoto) Reset() {
+	*x = ProfilePhoto{}
+	mi := &file_social_v1_profile_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProfilePhoto) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProfilePhoto) ProtoMessage() {}
+
+func (x *ProfilePhoto) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_profile_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProfilePhoto.ProtoReflect.Descriptor instead.
+func (*ProfilePhoto) Descriptor() ([]byte, []int) {
+	return file_social_v1_profile_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ProfilePhoto) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ProfilePhoto) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *ProfilePhoto) GetPosition() int32 {
+	if x != nil {
+		return x.Position
+	}
+	return 0
+}
+
 type CreateProfileRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -132,7 +224,7 @@ type CreateProfileRequest struct {
 
 func (x *CreateProfileRequest) Reset() {
 	*x = CreateProfileRequest{}
-	mi := &file_social_v1_profile_proto_msgTypes[1]
+	mi := &file_social_v1_profile_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -144,7 +236,7 @@ func (x *CreateProfileRequest) String() string {
 func (*CreateProfileRequest) ProtoMessage() {}
 
 func (x *CreateProfileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_profile_proto_msgTypes[1]
+	mi := &file_social_v1_profile_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -157,7 +249,7 @@ func (x *CreateProfileRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateProfileRequest.ProtoReflect.Descriptor instead.
 func (*CreateProfileRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_profile_proto_rawDescGZIP(), []int{1}
+	return file_social_v1_profile_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *CreateProfileRequest) GetUserId() string {
@@ -190,7 +282,7 @@ type GetProfileRequest struct {
 
 func (x *GetProfileRequest) Reset() {
 	*x = GetProfileRequest{}
-	mi := &file_social_v1_profile_proto_msgTypes[2]
+	mi := &file_social_v1_profile_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -202,7 +294,7 @@ func (x *GetProfileRequest) String() string {
 func (*GetProfileRequest) ProtoMessage() {}
 
 func (x *GetProfileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_profile_proto_msgTypes[2]
+	mi := &file_social_v1_profile_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -215,7 +307,7 @@ func (x *GetProfileRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProfileRequest.ProtoReflect.Descriptor instead.
 func (*GetProfileRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_profile_proto_rawDescGZIP(), []int{2}
+	return file_social_v1_profile_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetProfileRequest) GetUserId() string {
@@ -225,20 +317,28 @@ func (x *GetProfileRequest) GetUserId() string {
 	return ""
 }
 
+// UpdateProfileRequest is a partial update: an unset optional field, or an
+// empty repeated field, leaves the stored value unchanged (a client that only
+// sends `bio` no longer wipes interests). user_id is ignored — the caller is
+// always the authenticated user. Interests, when sent, must be 5–15 catalog
+// names.
 type UpdateProfileRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Bio           string                 `protobuf:"bytes,2,opt,name=bio,proto3" json:"bio,omitempty"`
+	Bio           *string                `protobuf:"bytes,2,opt,name=bio,proto3,oneof" json:"bio,omitempty"`
 	Interests     []string               `protobuf:"bytes,3,rep,name=interests,proto3" json:"interests,omitempty"`
 	Languages     []string               `protobuf:"bytes,4,rep,name=languages,proto3" json:"languages,omitempty"`
-	Occupation    string                 `protobuf:"bytes,5,opt,name=occupation,proto3" json:"occupation,omitempty"`
+	Occupation    *string                `protobuf:"bytes,5,opt,name=occupation,proto3,oneof" json:"occupation,omitempty"`
+	Gender        *string                `protobuf:"bytes,6,opt,name=gender,proto3,oneof" json:"gender,omitempty"`
+	Education     *string                `protobuf:"bytes,7,opt,name=education,proto3,oneof" json:"education,omitempty"`
+	Hobbies       []string               `protobuf:"bytes,8,rep,name=hobbies,proto3" json:"hobbies,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UpdateProfileRequest) Reset() {
 	*x = UpdateProfileRequest{}
-	mi := &file_social_v1_profile_proto_msgTypes[3]
+	mi := &file_social_v1_profile_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -250,7 +350,7 @@ func (x *UpdateProfileRequest) String() string {
 func (*UpdateProfileRequest) ProtoMessage() {}
 
 func (x *UpdateProfileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_profile_proto_msgTypes[3]
+	mi := &file_social_v1_profile_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -263,7 +363,7 @@ func (x *UpdateProfileRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateProfileRequest.ProtoReflect.Descriptor instead.
 func (*UpdateProfileRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_profile_proto_rawDescGZIP(), []int{3}
+	return file_social_v1_profile_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *UpdateProfileRequest) GetUserId() string {
@@ -274,8 +374,8 @@ func (x *UpdateProfileRequest) GetUserId() string {
 }
 
 func (x *UpdateProfileRequest) GetBio() string {
-	if x != nil {
-		return x.Bio
+	if x != nil && x.Bio != nil {
+		return *x.Bio
 	}
 	return ""
 }
@@ -295,10 +395,590 @@ func (x *UpdateProfileRequest) GetLanguages() []string {
 }
 
 func (x *UpdateProfileRequest) GetOccupation() string {
-	if x != nil {
-		return x.Occupation
+	if x != nil && x.Occupation != nil {
+		return *x.Occupation
 	}
 	return ""
+}
+
+func (x *UpdateProfileRequest) GetGender() string {
+	if x != nil && x.Gender != nil {
+		return *x.Gender
+	}
+	return ""
+}
+
+func (x *UpdateProfileRequest) GetEducation() string {
+	if x != nil && x.Education != nil {
+		return *x.Education
+	}
+	return ""
+}
+
+func (x *UpdateProfileRequest) GetHobbies() []string {
+	if x != nil {
+		return x.Hobbies
+	}
+	return nil
+}
+
+type AddProfilePhotoRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"` // https only, <= 2048 chars; the server never fetches it
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AddProfilePhotoRequest) Reset() {
+	*x = AddProfilePhotoRequest{}
+	mi := &file_social_v1_profile_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddProfilePhotoRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddProfilePhotoRequest) ProtoMessage() {}
+
+func (x *AddProfilePhotoRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_profile_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddProfilePhotoRequest.ProtoReflect.Descriptor instead.
+func (*AddProfilePhotoRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_profile_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *AddProfilePhotoRequest) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+type DeleteProfilePhotoRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PhotoId       string                 `protobuf:"bytes,1,opt,name=photo_id,json=photoId,proto3" json:"photo_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteProfilePhotoRequest) Reset() {
+	*x = DeleteProfilePhotoRequest{}
+	mi := &file_social_v1_profile_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteProfilePhotoRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteProfilePhotoRequest) ProtoMessage() {}
+
+func (x *DeleteProfilePhotoRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_profile_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteProfilePhotoRequest.ProtoReflect.Descriptor instead.
+func (*DeleteProfilePhotoRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_profile_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *DeleteProfilePhotoRequest) GetPhotoId() string {
+	if x != nil {
+		return x.PhotoId
+	}
+	return ""
+}
+
+type DeleteProfilePhotoResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteProfilePhotoResponse) Reset() {
+	*x = DeleteProfilePhotoResponse{}
+	mi := &file_social_v1_profile_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteProfilePhotoResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteProfilePhotoResponse) ProtoMessage() {}
+
+func (x *DeleteProfilePhotoResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_profile_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteProfilePhotoResponse.ProtoReflect.Descriptor instead.
+func (*DeleteProfilePhotoResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_profile_proto_rawDescGZIP(), []int{7}
+}
+
+type ReorderProfilePhotosRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PhotoIds      []string               `protobuf:"bytes,1,rep,name=photo_ids,json=photoIds,proto3" json:"photo_ids,omitempty"` // must be exactly the caller's photo ids
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReorderProfilePhotosRequest) Reset() {
+	*x = ReorderProfilePhotosRequest{}
+	mi := &file_social_v1_profile_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReorderProfilePhotosRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReorderProfilePhotosRequest) ProtoMessage() {}
+
+func (x *ReorderProfilePhotosRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_profile_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReorderProfilePhotosRequest.ProtoReflect.Descriptor instead.
+func (*ReorderProfilePhotosRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_profile_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ReorderProfilePhotosRequest) GetPhotoIds() []string {
+	if x != nil {
+		return x.PhotoIds
+	}
+	return nil
+}
+
+type ReorderProfilePhotosResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Photos        []*ProfilePhoto        `protobuf:"bytes,1,rep,name=photos,proto3" json:"photos,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReorderProfilePhotosResponse) Reset() {
+	*x = ReorderProfilePhotosResponse{}
+	mi := &file_social_v1_profile_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReorderProfilePhotosResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReorderProfilePhotosResponse) ProtoMessage() {}
+
+func (x *ReorderProfilePhotosResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_profile_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReorderProfilePhotosResponse.ProtoReflect.Descriptor instead.
+func (*ReorderProfilePhotosResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_profile_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ReorderProfilePhotosResponse) GetPhotos() []*ProfilePhoto {
+	if x != nil {
+		return x.Photos
+	}
+	return nil
+}
+
+type ListInterestCatalogRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListInterestCatalogRequest) Reset() {
+	*x = ListInterestCatalogRequest{}
+	mi := &file_social_v1_profile_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListInterestCatalogRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListInterestCatalogRequest) ProtoMessage() {}
+
+func (x *ListInterestCatalogRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_profile_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListInterestCatalogRequest.ProtoReflect.Descriptor instead.
+func (*ListInterestCatalogRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_profile_proto_rawDescGZIP(), []int{10}
+}
+
+type ListInterestCatalogResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Interests     []string               `protobuf:"bytes,1,rep,name=interests,proto3" json:"interests,omitempty"`
+	Categories    []string               `protobuf:"bytes,2,rep,name=categories,proto3" json:"categories,omitempty"`
+	MinSelectable int32                  `protobuf:"varint,3,opt,name=min_selectable,json=minSelectable,proto3" json:"min_selectable,omitempty"`
+	MaxSelectable int32                  `protobuf:"varint,4,opt,name=max_selectable,json=maxSelectable,proto3" json:"max_selectable,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListInterestCatalogResponse) Reset() {
+	*x = ListInterestCatalogResponse{}
+	mi := &file_social_v1_profile_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListInterestCatalogResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListInterestCatalogResponse) ProtoMessage() {}
+
+func (x *ListInterestCatalogResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_profile_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListInterestCatalogResponse.ProtoReflect.Descriptor instead.
+func (*ListInterestCatalogResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_profile_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ListInterestCatalogResponse) GetInterests() []string {
+	if x != nil {
+		return x.Interests
+	}
+	return nil
+}
+
+func (x *ListInterestCatalogResponse) GetCategories() []string {
+	if x != nil {
+		return x.Categories
+	}
+	return nil
+}
+
+func (x *ListInterestCatalogResponse) GetMinSelectable() int32 {
+	if x != nil {
+		return x.MinSelectable
+	}
+	return 0
+}
+
+func (x *ListInterestCatalogResponse) GetMaxSelectable() int32 {
+	if x != nil {
+		return x.MaxSelectable
+	}
+	return 0
+}
+
+type UserPreferences struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// make_friends | activity_partners | networking | explore_city |
+	// new_in_city | travel_companions | join_communities | attend_experiences
+	Intents       []string `protobuf:"bytes,1,rep,name=intents,proto3" json:"intents,omitempty"`
+	GroupPref     string   `protobuf:"bytes,2,opt,name=group_pref,json=groupPref,proto3" json:"group_pref,omitempty"`          // small | large | "" (unanswered)
+	EnergyPref    string   `protobuf:"bytes,3,opt,name=energy_pref,json=energyPref,proto3" json:"energy_pref,omitempty"`       // quiet | energetic
+	PlanningPref  string   `protobuf:"bytes,4,opt,name=planning_pref,json=planningPref,proto3" json:"planning_pref,omitempty"` // planned | spontaneous
+	TimePref      string   `protobuf:"bytes,5,opt,name=time_pref,json=timePref,proto3" json:"time_pref,omitempty"`             // morning | evening
+	SettingPref   string   `protobuf:"bytes,6,opt,name=setting_pref,json=settingPref,proto3" json:"setting_pref,omitempty"`    // indoor | outdoor
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserPreferences) Reset() {
+	*x = UserPreferences{}
+	mi := &file_social_v1_profile_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserPreferences) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserPreferences) ProtoMessage() {}
+
+func (x *UserPreferences) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_profile_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserPreferences.ProtoReflect.Descriptor instead.
+func (*UserPreferences) Descriptor() ([]byte, []int) {
+	return file_social_v1_profile_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *UserPreferences) GetIntents() []string {
+	if x != nil {
+		return x.Intents
+	}
+	return nil
+}
+
+func (x *UserPreferences) GetGroupPref() string {
+	if x != nil {
+		return x.GroupPref
+	}
+	return ""
+}
+
+func (x *UserPreferences) GetEnergyPref() string {
+	if x != nil {
+		return x.EnergyPref
+	}
+	return ""
+}
+
+func (x *UserPreferences) GetPlanningPref() string {
+	if x != nil {
+		return x.PlanningPref
+	}
+	return ""
+}
+
+func (x *UserPreferences) GetTimePref() string {
+	if x != nil {
+		return x.TimePref
+	}
+	return ""
+}
+
+func (x *UserPreferences) GetSettingPref() string {
+	if x != nil {
+		return x.SettingPref
+	}
+	return ""
+}
+
+type SetSocialIntentRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Intents       []string               `protobuf:"bytes,1,rep,name=intents,proto3" json:"intents,omitempty"` // replaces the stored set; empty clears it
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetSocialIntentRequest) Reset() {
+	*x = SetSocialIntentRequest{}
+	mi := &file_social_v1_profile_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetSocialIntentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetSocialIntentRequest) ProtoMessage() {}
+
+func (x *SetSocialIntentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_profile_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetSocialIntentRequest.ProtoReflect.Descriptor instead.
+func (*SetSocialIntentRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_profile_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *SetSocialIntentRequest) GetIntents() []string {
+	if x != nil {
+		return x.Intents
+	}
+	return nil
+}
+
+// SetPersonalityRequest replaces all five answers; "" clears one (skipped).
+type SetPersonalityRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GroupPref     string                 `protobuf:"bytes,1,opt,name=group_pref,json=groupPref,proto3" json:"group_pref,omitempty"`
+	EnergyPref    string                 `protobuf:"bytes,2,opt,name=energy_pref,json=energyPref,proto3" json:"energy_pref,omitempty"`
+	PlanningPref  string                 `protobuf:"bytes,3,opt,name=planning_pref,json=planningPref,proto3" json:"planning_pref,omitempty"`
+	TimePref      string                 `protobuf:"bytes,4,opt,name=time_pref,json=timePref,proto3" json:"time_pref,omitempty"`
+	SettingPref   string                 `protobuf:"bytes,5,opt,name=setting_pref,json=settingPref,proto3" json:"setting_pref,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetPersonalityRequest) Reset() {
+	*x = SetPersonalityRequest{}
+	mi := &file_social_v1_profile_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetPersonalityRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetPersonalityRequest) ProtoMessage() {}
+
+func (x *SetPersonalityRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_profile_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetPersonalityRequest.ProtoReflect.Descriptor instead.
+func (*SetPersonalityRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_profile_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *SetPersonalityRequest) GetGroupPref() string {
+	if x != nil {
+		return x.GroupPref
+	}
+	return ""
+}
+
+func (x *SetPersonalityRequest) GetEnergyPref() string {
+	if x != nil {
+		return x.EnergyPref
+	}
+	return ""
+}
+
+func (x *SetPersonalityRequest) GetPlanningPref() string {
+	if x != nil {
+		return x.PlanningPref
+	}
+	return ""
+}
+
+func (x *SetPersonalityRequest) GetTimePref() string {
+	if x != nil {
+		return x.TimePref
+	}
+	return ""
+}
+
+func (x *SetPersonalityRequest) GetSettingPref() string {
+	if x != nil {
+		return x.SettingPref
+	}
+	return ""
+}
+
+type GetMyPreferencesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetMyPreferencesRequest) Reset() {
+	*x = GetMyPreferencesRequest{}
+	mi := &file_social_v1_profile_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetMyPreferencesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMyPreferencesRequest) ProtoMessage() {}
+
+func (x *GetMyPreferencesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_profile_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMyPreferencesRequest.ProtoReflect.Descriptor instead.
+func (*GetMyPreferencesRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_profile_proto_rawDescGZIP(), []int{15}
 }
 
 type SetPrivacyRequest struct {
@@ -311,7 +991,7 @@ type SetPrivacyRequest struct {
 
 func (x *SetPrivacyRequest) Reset() {
 	*x = SetPrivacyRequest{}
-	mi := &file_social_v1_profile_proto_msgTypes[4]
+	mi := &file_social_v1_profile_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -323,7 +1003,7 @@ func (x *SetPrivacyRequest) String() string {
 func (*SetPrivacyRequest) ProtoMessage() {}
 
 func (x *SetPrivacyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_profile_proto_msgTypes[4]
+	mi := &file_social_v1_profile_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -336,7 +1016,7 @@ func (x *SetPrivacyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetPrivacyRequest.ProtoReflect.Descriptor instead.
 func (*SetPrivacyRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_profile_proto_rawDescGZIP(), []int{4}
+	return file_social_v1_profile_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *SetPrivacyRequest) GetUserId() string {
@@ -357,7 +1037,7 @@ var File_social_v1_profile_proto protoreflect.FileDescriptor
 
 const file_social_v1_profile_proto_rawDesc = "" +
 	"\n" +
-	"\x17social/v1/profile.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"\x8c\x02\n" +
+	"\x17social/v1/profile.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"\x8d\x03\n" +
 	"\aProfile\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
 	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12\x10\n" +
@@ -368,31 +1048,92 @@ const file_social_v1_profile_proto_rawDesc = "" +
 	"occupation\x18\x06 \x01(\tR\n" +
 	"occupation\x12/\n" +
 	"\x13verification_status\x18\a \x01(\tR\x12verificationStatus\x12&\n" +
-	"\x05audit\x18\b \x01(\v2\x10.social.v1.AuditR\x05audit\"p\n" +
+	"\x05audit\x18\b \x01(\v2\x10.social.v1.AuditR\x05audit\x12\x16\n" +
+	"\x06gender\x18\t \x01(\tR\x06gender\x12\x1c\n" +
+	"\teducation\x18\n" +
+	" \x01(\tR\teducation\x12\x18\n" +
+	"\ahobbies\x18\v \x03(\tR\ahobbies\x12/\n" +
+	"\x06photos\x18\f \x03(\v2\x17.social.v1.ProfilePhotoR\x06photos\"L\n" +
+	"\fProfilePhoto\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x10\n" +
+	"\x03url\x18\x02 \x01(\tR\x03url\x12\x1a\n" +
+	"\bposition\x18\x03 \x01(\x05R\bposition\"p\n" +
 	"\x14CreateProfileRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
 	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12\x1c\n" +
 	"\tinterests\x18\x03 \x03(\tR\tinterests\",\n" +
 	"\x11GetProfileRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"\x9d\x01\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"\xb1\x02\n" +
 	"\x14UpdateProfileRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x10\n" +
-	"\x03bio\x18\x02 \x01(\tR\x03bio\x12\x1c\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x15\n" +
+	"\x03bio\x18\x02 \x01(\tH\x00R\x03bio\x88\x01\x01\x12\x1c\n" +
 	"\tinterests\x18\x03 \x03(\tR\tinterests\x12\x1c\n" +
-	"\tlanguages\x18\x04 \x03(\tR\tlanguages\x12\x1e\n" +
+	"\tlanguages\x18\x04 \x03(\tR\tlanguages\x12#\n" +
 	"\n" +
-	"occupation\x18\x05 \x01(\tR\n" +
-	"occupation\"m\n" +
+	"occupation\x18\x05 \x01(\tH\x01R\n" +
+	"occupation\x88\x01\x01\x12\x1b\n" +
+	"\x06gender\x18\x06 \x01(\tH\x02R\x06gender\x88\x01\x01\x12!\n" +
+	"\teducation\x18\a \x01(\tH\x03R\teducation\x88\x01\x01\x12\x18\n" +
+	"\ahobbies\x18\b \x03(\tR\ahobbiesB\x06\n" +
+	"\x04_bioB\r\n" +
+	"\v_occupationB\t\n" +
+	"\a_genderB\f\n" +
+	"\n" +
+	"_education\"*\n" +
+	"\x16AddProfilePhotoRequest\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\"6\n" +
+	"\x19DeleteProfilePhotoRequest\x12\x19\n" +
+	"\bphoto_id\x18\x01 \x01(\tR\aphotoId\"\x1c\n" +
+	"\x1aDeleteProfilePhotoResponse\":\n" +
+	"\x1bReorderProfilePhotosRequest\x12\x1b\n" +
+	"\tphoto_ids\x18\x01 \x03(\tR\bphotoIds\"O\n" +
+	"\x1cReorderProfilePhotosResponse\x12/\n" +
+	"\x06photos\x18\x01 \x03(\v2\x17.social.v1.ProfilePhotoR\x06photos\"\x1c\n" +
+	"\x1aListInterestCatalogRequest\"\xa9\x01\n" +
+	"\x1bListInterestCatalogResponse\x12\x1c\n" +
+	"\tinterests\x18\x01 \x03(\tR\tinterests\x12\x1e\n" +
+	"\n" +
+	"categories\x18\x02 \x03(\tR\n" +
+	"categories\x12%\n" +
+	"\x0emin_selectable\x18\x03 \x01(\x05R\rminSelectable\x12%\n" +
+	"\x0emax_selectable\x18\x04 \x01(\x05R\rmaxSelectable\"\xd0\x01\n" +
+	"\x0fUserPreferences\x12\x18\n" +
+	"\aintents\x18\x01 \x03(\tR\aintents\x12\x1d\n" +
+	"\n" +
+	"group_pref\x18\x02 \x01(\tR\tgroupPref\x12\x1f\n" +
+	"\venergy_pref\x18\x03 \x01(\tR\n" +
+	"energyPref\x12#\n" +
+	"\rplanning_pref\x18\x04 \x01(\tR\fplanningPref\x12\x1b\n" +
+	"\ttime_pref\x18\x05 \x01(\tR\btimePref\x12!\n" +
+	"\fsetting_pref\x18\x06 \x01(\tR\vsettingPref\"2\n" +
+	"\x16SetSocialIntentRequest\x12\x18\n" +
+	"\aintents\x18\x01 \x03(\tR\aintents\"\xbc\x01\n" +
+	"\x15SetPersonalityRequest\x12\x1d\n" +
+	"\n" +
+	"group_pref\x18\x01 \x01(\tR\tgroupPref\x12\x1f\n" +
+	"\venergy_pref\x18\x02 \x01(\tR\n" +
+	"energyPref\x12#\n" +
+	"\rplanning_pref\x18\x03 \x01(\tR\fplanningPref\x12\x1b\n" +
+	"\ttime_pref\x18\x04 \x01(\tR\btimePref\x12!\n" +
+	"\fsetting_pref\x18\x05 \x01(\tR\vsettingPref\"\x19\n" +
+	"\x17GetMyPreferencesRequest\"m\n" +
 	"\x11SetPrivacyRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12?\n" +
-	"\x1cshow_in_participant_previews\x18\x02 \x01(\bR\x19showInParticipantPreviews2\x9c\x02\n" +
+	"\x1cshow_in_participant_previews\x18\x02 \x01(\bR\x19showInParticipantPreviews2\x93\a\n" +
 	"\x0eProfileService\x12D\n" +
 	"\rCreateProfile\x12\x1f.social.v1.CreateProfileRequest\x1a\x12.social.v1.Profile\x12>\n" +
 	"\n" +
 	"GetProfile\x12\x1c.social.v1.GetProfileRequest\x1a\x12.social.v1.Profile\x12D\n" +
 	"\rUpdateProfile\x12\x1f.social.v1.UpdateProfileRequest\x1a\x12.social.v1.Profile\x12>\n" +
 	"\n" +
-	"SetPrivacy\x12\x1c.social.v1.SetPrivacyRequest\x1a\x12.social.v1.ProfileB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
+	"SetPrivacy\x12\x1c.social.v1.SetPrivacyRequest\x1a\x12.social.v1.Profile\x12M\n" +
+	"\x0fAddProfilePhoto\x12!.social.v1.AddProfilePhotoRequest\x1a\x17.social.v1.ProfilePhoto\x12a\n" +
+	"\x12DeleteProfilePhoto\x12$.social.v1.DeleteProfilePhotoRequest\x1a%.social.v1.DeleteProfilePhotoResponse\x12g\n" +
+	"\x14ReorderProfilePhotos\x12&.social.v1.ReorderProfilePhotosRequest\x1a'.social.v1.ReorderProfilePhotosResponse\x12d\n" +
+	"\x13ListInterestCatalog\x12%.social.v1.ListInterestCatalogRequest\x1a&.social.v1.ListInterestCatalogResponse\x12P\n" +
+	"\x0fSetSocialIntent\x12!.social.v1.SetSocialIntentRequest\x1a\x1a.social.v1.UserPreferences\x12N\n" +
+	"\x0eSetPersonality\x12 .social.v1.SetPersonalityRequest\x1a\x1a.social.v1.UserPreferences\x12R\n" +
+	"\x10GetMyPreferences\x12\".social.v1.GetMyPreferencesRequest\x1a\x1a.social.v1.UserPreferencesB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
 var (
 	file_social_v1_profile_proto_rawDescOnce sync.Once
@@ -406,30 +1147,58 @@ func file_social_v1_profile_proto_rawDescGZIP() []byte {
 	return file_social_v1_profile_proto_rawDescData
 }
 
-var file_social_v1_profile_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_social_v1_profile_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_social_v1_profile_proto_goTypes = []any{
-	(*Profile)(nil),              // 0: social.v1.Profile
-	(*CreateProfileRequest)(nil), // 1: social.v1.CreateProfileRequest
-	(*GetProfileRequest)(nil),    // 2: social.v1.GetProfileRequest
-	(*UpdateProfileRequest)(nil), // 3: social.v1.UpdateProfileRequest
-	(*SetPrivacyRequest)(nil),    // 4: social.v1.SetPrivacyRequest
-	(*Audit)(nil),                // 5: social.v1.Audit
+	(*Profile)(nil),                      // 0: social.v1.Profile
+	(*ProfilePhoto)(nil),                 // 1: social.v1.ProfilePhoto
+	(*CreateProfileRequest)(nil),         // 2: social.v1.CreateProfileRequest
+	(*GetProfileRequest)(nil),            // 3: social.v1.GetProfileRequest
+	(*UpdateProfileRequest)(nil),         // 4: social.v1.UpdateProfileRequest
+	(*AddProfilePhotoRequest)(nil),       // 5: social.v1.AddProfilePhotoRequest
+	(*DeleteProfilePhotoRequest)(nil),    // 6: social.v1.DeleteProfilePhotoRequest
+	(*DeleteProfilePhotoResponse)(nil),   // 7: social.v1.DeleteProfilePhotoResponse
+	(*ReorderProfilePhotosRequest)(nil),  // 8: social.v1.ReorderProfilePhotosRequest
+	(*ReorderProfilePhotosResponse)(nil), // 9: social.v1.ReorderProfilePhotosResponse
+	(*ListInterestCatalogRequest)(nil),   // 10: social.v1.ListInterestCatalogRequest
+	(*ListInterestCatalogResponse)(nil),  // 11: social.v1.ListInterestCatalogResponse
+	(*UserPreferences)(nil),              // 12: social.v1.UserPreferences
+	(*SetSocialIntentRequest)(nil),       // 13: social.v1.SetSocialIntentRequest
+	(*SetPersonalityRequest)(nil),        // 14: social.v1.SetPersonalityRequest
+	(*GetMyPreferencesRequest)(nil),      // 15: social.v1.GetMyPreferencesRequest
+	(*SetPrivacyRequest)(nil),            // 16: social.v1.SetPrivacyRequest
+	(*Audit)(nil),                        // 17: social.v1.Audit
 }
 var file_social_v1_profile_proto_depIdxs = []int32{
-	5, // 0: social.v1.Profile.audit:type_name -> social.v1.Audit
-	1, // 1: social.v1.ProfileService.CreateProfile:input_type -> social.v1.CreateProfileRequest
-	2, // 2: social.v1.ProfileService.GetProfile:input_type -> social.v1.GetProfileRequest
-	3, // 3: social.v1.ProfileService.UpdateProfile:input_type -> social.v1.UpdateProfileRequest
-	4, // 4: social.v1.ProfileService.SetPrivacy:input_type -> social.v1.SetPrivacyRequest
-	0, // 5: social.v1.ProfileService.CreateProfile:output_type -> social.v1.Profile
-	0, // 6: social.v1.ProfileService.GetProfile:output_type -> social.v1.Profile
-	0, // 7: social.v1.ProfileService.UpdateProfile:output_type -> social.v1.Profile
-	0, // 8: social.v1.ProfileService.SetPrivacy:output_type -> social.v1.Profile
-	5, // [5:9] is the sub-list for method output_type
-	1, // [1:5] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	17, // 0: social.v1.Profile.audit:type_name -> social.v1.Audit
+	1,  // 1: social.v1.Profile.photos:type_name -> social.v1.ProfilePhoto
+	1,  // 2: social.v1.ReorderProfilePhotosResponse.photos:type_name -> social.v1.ProfilePhoto
+	2,  // 3: social.v1.ProfileService.CreateProfile:input_type -> social.v1.CreateProfileRequest
+	3,  // 4: social.v1.ProfileService.GetProfile:input_type -> social.v1.GetProfileRequest
+	4,  // 5: social.v1.ProfileService.UpdateProfile:input_type -> social.v1.UpdateProfileRequest
+	16, // 6: social.v1.ProfileService.SetPrivacy:input_type -> social.v1.SetPrivacyRequest
+	5,  // 7: social.v1.ProfileService.AddProfilePhoto:input_type -> social.v1.AddProfilePhotoRequest
+	6,  // 8: social.v1.ProfileService.DeleteProfilePhoto:input_type -> social.v1.DeleteProfilePhotoRequest
+	8,  // 9: social.v1.ProfileService.ReorderProfilePhotos:input_type -> social.v1.ReorderProfilePhotosRequest
+	10, // 10: social.v1.ProfileService.ListInterestCatalog:input_type -> social.v1.ListInterestCatalogRequest
+	13, // 11: social.v1.ProfileService.SetSocialIntent:input_type -> social.v1.SetSocialIntentRequest
+	14, // 12: social.v1.ProfileService.SetPersonality:input_type -> social.v1.SetPersonalityRequest
+	15, // 13: social.v1.ProfileService.GetMyPreferences:input_type -> social.v1.GetMyPreferencesRequest
+	0,  // 14: social.v1.ProfileService.CreateProfile:output_type -> social.v1.Profile
+	0,  // 15: social.v1.ProfileService.GetProfile:output_type -> social.v1.Profile
+	0,  // 16: social.v1.ProfileService.UpdateProfile:output_type -> social.v1.Profile
+	0,  // 17: social.v1.ProfileService.SetPrivacy:output_type -> social.v1.Profile
+	1,  // 18: social.v1.ProfileService.AddProfilePhoto:output_type -> social.v1.ProfilePhoto
+	7,  // 19: social.v1.ProfileService.DeleteProfilePhoto:output_type -> social.v1.DeleteProfilePhotoResponse
+	9,  // 20: social.v1.ProfileService.ReorderProfilePhotos:output_type -> social.v1.ReorderProfilePhotosResponse
+	11, // 21: social.v1.ProfileService.ListInterestCatalog:output_type -> social.v1.ListInterestCatalogResponse
+	12, // 22: social.v1.ProfileService.SetSocialIntent:output_type -> social.v1.UserPreferences
+	12, // 23: social.v1.ProfileService.SetPersonality:output_type -> social.v1.UserPreferences
+	12, // 24: social.v1.ProfileService.GetMyPreferences:output_type -> social.v1.UserPreferences
+	14, // [14:25] is the sub-list for method output_type
+	3,  // [3:14] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_profile_proto_init() }
@@ -438,13 +1207,14 @@ func file_social_v1_profile_proto_init() {
 		return
 	}
 	file_social_v1_common_proto_init()
+	file_social_v1_profile_proto_msgTypes[4].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_profile_proto_rawDesc), len(file_social_v1_profile_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

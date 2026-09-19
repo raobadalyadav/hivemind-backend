@@ -9,6 +9,7 @@ var (
 	ErrInvalidInput    = errors.New("social: invalid input")
 	ErrForbidden       = errors.New("social: this post is private")
 	ErrContentRejected = errors.New("social: post violates content policy")
+	ErrNotAttendee     = errors.New("social: you can only tag plans you attended or host")
 )
 
 // ReportSubmitter is satisfied by *moderation.Service — duplicated locally
@@ -37,6 +38,15 @@ func NewService(repo *Repository, reporter ReportSubmitter, screener ContentScre
 func (s *Service) CreatePost(ctx context.Context, p *Post) (*Post, error) {
 	if p.AuthorID == "" {
 		return nil, ErrInvalidInput
+	}
+	if p.PlanID != "" {
+		ok, err := s.repo.CanAttachToPlan(ctx, p.PlanID, p.AuthorID)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, ErrNotAttendee
+		}
 	}
 	severity, reason := s.screener.Screen(ctx, p.Body)
 	if severity == "severe" {
@@ -114,4 +124,28 @@ func (s *Service) LikePost(ctx context.Context, postID, userID string) (int32, e
 		return 0, err
 	}
 	return s.repo.Like(ctx, postID, userID)
+}
+
+// MemoryYear groups memories by calendar year, newest year first.
+type MemoryYear struct {
+	Year     int32
+	Memories []Memory
+}
+
+func (s *Service) ListMyMemories(ctx context.Context, userID string, year int32) ([]MemoryYear, error) {
+	if userID == "" || year < 0 {
+		return nil, ErrInvalidInput
+	}
+	ms, err := s.repo.ListMemories(ctx, userID, year)
+	if err != nil {
+		return nil, err
+	}
+	var out []MemoryYear
+	for _, m := range ms { // already newest-first, so years arrive grouped
+		if len(out) == 0 || out[len(out)-1].Year != m.Year {
+			out = append(out, MemoryYear{Year: m.Year})
+		}
+		out[len(out)-1].Memories = append(out[len(out)-1].Memories, m)
+	}
+	return out, nil
 }

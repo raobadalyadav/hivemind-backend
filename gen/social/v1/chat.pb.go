@@ -22,18 +22,273 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type ChatRoom struct {
+type MessageType int32
+
+const (
+	MessageType_MESSAGE_TYPE_TEXT         MessageType = 0
+	MessageType_MESSAGE_TYPE_IMAGE        MessageType = 1
+	MessageType_MESSAGE_TYPE_VOICE        MessageType = 2
+	MessageType_MESSAGE_TYPE_POLL         MessageType = 3
+	MessageType_MESSAGE_TYPE_ANNOUNCEMENT MessageType = 4
+	MessageType_MESSAGE_TYPE_LOCATION     MessageType = 5
+)
+
+// Enum value maps for MessageType.
+var (
+	MessageType_name = map[int32]string{
+		0: "MESSAGE_TYPE_TEXT",
+		1: "MESSAGE_TYPE_IMAGE",
+		2: "MESSAGE_TYPE_VOICE",
+		3: "MESSAGE_TYPE_POLL",
+		4: "MESSAGE_TYPE_ANNOUNCEMENT",
+		5: "MESSAGE_TYPE_LOCATION",
+	}
+	MessageType_value = map[string]int32{
+		"MESSAGE_TYPE_TEXT":         0,
+		"MESSAGE_TYPE_IMAGE":        1,
+		"MESSAGE_TYPE_VOICE":        2,
+		"MESSAGE_TYPE_POLL":         3,
+		"MESSAGE_TYPE_ANNOUNCEMENT": 4,
+		"MESSAGE_TYPE_LOCATION":     5,
+	}
+)
+
+func (x MessageType) Enum() *MessageType {
+	p := new(MessageType)
+	*p = x
+	return p
+}
+
+func (x MessageType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (MessageType) Descriptor() protoreflect.EnumDescriptor {
+	return file_social_v1_chat_proto_enumTypes[0].Descriptor()
+}
+
+func (MessageType) Type() protoreflect.EnumType {
+	return &file_social_v1_chat_proto_enumTypes[0]
+}
+
+func (x MessageType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use MessageType.Descriptor instead.
+func (MessageType) EnumDescriptor() ([]byte, []int) {
+	return file_social_v1_chat_proto_rawDescGZIP(), []int{0}
+}
+
+type Location struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	PlanId        string                 `protobuf:"bytes,2,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
-	Audit         *Audit                 `protobuf:"bytes,3,opt,name=audit,proto3" json:"audit,omitempty"`
+	Latitude      float64                `protobuf:"fixed64,1,opt,name=latitude,proto3" json:"latitude,omitempty"`
+	Longitude     float64                `protobuf:"fixed64,2,opt,name=longitude,proto3" json:"longitude,omitempty"`
+	Label         string                 `protobuf:"bytes,3,opt,name=label,proto3" json:"label,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
+func (x *Location) Reset() {
+	*x = Location{}
+	mi := &file_social_v1_chat_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Location) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Location) ProtoMessage() {}
+
+func (x *Location) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_chat_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Location.ProtoReflect.Descriptor instead.
+func (*Location) Descriptor() ([]byte, []int) {
+	return file_social_v1_chat_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Location) GetLatitude() float64 {
+	if x != nil {
+		return x.Latitude
+	}
+	return 0
+}
+
+func (x *Location) GetLongitude() float64 {
+	if x != nil {
+		return x.Longitude
+	}
+	return 0
+}
+
+func (x *Location) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
+type PollOption struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Label         string                 `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
+	VoteCount     int32                  `protobuf:"varint,3,opt,name=vote_count,json=voteCount,proto3" json:"vote_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PollOption) Reset() {
+	*x = PollOption{}
+	mi := &file_social_v1_chat_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PollOption) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PollOption) ProtoMessage() {}
+
+func (x *PollOption) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_chat_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PollOption.ProtoReflect.Descriptor instead.
+func (*PollOption) Descriptor() ([]byte, []int) {
+	return file_social_v1_chat_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *PollOption) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *PollOption) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
+func (x *PollOption) GetVoteCount() int32 {
+	if x != nil {
+		return x.VoteCount
+	}
+	return 0
+}
+
+type Poll struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Question       string                 `protobuf:"bytes,2,opt,name=question,proto3" json:"question,omitempty"`
+	Options        []*PollOption          `protobuf:"bytes,3,rep,name=options,proto3" json:"options,omitempty"`
+	MyVoteOptionId string                 `protobuf:"bytes,4,opt,name=my_vote_option_id,json=myVoteOptionId,proto3" json:"my_vote_option_id,omitempty"` // "" = not voted
+	TotalVotes     int32                  `protobuf:"varint,5,opt,name=total_votes,json=totalVotes,proto3" json:"total_votes,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *Poll) Reset() {
+	*x = Poll{}
+	mi := &file_social_v1_chat_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Poll) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Poll) ProtoMessage() {}
+
+func (x *Poll) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_chat_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Poll.ProtoReflect.Descriptor instead.
+func (*Poll) Descriptor() ([]byte, []int) {
+	return file_social_v1_chat_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *Poll) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Poll) GetQuestion() string {
+	if x != nil {
+		return x.Question
+	}
+	return ""
+}
+
+func (x *Poll) GetOptions() []*PollOption {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
+func (x *Poll) GetMyVoteOptionId() string {
+	if x != nil {
+		return x.MyVoteOptionId
+	}
+	return ""
+}
+
+func (x *Poll) GetTotalVotes() int32 {
+	if x != nil {
+		return x.TotalVotes
+	}
+	return 0
+}
+
+type ChatRoom struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Id              string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	PlanId          string                 `protobuf:"bytes,2,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	Audit           *Audit                 `protobuf:"bytes,3,opt,name=audit,proto3" json:"audit,omitempty"`
+	PinnedMessageId string                 `protobuf:"bytes,4,opt,name=pinned_message_id,json=pinnedMessageId,proto3" json:"pinned_message_id,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
 func (x *ChatRoom) Reset() {
 	*x = ChatRoom{}
-	mi := &file_social_v1_chat_proto_msgTypes[0]
+	mi := &file_social_v1_chat_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -45,7 +300,7 @@ func (x *ChatRoom) String() string {
 func (*ChatRoom) ProtoMessage() {}
 
 func (x *ChatRoom) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_chat_proto_msgTypes[0]
+	mi := &file_social_v1_chat_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -58,7 +313,7 @@ func (x *ChatRoom) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChatRoom.ProtoReflect.Descriptor instead.
 func (*ChatRoom) Descriptor() ([]byte, []int) {
-	return file_social_v1_chat_proto_rawDescGZIP(), []int{0}
+	return file_social_v1_chat_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ChatRoom) GetId() string {
@@ -82,20 +337,32 @@ func (x *ChatRoom) GetAudit() *Audit {
 	return nil
 }
 
+func (x *ChatRoom) GetPinnedMessageId() string {
+	if x != nil {
+		return x.PinnedMessageId
+	}
+	return ""
+}
+
 type Message struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	RoomId        string                 `protobuf:"bytes,2,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
-	SenderId      string                 `protobuf:"bytes,3,opt,name=sender_id,json=senderId,proto3" json:"sender_id,omitempty"`
-	Body          string                 `protobuf:"bytes,4,opt,name=body,proto3" json:"body,omitempty"`
-	SentAt        *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=sent_at,json=sentAt,proto3" json:"sent_at,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Id              string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	RoomId          string                 `protobuf:"bytes,2,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
+	SenderId        string                 `protobuf:"bytes,3,opt,name=sender_id,json=senderId,proto3" json:"sender_id,omitempty"`
+	Body            string                 `protobuf:"bytes,4,opt,name=body,proto3" json:"body,omitempty"`
+	SentAt          *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=sent_at,json=sentAt,proto3" json:"sent_at,omitempty"`
+	Type            MessageType            `protobuf:"varint,6,opt,name=type,proto3,enum=social.v1.MessageType" json:"type,omitempty"`
+	MediaUrls       []string               `protobuf:"bytes,7,rep,name=media_urls,json=mediaUrls,proto3" json:"media_urls,omitempty"`
+	Location        *Location              `protobuf:"bytes,8,opt,name=location,proto3" json:"location,omitempty"`
+	DurationSeconds int32                  `protobuf:"varint,9,opt,name=duration_seconds,json=durationSeconds,proto3" json:"duration_seconds,omitempty"` // voice
+	Poll            *Poll                  `protobuf:"bytes,10,opt,name=poll,proto3" json:"poll,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *Message) Reset() {
 	*x = Message{}
-	mi := &file_social_v1_chat_proto_msgTypes[1]
+	mi := &file_social_v1_chat_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -107,7 +374,7 @@ func (x *Message) String() string {
 func (*Message) ProtoMessage() {}
 
 func (x *Message) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_chat_proto_msgTypes[1]
+	mi := &file_social_v1_chat_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -120,7 +387,7 @@ func (x *Message) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Message.ProtoReflect.Descriptor instead.
 func (*Message) Descriptor() ([]byte, []int) {
-	return file_social_v1_chat_proto_rawDescGZIP(), []int{1}
+	return file_social_v1_chat_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Message) GetId() string {
@@ -158,6 +425,41 @@ func (x *Message) GetSentAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Message) GetType() MessageType {
+	if x != nil {
+		return x.Type
+	}
+	return MessageType_MESSAGE_TYPE_TEXT
+}
+
+func (x *Message) GetMediaUrls() []string {
+	if x != nil {
+		return x.MediaUrls
+	}
+	return nil
+}
+
+func (x *Message) GetLocation() *Location {
+	if x != nil {
+		return x.Location
+	}
+	return nil
+}
+
+func (x *Message) GetDurationSeconds() int32 {
+	if x != nil {
+		return x.DurationSeconds
+	}
+	return 0
+}
+
+func (x *Message) GetPoll() *Poll {
+	if x != nil {
+		return x.Poll
+	}
+	return nil
+}
+
 type CreateRoomRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PlanId        string                 `protobuf:"bytes,1,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
@@ -167,7 +469,7 @@ type CreateRoomRequest struct {
 
 func (x *CreateRoomRequest) Reset() {
 	*x = CreateRoomRequest{}
-	mi := &file_social_v1_chat_proto_msgTypes[2]
+	mi := &file_social_v1_chat_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -179,7 +481,7 @@ func (x *CreateRoomRequest) String() string {
 func (*CreateRoomRequest) ProtoMessage() {}
 
 func (x *CreateRoomRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_chat_proto_msgTypes[2]
+	mi := &file_social_v1_chat_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -192,7 +494,7 @@ func (x *CreateRoomRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRoomRequest.ProtoReflect.Descriptor instead.
 func (*CreateRoomRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_chat_proto_rawDescGZIP(), []int{2}
+	return file_social_v1_chat_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *CreateRoomRequest) GetPlanId() string {
@@ -202,18 +504,26 @@ func (x *CreateRoomRequest) GetPlanId() string {
 	return ""
 }
 
+// sender_id is ignored — the sender is always the authenticated caller.
+// text/announcement need body; image needs 1–10 https media_urls (body is the
+// caption); voice needs exactly 1 media_url + duration_seconds 1–300;
+// location needs a valid location.
 type SendMessageRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	RoomId        string                 `protobuf:"bytes,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
-	SenderId      string                 `protobuf:"bytes,2,opt,name=sender_id,json=senderId,proto3" json:"sender_id,omitempty"`
-	Body          string                 `protobuf:"bytes,3,opt,name=body,proto3" json:"body,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	RoomId          string                 `protobuf:"bytes,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
+	SenderId        string                 `protobuf:"bytes,2,opt,name=sender_id,json=senderId,proto3" json:"sender_id,omitempty"`
+	Body            string                 `protobuf:"bytes,3,opt,name=body,proto3" json:"body,omitempty"`
+	Type            MessageType            `protobuf:"varint,4,opt,name=type,proto3,enum=social.v1.MessageType" json:"type,omitempty"`
+	MediaUrls       []string               `protobuf:"bytes,5,rep,name=media_urls,json=mediaUrls,proto3" json:"media_urls,omitempty"`
+	Location        *Location              `protobuf:"bytes,6,opt,name=location,proto3" json:"location,omitempty"`
+	DurationSeconds int32                  `protobuf:"varint,7,opt,name=duration_seconds,json=durationSeconds,proto3" json:"duration_seconds,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *SendMessageRequest) Reset() {
 	*x = SendMessageRequest{}
-	mi := &file_social_v1_chat_proto_msgTypes[3]
+	mi := &file_social_v1_chat_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -225,7 +535,7 @@ func (x *SendMessageRequest) String() string {
 func (*SendMessageRequest) ProtoMessage() {}
 
 func (x *SendMessageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_chat_proto_msgTypes[3]
+	mi := &file_social_v1_chat_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -238,7 +548,7 @@ func (x *SendMessageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendMessageRequest.ProtoReflect.Descriptor instead.
 func (*SendMessageRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_chat_proto_rawDescGZIP(), []int{3}
+	return file_social_v1_chat_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SendMessageRequest) GetRoomId() string {
@@ -262,6 +572,250 @@ func (x *SendMessageRequest) GetBody() string {
 	return ""
 }
 
+func (x *SendMessageRequest) GetType() MessageType {
+	if x != nil {
+		return x.Type
+	}
+	return MessageType_MESSAGE_TYPE_TEXT
+}
+
+func (x *SendMessageRequest) GetMediaUrls() []string {
+	if x != nil {
+		return x.MediaUrls
+	}
+	return nil
+}
+
+func (x *SendMessageRequest) GetLocation() *Location {
+	if x != nil {
+		return x.Location
+	}
+	return nil
+}
+
+func (x *SendMessageRequest) GetDurationSeconds() int32 {
+	if x != nil {
+		return x.DurationSeconds
+	}
+	return 0
+}
+
+type CreatePollRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RoomId        string                 `protobuf:"bytes,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
+	Question      string                 `protobuf:"bytes,2,opt,name=question,proto3" json:"question,omitempty"`
+	Options       []string               `protobuf:"bytes,3,rep,name=options,proto3" json:"options,omitempty"` // 2–6
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreatePollRequest) Reset() {
+	*x = CreatePollRequest{}
+	mi := &file_social_v1_chat_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreatePollRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreatePollRequest) ProtoMessage() {}
+
+func (x *CreatePollRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_chat_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreatePollRequest.ProtoReflect.Descriptor instead.
+func (*CreatePollRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_chat_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *CreatePollRequest) GetRoomId() string {
+	if x != nil {
+		return x.RoomId
+	}
+	return ""
+}
+
+func (x *CreatePollRequest) GetQuestion() string {
+	if x != nil {
+		return x.Question
+	}
+	return ""
+}
+
+func (x *CreatePollRequest) GetOptions() []string {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
+type VotePollRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PollId        string                 `protobuf:"bytes,1,opt,name=poll_id,json=pollId,proto3" json:"poll_id,omitempty"`
+	OptionId      string                 `protobuf:"bytes,2,opt,name=option_id,json=optionId,proto3" json:"option_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VotePollRequest) Reset() {
+	*x = VotePollRequest{}
+	mi := &file_social_v1_chat_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VotePollRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VotePollRequest) ProtoMessage() {}
+
+func (x *VotePollRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_chat_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VotePollRequest.ProtoReflect.Descriptor instead.
+func (*VotePollRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_chat_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *VotePollRequest) GetPollId() string {
+	if x != nil {
+		return x.PollId
+	}
+	return ""
+}
+
+func (x *VotePollRequest) GetOptionId() string {
+	if x != nil {
+		return x.OptionId
+	}
+	return ""
+}
+
+type PinMessageRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RoomId        string                 `protobuf:"bytes,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
+	MessageId     string                 `protobuf:"bytes,2,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	Unpin         bool                   `protobuf:"varint,3,opt,name=unpin,proto3" json:"unpin,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PinMessageRequest) Reset() {
+	*x = PinMessageRequest{}
+	mi := &file_social_v1_chat_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PinMessageRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PinMessageRequest) ProtoMessage() {}
+
+func (x *PinMessageRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_chat_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PinMessageRequest.ProtoReflect.Descriptor instead.
+func (*PinMessageRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_chat_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *PinMessageRequest) GetRoomId() string {
+	if x != nil {
+		return x.RoomId
+	}
+	return ""
+}
+
+func (x *PinMessageRequest) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *PinMessageRequest) GetUnpin() bool {
+	if x != nil {
+		return x.Unpin
+	}
+	return false
+}
+
+type PinMessageResponse struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	PinnedMessageId string                 `protobuf:"bytes,1,opt,name=pinned_message_id,json=pinnedMessageId,proto3" json:"pinned_message_id,omitempty"` // "" after unpin
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *PinMessageResponse) Reset() {
+	*x = PinMessageResponse{}
+	mi := &file_social_v1_chat_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PinMessageResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PinMessageResponse) ProtoMessage() {}
+
+func (x *PinMessageResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_chat_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PinMessageResponse.ProtoReflect.Descriptor instead.
+func (*PinMessageResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_chat_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *PinMessageResponse) GetPinnedMessageId() string {
+	if x != nil {
+		return x.PinnedMessageId
+	}
+	return ""
+}
+
 type ListMessagesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	RoomId        string                 `protobuf:"bytes,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
@@ -272,7 +826,7 @@ type ListMessagesRequest struct {
 
 func (x *ListMessagesRequest) Reset() {
 	*x = ListMessagesRequest{}
-	mi := &file_social_v1_chat_proto_msgTypes[4]
+	mi := &file_social_v1_chat_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -284,7 +838,7 @@ func (x *ListMessagesRequest) String() string {
 func (*ListMessagesRequest) ProtoMessage() {}
 
 func (x *ListMessagesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_chat_proto_msgTypes[4]
+	mi := &file_social_v1_chat_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -297,7 +851,7 @@ func (x *ListMessagesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMessagesRequest.ProtoReflect.Descriptor instead.
 func (*ListMessagesRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_chat_proto_rawDescGZIP(), []int{4}
+	return file_social_v1_chat_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ListMessagesRequest) GetRoomId() string {
@@ -318,13 +872,14 @@ type ListMessagesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Messages      []*Message             `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
 	Page          *PageResponse          `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
+	PinnedMessage *Message               `protobuf:"bytes,3,opt,name=pinned_message,json=pinnedMessage,proto3" json:"pinned_message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListMessagesResponse) Reset() {
 	*x = ListMessagesResponse{}
-	mi := &file_social_v1_chat_proto_msgTypes[5]
+	mi := &file_social_v1_chat_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -336,7 +891,7 @@ func (x *ListMessagesResponse) String() string {
 func (*ListMessagesResponse) ProtoMessage() {}
 
 func (x *ListMessagesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_chat_proto_msgTypes[5]
+	mi := &file_social_v1_chat_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -349,7 +904,7 @@ func (x *ListMessagesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMessagesResponse.ProtoReflect.Descriptor instead.
 func (*ListMessagesResponse) Descriptor() ([]byte, []int) {
-	return file_social_v1_chat_proto_rawDescGZIP(), []int{5}
+	return file_social_v1_chat_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ListMessagesResponse) GetMessages() []*Message {
@@ -366,6 +921,13 @@ func (x *ListMessagesResponse) GetPage() *PageResponse {
 	return nil
 }
 
+func (x *ListMessagesResponse) GetPinnedMessage() *Message {
+	if x != nil {
+		return x.PinnedMessage
+	}
+	return nil
+}
+
 type ReportMessageRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	MessageId     string                 `protobuf:"bytes,1,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
@@ -377,7 +939,7 @@ type ReportMessageRequest struct {
 
 func (x *ReportMessageRequest) Reset() {
 	*x = ReportMessageRequest{}
-	mi := &file_social_v1_chat_proto_msgTypes[6]
+	mi := &file_social_v1_chat_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -389,7 +951,7 @@ func (x *ReportMessageRequest) String() string {
 func (*ReportMessageRequest) ProtoMessage() {}
 
 func (x *ReportMessageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_chat_proto_msgTypes[6]
+	mi := &file_social_v1_chat_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -402,7 +964,7 @@ func (x *ReportMessageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportMessageRequest.ProtoReflect.Descriptor instead.
 func (*ReportMessageRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_chat_proto_rawDescGZIP(), []int{6}
+	return file_social_v1_chat_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ReportMessageRequest) GetMessageId() string {
@@ -435,7 +997,7 @@ type ReportMessageResponse struct {
 
 func (x *ReportMessageResponse) Reset() {
 	*x = ReportMessageResponse{}
-	mi := &file_social_v1_chat_proto_msgTypes[7]
+	mi := &file_social_v1_chat_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -447,7 +1009,7 @@ func (x *ReportMessageResponse) String() string {
 func (*ReportMessageResponse) ProtoMessage() {}
 
 func (x *ReportMessageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_chat_proto_msgTypes[7]
+	mi := &file_social_v1_chat_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -460,7 +1022,7 @@ func (x *ReportMessageResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportMessageResponse.ProtoReflect.Descriptor instead.
 func (*ReportMessageResponse) Descriptor() ([]byte, []int) {
-	return file_social_v1_chat_proto_rawDescGZIP(), []int{7}
+	return file_social_v1_chat_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ReportMessageResponse) GetModerationCaseId() string {
@@ -479,7 +1041,7 @@ type GenerateIcebreakerRequest struct {
 
 func (x *GenerateIcebreakerRequest) Reset() {
 	*x = GenerateIcebreakerRequest{}
-	mi := &file_social_v1_chat_proto_msgTypes[8]
+	mi := &file_social_v1_chat_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -491,7 +1053,7 @@ func (x *GenerateIcebreakerRequest) String() string {
 func (*GenerateIcebreakerRequest) ProtoMessage() {}
 
 func (x *GenerateIcebreakerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_chat_proto_msgTypes[8]
+	mi := &file_social_v1_chat_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -504,7 +1066,7 @@ func (x *GenerateIcebreakerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerateIcebreakerRequest.ProtoReflect.Descriptor instead.
 func (*GenerateIcebreakerRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_chat_proto_rawDescGZIP(), []int{8}
+	return file_social_v1_chat_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GenerateIcebreakerRequest) GetRoomId() string {
@@ -523,7 +1085,7 @@ type GenerateIcebreakerResponse struct {
 
 func (x *GenerateIcebreakerResponse) Reset() {
 	*x = GenerateIcebreakerResponse{}
-	mi := &file_social_v1_chat_proto_msgTypes[9]
+	mi := &file_social_v1_chat_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -535,7 +1097,7 @@ func (x *GenerateIcebreakerResponse) String() string {
 func (*GenerateIcebreakerResponse) ProtoMessage() {}
 
 func (x *GenerateIcebreakerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_chat_proto_msgTypes[9]
+	mi := &file_social_v1_chat_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -548,7 +1110,7 @@ func (x *GenerateIcebreakerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GenerateIcebreakerResponse.ProtoReflect.Descriptor instead.
 func (*GenerateIcebreakerResponse) Descriptor() ([]byte, []int) {
-	return file_social_v1_chat_proto_rawDescGZIP(), []int{9}
+	return file_social_v1_chat_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GenerateIcebreakerResponse) GetText() string {
@@ -562,29 +1124,74 @@ var File_social_v1_chat_proto protoreflect.FileDescriptor
 
 const file_social_v1_chat_proto_rawDesc = "" +
 	"\n" +
-	"\x14social/v1/chat.proto\x12\tsocial.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x16social/v1/common.proto\"[\n" +
+	"\x14social/v1/chat.proto\x12\tsocial.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x16social/v1/common.proto\"Z\n" +
+	"\bLocation\x12\x1a\n" +
+	"\blatitude\x18\x01 \x01(\x01R\blatitude\x12\x1c\n" +
+	"\tlongitude\x18\x02 \x01(\x01R\tlongitude\x12\x14\n" +
+	"\x05label\x18\x03 \x01(\tR\x05label\"Q\n" +
+	"\n" +
+	"PollOption\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05label\x18\x02 \x01(\tR\x05label\x12\x1d\n" +
+	"\n" +
+	"vote_count\x18\x03 \x01(\x05R\tvoteCount\"\xaf\x01\n" +
+	"\x04Poll\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
+	"\bquestion\x18\x02 \x01(\tR\bquestion\x12/\n" +
+	"\aoptions\x18\x03 \x03(\v2\x15.social.v1.PollOptionR\aoptions\x12)\n" +
+	"\x11my_vote_option_id\x18\x04 \x01(\tR\x0emyVoteOptionId\x12\x1f\n" +
+	"\vtotal_votes\x18\x05 \x01(\x05R\n" +
+	"totalVotes\"\x87\x01\n" +
 	"\bChatRoom\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\aplan_id\x18\x02 \x01(\tR\x06planId\x12&\n" +
-	"\x05audit\x18\x03 \x01(\v2\x10.social.v1.AuditR\x05audit\"\x98\x01\n" +
+	"\x05audit\x18\x03 \x01(\v2\x10.social.v1.AuditR\x05audit\x12*\n" +
+	"\x11pinned_message_id\x18\x04 \x01(\tR\x0fpinnedMessageId\"\xe4\x02\n" +
 	"\aMessage\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\aroom_id\x18\x02 \x01(\tR\x06roomId\x12\x1b\n" +
 	"\tsender_id\x18\x03 \x01(\tR\bsenderId\x12\x12\n" +
 	"\x04body\x18\x04 \x01(\tR\x04body\x123\n" +
-	"\asent_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x06sentAt\",\n" +
+	"\asent_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x06sentAt\x12*\n" +
+	"\x04type\x18\x06 \x01(\x0e2\x16.social.v1.MessageTypeR\x04type\x12\x1d\n" +
+	"\n" +
+	"media_urls\x18\a \x03(\tR\tmediaUrls\x12/\n" +
+	"\blocation\x18\b \x01(\v2\x13.social.v1.LocationR\blocation\x12)\n" +
+	"\x10duration_seconds\x18\t \x01(\x05R\x0fdurationSeconds\x12#\n" +
+	"\x04poll\x18\n" +
+	" \x01(\v2\x0f.social.v1.PollR\x04poll\",\n" +
 	"\x11CreateRoomRequest\x12\x17\n" +
-	"\aplan_id\x18\x01 \x01(\tR\x06planId\"^\n" +
+	"\aplan_id\x18\x01 \x01(\tR\x06planId\"\x85\x02\n" +
 	"\x12SendMessageRequest\x12\x17\n" +
 	"\aroom_id\x18\x01 \x01(\tR\x06roomId\x12\x1b\n" +
 	"\tsender_id\x18\x02 \x01(\tR\bsenderId\x12\x12\n" +
-	"\x04body\x18\x03 \x01(\tR\x04body\"Z\n" +
+	"\x04body\x18\x03 \x01(\tR\x04body\x12*\n" +
+	"\x04type\x18\x04 \x01(\x0e2\x16.social.v1.MessageTypeR\x04type\x12\x1d\n" +
+	"\n" +
+	"media_urls\x18\x05 \x03(\tR\tmediaUrls\x12/\n" +
+	"\blocation\x18\x06 \x01(\v2\x13.social.v1.LocationR\blocation\x12)\n" +
+	"\x10duration_seconds\x18\a \x01(\x05R\x0fdurationSeconds\"b\n" +
+	"\x11CreatePollRequest\x12\x17\n" +
+	"\aroom_id\x18\x01 \x01(\tR\x06roomId\x12\x1a\n" +
+	"\bquestion\x18\x02 \x01(\tR\bquestion\x12\x18\n" +
+	"\aoptions\x18\x03 \x03(\tR\aoptions\"G\n" +
+	"\x0fVotePollRequest\x12\x17\n" +
+	"\apoll_id\x18\x01 \x01(\tR\x06pollId\x12\x1b\n" +
+	"\toption_id\x18\x02 \x01(\tR\boptionId\"a\n" +
+	"\x11PinMessageRequest\x12\x17\n" +
+	"\aroom_id\x18\x01 \x01(\tR\x06roomId\x12\x1d\n" +
+	"\n" +
+	"message_id\x18\x02 \x01(\tR\tmessageId\x12\x14\n" +
+	"\x05unpin\x18\x03 \x01(\bR\x05unpin\"@\n" +
+	"\x12PinMessageResponse\x12*\n" +
+	"\x11pinned_message_id\x18\x01 \x01(\tR\x0fpinnedMessageId\"Z\n" +
 	"\x13ListMessagesRequest\x12\x17\n" +
 	"\aroom_id\x18\x01 \x01(\tR\x06roomId\x12*\n" +
-	"\x04page\x18\x02 \x01(\v2\x16.social.v1.PageRequestR\x04page\"s\n" +
+	"\x04page\x18\x02 \x01(\v2\x16.social.v1.PageRequestR\x04page\"\xae\x01\n" +
 	"\x14ListMessagesResponse\x12.\n" +
 	"\bmessages\x18\x01 \x03(\v2\x12.social.v1.MessageR\bmessages\x12+\n" +
-	"\x04page\x18\x02 \x01(\v2\x17.social.v1.PageResponseR\x04page\"n\n" +
+	"\x04page\x18\x02 \x01(\v2\x17.social.v1.PageResponseR\x04page\x129\n" +
+	"\x0epinned_message\x18\x03 \x01(\v2\x12.social.v1.MessageR\rpinnedMessage\"n\n" +
 	"\x14ReportMessageRequest\x12\x1d\n" +
 	"\n" +
 	"message_id\x18\x01 \x01(\tR\tmessageId\x12\x1f\n" +
@@ -596,14 +1203,26 @@ const file_social_v1_chat_proto_rawDesc = "" +
 	"\x19GenerateIcebreakerRequest\x12\x17\n" +
 	"\aroom_id\x18\x01 \x01(\tR\x06roomId\"0\n" +
 	"\x1aGenerateIcebreakerResponse\x12\x12\n" +
-	"\x04text\x18\x01 \x01(\tR\x04text2\x98\x03\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text*\xa5\x01\n" +
+	"\vMessageType\x12\x15\n" +
+	"\x11MESSAGE_TYPE_TEXT\x10\x00\x12\x16\n" +
+	"\x12MESSAGE_TYPE_IMAGE\x10\x01\x12\x16\n" +
+	"\x12MESSAGE_TYPE_VOICE\x10\x02\x12\x15\n" +
+	"\x11MESSAGE_TYPE_POLL\x10\x03\x12\x1d\n" +
+	"\x19MESSAGE_TYPE_ANNOUNCEMENT\x10\x04\x12\x19\n" +
+	"\x15MESSAGE_TYPE_LOCATION\x10\x052\xdc\x04\n" +
 	"\vChatService\x12?\n" +
 	"\n" +
 	"CreateRoom\x12\x1c.social.v1.CreateRoomRequest\x1a\x13.social.v1.ChatRoom\x12@\n" +
 	"\vSendMessage\x12\x1d.social.v1.SendMessageRequest\x1a\x12.social.v1.Message\x12O\n" +
 	"\fListMessages\x12\x1e.social.v1.ListMessagesRequest\x1a\x1f.social.v1.ListMessagesResponse\x12R\n" +
 	"\rReportMessage\x12\x1f.social.v1.ReportMessageRequest\x1a .social.v1.ReportMessageResponse\x12a\n" +
-	"\x12GenerateIcebreaker\x12$.social.v1.GenerateIcebreakerRequest\x1a%.social.v1.GenerateIcebreakerResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
+	"\x12GenerateIcebreaker\x12$.social.v1.GenerateIcebreakerRequest\x1a%.social.v1.GenerateIcebreakerResponse\x12>\n" +
+	"\n" +
+	"CreatePoll\x12\x1c.social.v1.CreatePollRequest\x1a\x12.social.v1.Message\x127\n" +
+	"\bVotePoll\x12\x1a.social.v1.VotePollRequest\x1a\x0f.social.v1.Poll\x12I\n" +
+	"\n" +
+	"PinMessage\x12\x1c.social.v1.PinMessageRequest\x1a\x1d.social.v1.PinMessageResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
 var (
 	file_social_v1_chat_proto_rawDescOnce sync.Once
@@ -617,44 +1236,66 @@ func file_social_v1_chat_proto_rawDescGZIP() []byte {
 	return file_social_v1_chat_proto_rawDescData
 }
 
-var file_social_v1_chat_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_social_v1_chat_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_social_v1_chat_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_social_v1_chat_proto_goTypes = []any{
-	(*ChatRoom)(nil),                   // 0: social.v1.ChatRoom
-	(*Message)(nil),                    // 1: social.v1.Message
-	(*CreateRoomRequest)(nil),          // 2: social.v1.CreateRoomRequest
-	(*SendMessageRequest)(nil),         // 3: social.v1.SendMessageRequest
-	(*ListMessagesRequest)(nil),        // 4: social.v1.ListMessagesRequest
-	(*ListMessagesResponse)(nil),       // 5: social.v1.ListMessagesResponse
-	(*ReportMessageRequest)(nil),       // 6: social.v1.ReportMessageRequest
-	(*ReportMessageResponse)(nil),      // 7: social.v1.ReportMessageResponse
-	(*GenerateIcebreakerRequest)(nil),  // 8: social.v1.GenerateIcebreakerRequest
-	(*GenerateIcebreakerResponse)(nil), // 9: social.v1.GenerateIcebreakerResponse
-	(*Audit)(nil),                      // 10: social.v1.Audit
-	(*timestamppb.Timestamp)(nil),      // 11: google.protobuf.Timestamp
-	(*PageRequest)(nil),                // 12: social.v1.PageRequest
-	(*PageResponse)(nil),               // 13: social.v1.PageResponse
+	(MessageType)(0),                   // 0: social.v1.MessageType
+	(*Location)(nil),                   // 1: social.v1.Location
+	(*PollOption)(nil),                 // 2: social.v1.PollOption
+	(*Poll)(nil),                       // 3: social.v1.Poll
+	(*ChatRoom)(nil),                   // 4: social.v1.ChatRoom
+	(*Message)(nil),                    // 5: social.v1.Message
+	(*CreateRoomRequest)(nil),          // 6: social.v1.CreateRoomRequest
+	(*SendMessageRequest)(nil),         // 7: social.v1.SendMessageRequest
+	(*CreatePollRequest)(nil),          // 8: social.v1.CreatePollRequest
+	(*VotePollRequest)(nil),            // 9: social.v1.VotePollRequest
+	(*PinMessageRequest)(nil),          // 10: social.v1.PinMessageRequest
+	(*PinMessageResponse)(nil),         // 11: social.v1.PinMessageResponse
+	(*ListMessagesRequest)(nil),        // 12: social.v1.ListMessagesRequest
+	(*ListMessagesResponse)(nil),       // 13: social.v1.ListMessagesResponse
+	(*ReportMessageRequest)(nil),       // 14: social.v1.ReportMessageRequest
+	(*ReportMessageResponse)(nil),      // 15: social.v1.ReportMessageResponse
+	(*GenerateIcebreakerRequest)(nil),  // 16: social.v1.GenerateIcebreakerRequest
+	(*GenerateIcebreakerResponse)(nil), // 17: social.v1.GenerateIcebreakerResponse
+	(*Audit)(nil),                      // 18: social.v1.Audit
+	(*timestamppb.Timestamp)(nil),      // 19: google.protobuf.Timestamp
+	(*PageRequest)(nil),                // 20: social.v1.PageRequest
+	(*PageResponse)(nil),               // 21: social.v1.PageResponse
 }
 var file_social_v1_chat_proto_depIdxs = []int32{
-	10, // 0: social.v1.ChatRoom.audit:type_name -> social.v1.Audit
-	11, // 1: social.v1.Message.sent_at:type_name -> google.protobuf.Timestamp
-	12, // 2: social.v1.ListMessagesRequest.page:type_name -> social.v1.PageRequest
-	1,  // 3: social.v1.ListMessagesResponse.messages:type_name -> social.v1.Message
-	13, // 4: social.v1.ListMessagesResponse.page:type_name -> social.v1.PageResponse
-	2,  // 5: social.v1.ChatService.CreateRoom:input_type -> social.v1.CreateRoomRequest
-	3,  // 6: social.v1.ChatService.SendMessage:input_type -> social.v1.SendMessageRequest
-	4,  // 7: social.v1.ChatService.ListMessages:input_type -> social.v1.ListMessagesRequest
-	6,  // 8: social.v1.ChatService.ReportMessage:input_type -> social.v1.ReportMessageRequest
-	8,  // 9: social.v1.ChatService.GenerateIcebreaker:input_type -> social.v1.GenerateIcebreakerRequest
-	0,  // 10: social.v1.ChatService.CreateRoom:output_type -> social.v1.ChatRoom
-	1,  // 11: social.v1.ChatService.SendMessage:output_type -> social.v1.Message
-	5,  // 12: social.v1.ChatService.ListMessages:output_type -> social.v1.ListMessagesResponse
-	7,  // 13: social.v1.ChatService.ReportMessage:output_type -> social.v1.ReportMessageResponse
-	9,  // 14: social.v1.ChatService.GenerateIcebreaker:output_type -> social.v1.GenerateIcebreakerResponse
-	10, // [10:15] is the sub-list for method output_type
-	5,  // [5:10] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	2,  // 0: social.v1.Poll.options:type_name -> social.v1.PollOption
+	18, // 1: social.v1.ChatRoom.audit:type_name -> social.v1.Audit
+	19, // 2: social.v1.Message.sent_at:type_name -> google.protobuf.Timestamp
+	0,  // 3: social.v1.Message.type:type_name -> social.v1.MessageType
+	1,  // 4: social.v1.Message.location:type_name -> social.v1.Location
+	3,  // 5: social.v1.Message.poll:type_name -> social.v1.Poll
+	0,  // 6: social.v1.SendMessageRequest.type:type_name -> social.v1.MessageType
+	1,  // 7: social.v1.SendMessageRequest.location:type_name -> social.v1.Location
+	20, // 8: social.v1.ListMessagesRequest.page:type_name -> social.v1.PageRequest
+	5,  // 9: social.v1.ListMessagesResponse.messages:type_name -> social.v1.Message
+	21, // 10: social.v1.ListMessagesResponse.page:type_name -> social.v1.PageResponse
+	5,  // 11: social.v1.ListMessagesResponse.pinned_message:type_name -> social.v1.Message
+	6,  // 12: social.v1.ChatService.CreateRoom:input_type -> social.v1.CreateRoomRequest
+	7,  // 13: social.v1.ChatService.SendMessage:input_type -> social.v1.SendMessageRequest
+	12, // 14: social.v1.ChatService.ListMessages:input_type -> social.v1.ListMessagesRequest
+	14, // 15: social.v1.ChatService.ReportMessage:input_type -> social.v1.ReportMessageRequest
+	16, // 16: social.v1.ChatService.GenerateIcebreaker:input_type -> social.v1.GenerateIcebreakerRequest
+	8,  // 17: social.v1.ChatService.CreatePoll:input_type -> social.v1.CreatePollRequest
+	9,  // 18: social.v1.ChatService.VotePoll:input_type -> social.v1.VotePollRequest
+	10, // 19: social.v1.ChatService.PinMessage:input_type -> social.v1.PinMessageRequest
+	4,  // 20: social.v1.ChatService.CreateRoom:output_type -> social.v1.ChatRoom
+	5,  // 21: social.v1.ChatService.SendMessage:output_type -> social.v1.Message
+	13, // 22: social.v1.ChatService.ListMessages:output_type -> social.v1.ListMessagesResponse
+	15, // 23: social.v1.ChatService.ReportMessage:output_type -> social.v1.ReportMessageResponse
+	17, // 24: social.v1.ChatService.GenerateIcebreaker:output_type -> social.v1.GenerateIcebreakerResponse
+	5,  // 25: social.v1.ChatService.CreatePoll:output_type -> social.v1.Message
+	3,  // 26: social.v1.ChatService.VotePoll:output_type -> social.v1.Poll
+	11, // 27: social.v1.ChatService.PinMessage:output_type -> social.v1.PinMessageResponse
+	20, // [20:28] is the sub-list for method output_type
+	12, // [12:20] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_chat_proto_init() }
@@ -668,13 +1309,14 @@ func file_social_v1_chat_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_chat_proto_rawDesc), len(file_social_v1_chat_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   10,
+			NumEnums:      1,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_social_v1_chat_proto_goTypes,
 		DependencyIndexes: file_social_v1_chat_proto_depIdxs,
+		EnumInfos:         file_social_v1_chat_proto_enumTypes,
 		MessageInfos:      file_social_v1_chat_proto_msgTypes,
 	}.Build()
 	File_social_v1_chat_proto = out.File

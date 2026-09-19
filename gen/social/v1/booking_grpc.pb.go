@@ -19,11 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	BookingService_QuoteBooking_FullMethodName  = "/social.v1.BookingService/QuoteBooking"
-	BookingService_CreateBooking_FullMethodName = "/social.v1.BookingService/CreateBooking"
-	BookingService_GetBooking_FullMethodName    = "/social.v1.BookingService/GetBooking"
-	BookingService_CancelBooking_FullMethodName = "/social.v1.BookingService/CancelBooking"
-	BookingService_CheckIn_FullMethodName       = "/social.v1.BookingService/CheckIn"
+	BookingService_QuoteBooking_FullMethodName      = "/social.v1.BookingService/QuoteBooking"
+	BookingService_CreateBooking_FullMethodName     = "/social.v1.BookingService/CreateBooking"
+	BookingService_GetBooking_FullMethodName        = "/social.v1.BookingService/GetBooking"
+	BookingService_CancelBooking_FullMethodName     = "/social.v1.BookingService/CancelBooking"
+	BookingService_CheckIn_FullMethodName           = "/social.v1.BookingService/CheckIn"
+	BookingService_JoinWaitlist_FullMethodName      = "/social.v1.BookingService/JoinWaitlist"
+	BookingService_LeaveWaitlist_FullMethodName     = "/social.v1.BookingService/LeaveWaitlist"
+	BookingService_GetWaitlistStatus_FullMethodName = "/social.v1.BookingService/GetWaitlistStatus"
+	BookingService_ListMyWaitlist_FullMethodName    = "/social.v1.BookingService/ListMyWaitlist"
+	BookingService_ListMyBookings_FullMethodName    = "/social.v1.BookingService/ListMyBookings"
+	BookingService_GetPass_FullMethodName           = "/social.v1.BookingService/GetPass"
+	BookingService_ScanPass_FullMethodName          = "/social.v1.BookingService/ScanPass"
 )
 
 // BookingServiceClient is the client API for BookingService service.
@@ -39,6 +46,18 @@ type BookingServiceClient interface {
 	GetBooking(ctx context.Context, in *GetBookingRequest, opts ...grpc.CallOption) (*Booking, error)
 	CancelBooking(ctx context.Context, in *CancelBookingRequest, opts ...grpc.CallOption) (*Booking, error)
 	CheckIn(ctx context.Context, in *CheckInRequest, opts ...grpc.CallOption) (*CheckInResult, error)
+	// Waitlist (flow.md §16). Accepting an offer is just CreateBooking/JoinPlan —
+	// an offered seat is held for the user until offer_expires_at.
+	JoinWaitlist(ctx context.Context, in *JoinWaitlistRequest, opts ...grpc.CallOption) (*WaitlistStatus, error)
+	LeaveWaitlist(ctx context.Context, in *LeaveWaitlistRequest, opts ...grpc.CallOption) (*LeaveWaitlistResponse, error)
+	GetWaitlistStatus(ctx context.Context, in *GetWaitlistStatusRequest, opts ...grpc.CallOption) (*WaitlistStatus, error)
+	ListMyWaitlist(ctx context.Context, in *ListMyWaitlistRequest, opts ...grpc.CallOption) (*ListMyWaitlistResponse, error)
+	// My Bookings tabs (flow.md §17).
+	ListMyBookings(ctx context.Context, in *ListMyBookingsRequest, opts ...grpc.CallOption) (*ListMyBookingsResponse, error)
+	// Digital pass (flow.md §18/§34): GetPass returns a signed payload the
+	// client renders as a QR code; the host's ScanPass verifies it and checks in.
+	GetPass(ctx context.Context, in *GetPassRequest, opts ...grpc.CallOption) (*Pass, error)
+	ScanPass(ctx context.Context, in *ScanPassRequest, opts ...grpc.CallOption) (*ScanPassResult, error)
 }
 
 type bookingServiceClient struct {
@@ -99,6 +118,76 @@ func (c *bookingServiceClient) CheckIn(ctx context.Context, in *CheckInRequest, 
 	return out, nil
 }
 
+func (c *bookingServiceClient) JoinWaitlist(ctx context.Context, in *JoinWaitlistRequest, opts ...grpc.CallOption) (*WaitlistStatus, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(WaitlistStatus)
+	err := c.cc.Invoke(ctx, BookingService_JoinWaitlist_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bookingServiceClient) LeaveWaitlist(ctx context.Context, in *LeaveWaitlistRequest, opts ...grpc.CallOption) (*LeaveWaitlistResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LeaveWaitlistResponse)
+	err := c.cc.Invoke(ctx, BookingService_LeaveWaitlist_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bookingServiceClient) GetWaitlistStatus(ctx context.Context, in *GetWaitlistStatusRequest, opts ...grpc.CallOption) (*WaitlistStatus, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(WaitlistStatus)
+	err := c.cc.Invoke(ctx, BookingService_GetWaitlistStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bookingServiceClient) ListMyWaitlist(ctx context.Context, in *ListMyWaitlistRequest, opts ...grpc.CallOption) (*ListMyWaitlistResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListMyWaitlistResponse)
+	err := c.cc.Invoke(ctx, BookingService_ListMyWaitlist_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bookingServiceClient) ListMyBookings(ctx context.Context, in *ListMyBookingsRequest, opts ...grpc.CallOption) (*ListMyBookingsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListMyBookingsResponse)
+	err := c.cc.Invoke(ctx, BookingService_ListMyBookings_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bookingServiceClient) GetPass(ctx context.Context, in *GetPassRequest, opts ...grpc.CallOption) (*Pass, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Pass)
+	err := c.cc.Invoke(ctx, BookingService_GetPass_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bookingServiceClient) ScanPass(ctx context.Context, in *ScanPassRequest, opts ...grpc.CallOption) (*ScanPassResult, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ScanPassResult)
+	err := c.cc.Invoke(ctx, BookingService_ScanPass_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BookingServiceServer is the server API for BookingService service.
 // All implementations must embed UnimplementedBookingServiceServer
 // for forward compatibility.
@@ -112,6 +201,18 @@ type BookingServiceServer interface {
 	GetBooking(context.Context, *GetBookingRequest) (*Booking, error)
 	CancelBooking(context.Context, *CancelBookingRequest) (*Booking, error)
 	CheckIn(context.Context, *CheckInRequest) (*CheckInResult, error)
+	// Waitlist (flow.md §16). Accepting an offer is just CreateBooking/JoinPlan —
+	// an offered seat is held for the user until offer_expires_at.
+	JoinWaitlist(context.Context, *JoinWaitlistRequest) (*WaitlistStatus, error)
+	LeaveWaitlist(context.Context, *LeaveWaitlistRequest) (*LeaveWaitlistResponse, error)
+	GetWaitlistStatus(context.Context, *GetWaitlistStatusRequest) (*WaitlistStatus, error)
+	ListMyWaitlist(context.Context, *ListMyWaitlistRequest) (*ListMyWaitlistResponse, error)
+	// My Bookings tabs (flow.md §17).
+	ListMyBookings(context.Context, *ListMyBookingsRequest) (*ListMyBookingsResponse, error)
+	// Digital pass (flow.md §18/§34): GetPass returns a signed payload the
+	// client renders as a QR code; the host's ScanPass verifies it and checks in.
+	GetPass(context.Context, *GetPassRequest) (*Pass, error)
+	ScanPass(context.Context, *ScanPassRequest) (*ScanPassResult, error)
 	mustEmbedUnimplementedBookingServiceServer()
 }
 
@@ -136,6 +237,27 @@ func (UnimplementedBookingServiceServer) CancelBooking(context.Context, *CancelB
 }
 func (UnimplementedBookingServiceServer) CheckIn(context.Context, *CheckInRequest) (*CheckInResult, error) {
 	return nil, status.Error(codes.Unimplemented, "method CheckIn not implemented")
+}
+func (UnimplementedBookingServiceServer) JoinWaitlist(context.Context, *JoinWaitlistRequest) (*WaitlistStatus, error) {
+	return nil, status.Error(codes.Unimplemented, "method JoinWaitlist not implemented")
+}
+func (UnimplementedBookingServiceServer) LeaveWaitlist(context.Context, *LeaveWaitlistRequest) (*LeaveWaitlistResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method LeaveWaitlist not implemented")
+}
+func (UnimplementedBookingServiceServer) GetWaitlistStatus(context.Context, *GetWaitlistStatusRequest) (*WaitlistStatus, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetWaitlistStatus not implemented")
+}
+func (UnimplementedBookingServiceServer) ListMyWaitlist(context.Context, *ListMyWaitlistRequest) (*ListMyWaitlistResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListMyWaitlist not implemented")
+}
+func (UnimplementedBookingServiceServer) ListMyBookings(context.Context, *ListMyBookingsRequest) (*ListMyBookingsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListMyBookings not implemented")
+}
+func (UnimplementedBookingServiceServer) GetPass(context.Context, *GetPassRequest) (*Pass, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPass not implemented")
+}
+func (UnimplementedBookingServiceServer) ScanPass(context.Context, *ScanPassRequest) (*ScanPassResult, error) {
+	return nil, status.Error(codes.Unimplemented, "method ScanPass not implemented")
 }
 func (UnimplementedBookingServiceServer) mustEmbedUnimplementedBookingServiceServer() {}
 func (UnimplementedBookingServiceServer) testEmbeddedByValue()                        {}
@@ -248,6 +370,132 @@ func _BookingService_CheckIn_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BookingService_JoinWaitlist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(JoinWaitlistRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BookingServiceServer).JoinWaitlist(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BookingService_JoinWaitlist_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BookingServiceServer).JoinWaitlist(ctx, req.(*JoinWaitlistRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BookingService_LeaveWaitlist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LeaveWaitlistRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BookingServiceServer).LeaveWaitlist(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BookingService_LeaveWaitlist_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BookingServiceServer).LeaveWaitlist(ctx, req.(*LeaveWaitlistRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BookingService_GetWaitlistStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetWaitlistStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BookingServiceServer).GetWaitlistStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BookingService_GetWaitlistStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BookingServiceServer).GetWaitlistStatus(ctx, req.(*GetWaitlistStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BookingService_ListMyWaitlist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListMyWaitlistRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BookingServiceServer).ListMyWaitlist(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BookingService_ListMyWaitlist_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BookingServiceServer).ListMyWaitlist(ctx, req.(*ListMyWaitlistRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BookingService_ListMyBookings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListMyBookingsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BookingServiceServer).ListMyBookings(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BookingService_ListMyBookings_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BookingServiceServer).ListMyBookings(ctx, req.(*ListMyBookingsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BookingService_GetPass_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPassRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BookingServiceServer).GetPass(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BookingService_GetPass_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BookingServiceServer).GetPass(ctx, req.(*GetPassRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BookingService_ScanPass_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ScanPassRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BookingServiceServer).ScanPass(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BookingService_ScanPass_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BookingServiceServer).ScanPass(ctx, req.(*ScanPassRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BookingService_ServiceDesc is the grpc.ServiceDesc for BookingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -274,6 +522,34 @@ var BookingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CheckIn",
 			Handler:    _BookingService_CheckIn_Handler,
+		},
+		{
+			MethodName: "JoinWaitlist",
+			Handler:    _BookingService_JoinWaitlist_Handler,
+		},
+		{
+			MethodName: "LeaveWaitlist",
+			Handler:    _BookingService_LeaveWaitlist_Handler,
+		},
+		{
+			MethodName: "GetWaitlistStatus",
+			Handler:    _BookingService_GetWaitlistStatus_Handler,
+		},
+		{
+			MethodName: "ListMyWaitlist",
+			Handler:    _BookingService_ListMyWaitlist_Handler,
+		},
+		{
+			MethodName: "ListMyBookings",
+			Handler:    _BookingService_ListMyBookings_Handler,
+		},
+		{
+			MethodName: "GetPass",
+			Handler:    _BookingService_GetPass_Handler,
+		},
+		{
+			MethodName: "ScanPass",
+			Handler:    _BookingService_ScanPass_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

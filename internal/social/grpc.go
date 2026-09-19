@@ -2,6 +2,7 @@ package social
 
 import (
 	"context"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -40,6 +41,8 @@ func (h *Handler) CreatePost(ctx context.Context, req *socialv1.CreatePostReques
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		case ErrContentRejected:
 			return nil, status.Error(codes.FailedPrecondition, err.Error())
+		case ErrNotAttendee:
+			return nil, status.Error(codes.PermissionDenied, err.Error())
 		default:
 			return nil, status.Error(codes.Internal, "failed to create post")
 		}
@@ -123,4 +126,30 @@ func toProto(p *Post) *socialv1.Post {
 		MediaUrls:  p.MediaURLs,
 		Visibility: p.Visibility,
 	}
+}
+
+func (h *Handler) ListMyMemories(ctx context.Context, req *socialv1.ListMyMemoriesRequest) (*socialv1.ListMyMemoriesResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	years, err := h.svc.ListMyMemories(ctx, userID, req.GetYear())
+	if err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to load memories")
+	}
+	out := make([]*socialv1.MemoryYear, 0, len(years))
+	for _, y := range years {
+		my := &socialv1.MemoryYear{Year: y.Year}
+		for _, m := range y.Memories {
+			my.Memories = append(my.Memories, &socialv1.Memory{
+				PlanId: m.PlanID, Title: m.Title, StartsAt: m.StartsAt.UTC().Format(time.RFC3339),
+				CityName: m.CityName, PhotoCount: m.PhotoCount, PeopleCount: m.PeopleCount,
+			})
+		}
+		out = append(out, my)
+	}
+	return &socialv1.ListMyMemoriesResponse{Years: out}, nil
 }

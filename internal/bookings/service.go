@@ -3,6 +3,7 @@ package bookings
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/hivemind/backend/pkg/idempotency"
 )
@@ -27,8 +28,10 @@ type Quote struct {
 }
 
 type Service struct {
-	repo  *Repository
-	guard *idempotency.Guard
+	repo         *Repository
+	guard        *idempotency.Guard
+	passSecret   []byte
+	entitlements EntitlementChecker
 }
 
 func NewService(repo *Repository, guard *idempotency.Guard) *Service {
@@ -38,6 +41,10 @@ func NewService(repo *Repository, guard *idempotency.Guard) *Service {
 func (s *Service) CreateBooking(ctx context.Context, b *Booking) (*Booking, error) {
 	if b.PlanID == "" || b.UserID == "" {
 		return nil, ErrInvalidInput
+	}
+	// Access first: a denied request must not burn its idempotency key.
+	if err := s.checkAccess(ctx, b.PlanID, b.UserID); err != nil {
+		return nil, err
 	}
 	if err := s.guard.Reserve(ctx, b.IdempotencyKey); err != nil {
 		return nil, err
@@ -166,7 +173,11 @@ func (s *Service) QuoteBooking(ctx context.Context, planID, userID string) (*Quo
 		fee = maxServiceFeeMinor
 	}
 
-	eligible := pricing.Status == "published" && pricing.ConfirmedCount < pricing.Capacity
+	holds, err := s.repo.HoldsForOthers(ctx, planID, userID)
+	if err != nil {
+		return nil, err
+	}
+	eligible := pricing.Status == "published" && pricing.ConfirmedCount+holds < pricing.Capacity
 	if eligible {
 		if _, err := s.repo.FindActiveBookingID(ctx, planID, userID); err == nil {
 			eligible = false // already booked
@@ -234,4 +245,59 @@ func (s *Service) CheckIn(ctx context.Context, bookingID, callerID, callerRole s
 		}
 	}
 	return s.repo.CheckIn(ctx, bookingID, callerID)
+}
+
+func (s *Service) JoinWaitlist(ctx context.Context, planID, userID string) (*WaitlistStatus, error) {
+	if planID == "" || userID == "" {
+		return nil, ErrInvalidInput
+	}
+	if err := s.checkAccess(ctx, planID, userID); err != nil {
+		return nil, err
+	}
+	return s.repo.JoinWaitlist(ctx, planID, userID)
+}
+
+func (s *Service) LeaveWaitlist(ctx context.Context, planID, userID string) error {
+	if planID == "" || userID == "" {
+		return ErrInvalidInput
+	}
+	return s.repo.LeaveWaitlist(ctx, planID, userID)
+}
+
+func (s *Service) GetWaitlistStatus(ctx context.Context, planID, userID string) (*WaitlistStatus, error) {
+	if planID == "" || userID == "" {
+		return nil, ErrInvalidInput
+	}
+	return s.repo.GetWaitlistStatus(ctx, planID, userID)
+}
+
+func (s *Service) ListMyWaitlist(ctx context.Context, userID string) ([]*WaitlistStatus, error) {
+	if userID == "" {
+		return nil, ErrInvalidInput
+	}
+	return s.repo.ListMyWaitlist(ctx, userID)
+}
+
+// SweepWaitlist / ExpireWaitlistForPlan are called by cmd/worker.
+func (s *Service) SweepWaitlist(ctx context.Context, now time.Time) (int, error) {
+	return s.repo.SweepWaitlist(ctx, now)
+}
+
+func (s *Service) ExpireWaitlistForPlan(ctx context.Context, planID string) error {
+	return s.repo.ExpireWaitlistForPlan(ctx, planID)
+}
+
+func (s *Service) CompleteEndedPlans(ctx context.Context, now time.Time) (int, error) {
+	return s.repo.CompleteEndedPlans(ctx, now)
+}
+
+func (s *Service) MarkNoShows(ctx context.Context, now time.Time) (int, error) {
+	return s.repo.MarkNoShows(ctx, now)
+}
+
+func (s *Service) ListMyBookings(ctx context.Context, userID, tab string) ([]*BookingSummary, error) {
+	if userID == "" {
+		return nil, ErrInvalidInput
+	}
+	return s.repo.ListMyBookings(ctx, userID, tab)
 }

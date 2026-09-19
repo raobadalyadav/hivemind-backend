@@ -4,6 +4,7 @@ package social
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -177,4 +178,55 @@ func (r *Repository) Like(ctx context.Context, postID, userID string) (int32, er
 		return 0, err
 	}
 	return count, nil
+}
+
+// CanAttachToPlan: only someone who attended a plan (or hosts it) may tag a
+// post with it — otherwise anyone could spam a plan's memory feed.
+func (r *Repository) CanAttachToPlan(ctx context.Context, planID, userID string) (bool, error) {
+	var ok bool
+	err := r.pool.QueryRow(ctx, `
+		SELECT EXISTS(SELECT 1 FROM attended_bookings WHERE plan_id = $1 AND user_id = $2)
+		    OR EXISTS(SELECT 1 FROM plans WHERE id = $1 AND host_id = $2)`, planID, userID).Scan(&ok)
+	return ok, err
+}
+
+type Memory struct {
+	PlanID      string
+	Title       string
+	StartsAt    time.Time
+	CityName    string
+	Year        int32
+	PhotoCount  int32
+	PeopleCount int32
+}
+
+// ListMemories returns the caller's attended plans, newest first, with the
+// year taken in the plan's own city timezone. photo_count counts media on
+// posts tagged with the plan that the caller may see (their own or public).
+func (r *Repository) ListMemories(ctx context.Context, userID string, year int32) ([]Memory, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT p.id::text, p.title, p.starts_at, COALESCE(c.name, ''),
+			EXTRACT(year FROM p.starts_at AT TIME ZONE COALESCE(c.timezone, 'UTC'))::int,
+			(SELECT count(*) FROM post_media pm JOIN posts po ON po.id = pm.post_id
+			   WHERE po.plan_id = p.id AND (po.author_id = $1 OR po.visibility = 'public')),
+			(SELECT count(*) FROM attended_bookings x WHERE x.plan_id = p.id)
+		FROM attended_bookings ab
+		JOIN plans p ON p.id = ab.plan_id
+		LEFT JOIN cities c ON c.id = p.city_id
+		WHERE ab.user_id = $1
+		  AND ($2::int = 0 OR EXTRACT(year FROM p.starts_at AT TIME ZONE COALESCE(c.timezone, 'UTC'))::int = $2)
+		ORDER BY p.starts_at DESC`, userID, year)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Memory
+	for rows.Next() {
+		var m Memory
+		if err := rows.Scan(&m.PlanID, &m.Title, &m.StartsAt, &m.CityName, &m.Year, &m.PhotoCount, &m.PeopleCount); err != nil {
+			return nil, err
+		}
+		out = append(out, m)
+	}
+	return out, rows.Err()
 }
