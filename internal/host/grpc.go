@@ -108,10 +108,10 @@ func (h *Handler) GetHostDashboard(ctx context.Context, req *socialv1.GetHostDas
 
 func toStatusProto(a *PayoutAccount, role string) *socialv1.HostStatus {
 	return &socialv1.HostStatus{
-		UserId:               a.HostID,
-		Role:                 role,
-		PayoutAccountStatus:  a.Status,
-		IdDocumentUrl:        a.IDDocumentURL,
+		UserId:              a.HostID,
+		Role:                role,
+		PayoutAccountStatus: a.Status,
+		IdDocumentUrl:       a.IDDocumentURL,
 	}
 }
 

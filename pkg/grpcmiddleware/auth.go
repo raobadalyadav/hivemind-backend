@@ -45,6 +45,12 @@ var adminMethods = map[string]bool{
 	"/social.v1.AdminService/GetDashboardStats":       true,
 	"/social.v1.NotificationService/SendNotification": true,
 	"/social.v1.ModerationService/ResolveCase":        true,
+	"/social.v1.AdminService/ApproveHost":             true,
+	"/social.v1.AdminService/MarkPayoutProcessed":     true,
+	"/social.v1.AdminService/AdminGrantCredit":        true,
+	"/social.v1.AdminService/CreateCoupon":            true,
+	"/social.v1.AdminService/ListCoupons":             true,
+	"/social.v1.AdminService/DeactivateCoupon":        true,
 }
 
 func isAdminRole(role string) bool {

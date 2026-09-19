@@ -111,7 +111,10 @@ func (r *Repository) HomeFeedPlanIDs(ctx context.Context, userID, section string
 		LEFT JOIN cities c ON c.id = p.city_id
 		WHERE p.status = 'published' AND ` + dateFilter(section) + `
 		  AND (p.city_id = (SELECT city_id FROM users WHERE id = $1) OR (SELECT city_id FROM users WHERE id = $1) IS NULL)
-		ORDER BY p.starts_at
+		ORDER BY
+		  (EXISTS(SELECT 1 FROM promoted_listings pl WHERE pl.plan_id = p.id
+		     AND pl.status = 'paid'::promoted_listing_status AND now() BETWEEN pl.starts_at AND pl.ends_at)) DESC,
+		  p.starts_at
 		LIMIT $2`
 
 	rows, err := r.pool.Query(ctx, query, userID, limit)

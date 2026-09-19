@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/hivemind/backend/internal/payments"
+	"github.com/hivemind/backend/internal/promotions"
 	"github.com/hivemind/backend/pkg/cashfree"
 )
 
@@ -24,7 +26,7 @@ const (
 	webhookMaxClockSkew = 5 * time.Minute
 )
 
-func cashfreeWebhookHandler(paymentsSvc *payments.Service, cfClient *cashfree.Client, logger *slog.Logger) http.HandlerFunc {
+func cashfreeWebhookHandler(paymentsSvc *payments.Service, promotionsSvc *promotions.Service, cfClient *cashfree.Client, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if cfClient == nil {
 			http.Error(w, "payment gateway not configured", http.StatusServiceUnavailable)
@@ -84,9 +86,19 @@ func cashfreeWebhookHandler(paymentsSvc *payments.Service, cfClient *cashfree.Cl
 		ctx, cancel := context.WithTimeout(context.Background(), webhookHandlerTimeout)
 		defer cancel()
 		if _, err := paymentsSvc.MarkCaptured(ctx, event.OrderID, event.CFPaymentID, event.AmountMinor); err != nil {
-			logger.Error("mark payment captured", "error", err, "order_id", event.OrderID)
-			http.Error(w, "failed to process webhook", http.StatusInternalServerError)
-			return
+			if !errors.Is(err, payments.ErrPaymentNotFound) {
+				logger.Error("mark payment captured", "error", err, "order_id", event.OrderID)
+				http.Error(w, "failed to process webhook", http.StatusInternalServerError)
+				return
+			}
+			// Not a booking-payment order — try a promoted-listing purchase
+			// (its own row-is-the-order table, see internal/promotions)
+			// before giving up.
+			if err := promotionsSvc.MarkCaptured(ctx, event.OrderID, event.CFPaymentID, event.AmountMinor); err != nil {
+				logger.Error("mark promotion captured", "error", err, "order_id", event.OrderID)
+				http.Error(w, "failed to process webhook", http.StatusInternalServerError)
+				return
+			}
 		}
 
 		w.WriteHeader(http.StatusOK)

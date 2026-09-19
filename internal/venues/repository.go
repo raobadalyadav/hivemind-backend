@@ -24,10 +24,10 @@ type Venue struct {
 }
 
 type Dashboard struct {
-	TotalBookings  int64
-	TotalAttendees int64
+	TotalBookings     int64
+	TotalAttendees    int64
 	GrossRevenueMinor int64
-	AvgRating      float64
+	AvgRating         float64
 }
 
 type Repository struct {

@@ -29,16 +29,20 @@ import (
 	"github.com/hivemind/backend/internal/communities"
 	"github.com/hivemind/backend/internal/connections"
 	"github.com/hivemind/backend/internal/discovery"
+	"github.com/hivemind/backend/internal/host"
 	"github.com/hivemind/backend/internal/moderation"
 	"github.com/hivemind/backend/internal/notifications"
 	"github.com/hivemind/backend/internal/payments"
 	"github.com/hivemind/backend/internal/plans"
 	"github.com/hivemind/backend/internal/profiles"
+	"github.com/hivemind/backend/internal/promotions"
 	"github.com/hivemind/backend/internal/recommendation"
+	"github.com/hivemind/backend/internal/reviews"
 	"github.com/hivemind/backend/internal/search"
 	"github.com/hivemind/backend/internal/social"
 	"github.com/hivemind/backend/internal/subscriptions"
 	"github.com/hivemind/backend/internal/users"
+	"github.com/hivemind/backend/internal/venues"
 	"github.com/hivemind/backend/pkg/analytics"
 	"github.com/hivemind/backend/pkg/cashfree"
 	"github.com/hivemind/backend/pkg/email"
@@ -142,14 +146,32 @@ func main() {
 	}
 	paymentsSvc := payments.NewService(payments.NewRepository(pool), paymentGateway, bookingsSvc, logger)
 
+	// plansSvc and subscriptionsSvc are built as named variables (not inline
+	// in their Register call below) so they can also be injected into
+	// promotions/host via the PlanHostChecker/EntitlementChecker interfaces
+	// those packages declare.
+	plansSvc := plans.NewService(plans.NewRepository(pool), bookingsSvc, bookingsSvc)
+	subscriptionsSvc := subscriptions.NewService(subscriptions.NewRepository(pool))
+
+	// Declared as the interface type for the same nil-interface reason as
+	// paymentGateway above.
+	var promotionGateway promotions.GatewayClient
+	if cashfreeClient != nil {
+		promotionGateway = cashfreeClient
+	}
+	promotionsSvc := promotions.NewService(promotions.NewRepository(pool), plansSvc, promotionGateway, logger)
+	hostSvc := host.NewService(host.NewRepository(pool), subscriptionsSvc)
+	venuesSvc := venues.NewService(venues.NewRepository(pool))
+	reviewsSvc := reviews.NewService(reviews.NewRepository(pool), bookingsSvc)
+
 	socialv1.RegisterAuthServiceServer(srv, auth.NewHandler(auth.NewService(auth.NewRepository(pool), issuer, googleVerifier, appleVerifier, emailSender, analyticsRec, logger)))
 	socialv1.RegisterUserServiceServer(srv, users.NewHandler(users.NewService(users.NewRepository(pool))))
 	socialv1.RegisterProfileServiceServer(srv, profiles.NewHandler(profiles.NewService(profiles.NewRepository(pool))))
 	socialv1.RegisterDiscoveryServiceServer(srv, discovery.NewHandler(discovery.NewService(discovery.NewRepository(pool))))
-	socialv1.RegisterPlanServiceServer(srv, plans.NewHandler(plans.NewService(plans.NewRepository(pool), bookingsSvc, bookingsSvc)))
+	socialv1.RegisterPlanServiceServer(srv, plans.NewHandler(plansSvc))
 	socialv1.RegisterBookingServiceServer(srv, bookings.NewHandler(bookingsSvc))
 	socialv1.RegisterPaymentServiceServer(srv, payments.NewHandler(paymentsSvc))
-	socialv1.RegisterSubscriptionServiceServer(srv, subscriptions.NewHandler(subscriptions.NewService(subscriptions.NewRepository(pool))))
+	socialv1.RegisterSubscriptionServiceServer(srv, subscriptions.NewHandler(subscriptionsSvc))
 	socialv1.RegisterCommunityServiceServer(srv, communities.NewHandler(communities.NewService(communities.NewRepository(pool))))
 	socialv1.RegisterConnectionServiceServer(srv, connections.NewHandler(connections.NewService(connections.NewRepository(pool))))
 	socialv1.RegisterChatServiceServer(srv, chat.NewHandler(chat.NewService(chat.NewRepository(pool), moderationSvc)))
@@ -159,6 +181,10 @@ func main() {
 	socialv1.RegisterSearchServiceServer(srv, search.NewHandler(search.NewService(search.NewRepository(pool))))
 	socialv1.RegisterRecommendationServiceServer(srv, recommendation.NewHandler(recommendation.NewService(recommendation.NewRepository(pool))))
 	socialv1.RegisterAdminServiceServer(srv, admin.NewHandler(admin.NewService(admin.NewRepository(pool))))
+	socialv1.RegisterVenueServiceServer(srv, venues.NewHandler(venuesSvc))
+	socialv1.RegisterHostServiceServer(srv, host.NewHandler(hostSvc))
+	socialv1.RegisterPromotionServiceServer(srv, promotions.NewHandler(promotionsSvc))
+	socialv1.RegisterReviewServiceServer(srv, reviews.NewHandler(reviewsSvc))
 
 	healthSrv := health.NewServer()
 	healthpb.RegisterHealthServer(srv, healthSrv)
@@ -185,7 +211,7 @@ func main() {
 	// Cashfree webhooks are plain HTTP POSTs from Cashfree's servers, not
 	// gRPC — a second, separate listener, same process.
 	webhookMux := http.NewServeMux()
-	webhookMux.HandleFunc("/webhooks/cashfree", cashfreeWebhookHandler(paymentsSvc, cashfreeClient, logger))
+	webhookMux.HandleFunc("/webhooks/cashfree", cashfreeWebhookHandler(paymentsSvc, promotionsSvc, cashfreeClient, logger))
 	webhookSrv := &http.Server{Addr: ":" + cfg.WebhookPort, Handler: webhookMux}
 	go func() {
 		logger.Info("webhook server starting", "port", cfg.WebhookPort)

@@ -49,7 +49,7 @@ func NewService(repo *Repository, gateway GatewayClient, bookingOwner BookingOwn
 // the whole booking flow. PaymentSessionID is returned separately (not
 // stored on Order) since it's short-lived and only needed once,
 // immediately, by the mobile client's Checkout SDK.
-func (s *Service) CreateOrder(ctx context.Context, o *Order, callerID, customerPhone string) (*Order, string, error) {
+func (s *Service) CreateOrder(ctx context.Context, o *Order, callerID, customerPhone, promoCode string, useCredits bool) (*Order, string, error) {
 	if o.BookingID == "" || o.AmountMinor <= 0 || callerID == "" {
 		return nil, "", ErrInvalidInput
 	}
@@ -63,9 +63,24 @@ func (s *Service) CreateOrder(ctx context.Context, o *Order, callerID, customerP
 	if o.Currency == "" {
 		o.Currency = "INR"
 	}
-	created, err := s.repo.CreateOrder(ctx, o)
+
+	if promoCode != "" {
+		discount, err := s.repo.ReserveCoupon(ctx, promoCode, o.AmountMinor)
+		if err != nil {
+			return nil, "", err
+		}
+		o.AmountMinor -= discount
+	}
+
+	created, _, err := s.repo.CreateOrderWithCredits(ctx, o, callerID, useCredits)
 	if err != nil {
 		return nil, "", err
+	}
+
+	if created.AmountMinor <= 0 {
+		// Fully covered by coupon/credits — nothing to charge, no gateway
+		// call to make.
+		return created, "", nil
 	}
 
 	if s.gateway == nil {
@@ -101,6 +116,13 @@ func (s *Service) MarkCaptured(ctx context.Context, cashfreeOrderID, gatewayPaym
 		return nil, err
 	}
 	return s.repo.MarkCaptured(ctx, order.ID, gatewayPaymentID, amountMinor, order.Currency)
+}
+
+func (s *Service) GetMyCreditBalance(ctx context.Context, userID string) (int64, error) {
+	if userID == "" {
+		return 0, ErrInvalidInput
+	}
+	return s.repo.GetCreditBalance(ctx, userID)
 }
 
 func (s *Service) GetPayment(ctx context.Context, id string) (*Payment, error) {

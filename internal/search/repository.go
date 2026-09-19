@@ -24,7 +24,10 @@ func (r *Repository) SearchPlanIDs(ctx context.Context, query, cityID string, li
 		WHERE status = 'published'
 		  AND (city_id = NULLIF($2,'')::uuid OR $2 = '')
 		  AND (title ILIKE '%' || $1 || '%' OR description ILIKE '%' || $1 || '%')
-		ORDER BY starts_at
+		ORDER BY
+		  (EXISTS(SELECT 1 FROM promoted_listings pl WHERE pl.plan_id = plans.id
+		     AND pl.status = 'paid'::promoted_listing_status AND now() BETWEEN pl.starts_at AND pl.ends_at)) DESC,
+		  starts_at
 		LIMIT $3`,
 		query, cityID, limit,
 	)

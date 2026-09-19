@@ -97,3 +97,90 @@ func TestRepository_MarkCaptured(t *testing.T) {
 		t.Errorf("expected found payment id %q, got %q", payment.ID, found.ID)
 	}
 }
+
+// TestRepository_ReserveCoupon_Exhaustion seeds a coupon with max_uses=1 and
+// verifies a second reservation is rejected — the row-locked
+// UPDATE...WHERE uses_count < max_uses in ReserveCoupon is what enforces
+// this atomically.
+func TestRepository_ReserveCoupon_Exhaustion(t *testing.T) {
+	pool := testPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	repo := NewRepository(pool)
+
+	suffix := time.Now().Format("150405.000000000")
+	code := "TESTCOUPON" + suffix
+	if _, err := pool.Exec(ctx,
+		`INSERT INTO promo_codes (code, discount_type, discount_value, max_uses) VALUES ($1, 'percent', 10, 1)`,
+		code,
+	); err != nil {
+		t.Fatalf("seed coupon: %v", err)
+	}
+
+	discount, err := repo.ReserveCoupon(ctx, code, 100000)
+	if err != nil {
+		t.Fatalf("first ReserveCoupon should succeed: %v", err)
+	}
+	if discount != 10000 {
+		t.Errorf("expected 10%% discount of 100000 = 10000, got %d", discount)
+	}
+
+	if _, err := repo.ReserveCoupon(ctx, code, 100000); err != ErrCouponInvalid {
+		t.Fatalf("expected ErrCouponInvalid once max_uses is exhausted, got %v", err)
+	}
+}
+
+// TestRepository_CreateOrderWithCredits_CapsAtBalance verifies a credit
+// spend never exceeds the user's actual balance, even when the order
+// amount requested is larger.
+func TestRepository_CreateOrderWithCredits_CapsAtBalance(t *testing.T) {
+	pool := testPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	repo := NewRepository(pool)
+
+	suffix := time.Now().Format("150405.000000000")
+	var userID, planID, bookingID string
+	if err := pool.QueryRow(ctx,
+		`INSERT INTO users (email) VALUES ($1) RETURNING id`, "credits-test-"+suffix+"@example.com",
+	).Scan(&userID); err != nil {
+		t.Fatalf("seed user: %v", err)
+	}
+	if err := pool.QueryRow(ctx, `
+		INSERT INTO plans (title, host_id, starts_at, ends_at, capacity, confirmed_count, currency, status)
+		VALUES ('Credits Test Plan', $1, now() + interval '1 hour', now() + interval '2 hour', 5, 0, 'INR', 'published')
+		RETURNING id`, userID,
+	).Scan(&planID); err != nil {
+		t.Fatalf("seed plan: %v", err)
+	}
+	if err := pool.QueryRow(ctx,
+		`INSERT INTO bookings (plan_id, user_id, status, price_minor, currency) VALUES ($1, $2, 'confirmed', 100000, 'INR') RETURNING id`,
+		planID, userID,
+	).Scan(&bookingID); err != nil {
+		t.Fatalf("seed booking: %v", err)
+	}
+	if _, err := pool.Exec(ctx,
+		`INSERT INTO credit_ledger (user_id, amount_minor, reason) VALUES ($1, 3000, 'test_grant')`, userID,
+	); err != nil {
+		t.Fatalf("seed credit grant: %v", err)
+	}
+
+	order, spent, err := repo.CreateOrderWithCredits(ctx, &Order{BookingID: bookingID, AmountMinor: 100000, Currency: "INR"}, userID, true)
+	if err != nil {
+		t.Fatalf("CreateOrderWithCredits: %v", err)
+	}
+	if spent != 3000 {
+		t.Errorf("expected creditsSpentMinor capped at balance 3000, got %d", spent)
+	}
+	if order.AmountMinor != 97000 {
+		t.Errorf("expected order amount 100000-3000=97000, got %d", order.AmountMinor)
+	}
+
+	balance, err := repo.GetCreditBalance(ctx, userID)
+	if err != nil {
+		t.Fatalf("GetCreditBalance: %v", err)
+	}
+	if balance != 0 {
+		t.Errorf("expected balance 0 after spending it all, got %d", balance)
+	}
+}

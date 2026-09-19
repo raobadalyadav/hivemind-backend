@@ -31,13 +31,15 @@ func (h *Handler) CreateOrder(ctx context.Context, req *socialv1.CreateOrderRequ
 		o.AmountMinor = req.GetAmount().GetMinorUnits()
 		o.Currency = req.GetAmount().GetCurrency()
 	}
-	created, sessionID, err := h.svc.CreateOrder(ctx, o, callerID, req.GetCustomerPhone())
+	created, sessionID, err := h.svc.CreateOrder(ctx, o, callerID, req.GetCustomerPhone(), req.GetPromoCode(), req.GetUseCredits())
 	if err != nil {
 		switch err {
 		case ErrInvalidInput:
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		case ErrForbidden:
 			return nil, status.Error(codes.PermissionDenied, err.Error())
+		case ErrCouponInvalid:
+			return nil, status.Error(codes.FailedPrecondition, err.Error())
 		default:
 			return nil, status.Error(codes.Internal, "failed to create order")
 		}
@@ -63,6 +65,18 @@ func (h *Handler) GetPayment(ctx context.Context, req *socialv1.GetPaymentReques
 		Amount:  &socialv1.Money{MinorUnits: p.AmountMinor, Currency: p.Currency},
 		Status:  p.Status,
 	}, nil
+}
+
+func (h *Handler) GetMyCreditBalance(ctx context.Context, req *socialv1.GetMyCreditBalanceRequest) (*socialv1.CreditBalance, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	balance, err := h.svc.GetMyCreditBalance(ctx, userID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to load credit balance")
+	}
+	return &socialv1.CreditBalance{BalanceMinor: balance}, nil
 }
 
 func (h *Handler) RefundPayment(ctx context.Context, req *socialv1.RefundPaymentRequest) (*socialv1.Refund, error) {

@@ -6,9 +6,9 @@ import (
 )
 
 var (
-	ErrInvalidInput     = errors.New("host: invalid input")
-	ErrHostNotApproved  = errors.New("host: payout account is not active")
-	ErrNoPayoutBalance  = errors.New("host: no payable balance")
+	ErrInvalidInput    = errors.New("host: invalid input")
+	ErrHostNotApproved = errors.New("host: payout account is not active")
+	ErrNoPayoutBalance = errors.New("host: no payable balance")
 )
 
 // Commission per PRD §21: 15% flat, 10% for hosts holding the business_pro

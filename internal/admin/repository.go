@@ -141,7 +141,7 @@ func (r *Repository) ApproveHost(ctx context.Context, userID, actorID string) er
 		return err
 	}
 	if _, err := tx.Exec(ctx,
-		`UPDATE payout_accounts SET status = 'active'::payout_status WHERE host_id = $1`, userID,
+		`UPDATE payout_accounts SET status = 'active'::payout_account_status WHERE host_id = $1`, userID,
 	); err != nil {
 		return err
 	}

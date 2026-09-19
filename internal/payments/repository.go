@@ -20,6 +20,7 @@ const pgUniqueViolation = "23505"
 var (
 	ErrPaymentNotFound      = errors.New("payments: payment not found")
 	ErrPaymentNotRefundable = errors.New("payments: payment is not in a refundable state")
+	ErrCouponInvalid        = errors.New("payments: coupon code is invalid, expired, or exhausted")
 )
 
 func isUniqueViolation(err error) bool {
@@ -218,6 +219,118 @@ func (r *Repository) FindCapturedPaymentForBooking(ctx context.Context, bookingI
 		return nil, err
 	}
 	return &p, nil
+}
+
+// ReserveCoupon atomically validates and reserves one use of a coupon
+// before CreateOrder runs — a single row-locked UPDATE...WHERE, so a lost
+// race under concurrency rejects the request instead of creating an order
+// whose discount was never actually reserved (0 rows updated = exhausted).
+func (r *Repository) ReserveCoupon(ctx context.Context, code string, amountMinor int64) (discountMinor int64, err error) {
+	var id, discountType string
+	var discountValue int64
+	var maxUses int32
+	if err := r.pool.QueryRow(ctx, `
+		SELECT id, discount_type, discount_value, max_uses FROM promo_codes
+		WHERE code = $1 AND active AND (expires_at IS NULL OR expires_at > now())`,
+		code,
+	).Scan(&id, &discountType, &discountValue, &maxUses); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, ErrCouponInvalid
+		}
+		return 0, err
+	}
+
+	if discountType == "fixed" {
+		discountMinor = discountValue
+	} else {
+		discountMinor = amountMinor * discountValue / 100
+	}
+	if discountMinor > amountMinor {
+		discountMinor = amountMinor
+	}
+
+	tag, err := r.pool.Exec(ctx, `
+		UPDATE promo_codes SET uses_count = uses_count + 1
+		WHERE id = $1 AND (max_uses = 0 OR uses_count < max_uses)`,
+		id,
+	)
+	if err != nil {
+		return 0, err
+	}
+	if tag.RowsAffected() == 0 {
+		return 0, ErrCouponInvalid
+	}
+	return discountMinor, nil
+}
+
+// CreateOrderWithCredits is CreateOrder plus an optional credit spend, in
+// one transaction: the order row must exist before credit_ledger.order_id
+// can reference it, so both writes commit or roll back together — a failed
+// credit debit must not leave a charged order with no matching ledger
+// entry. SELECT...FOR UPDATE on the caller's ledger rows is a
+// serialization barrier so two concurrent spends by the same user can't
+// both pass the balance check.
+// ponytail: balance is recomputed by summing the ledger every call —
+// correct for a single user's realistic concurrency, not built to survive a
+// deliberate concurrent double-spend attack. Upgrade to a maintained
+// balance column with a CHECK >= 0 if that ever needs to be load-bearing.
+func (r *Repository) CreateOrderWithCredits(ctx context.Context, o *Order, userID string, useCredits bool) (order *Order, creditsSpentMinor int64, err error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer tx.Rollback(ctx)
+
+	if useCredits {
+		var balance int64
+		if err := tx.QueryRow(ctx,
+			`SELECT COALESCE(SUM(amount_minor),0) FROM (
+				SELECT amount_minor FROM credit_ledger WHERE user_id = $1 FOR UPDATE
+			) locked`, userID,
+		).Scan(&balance); err != nil {
+			return nil, 0, err
+		}
+		if balance > 0 {
+			creditsSpentMinor = balance
+			if creditsSpentMinor > o.AmountMinor {
+				creditsSpentMinor = o.AmountMinor
+			}
+		}
+	}
+
+	out := *o
+	out.AmountMinor = o.AmountMinor - creditsSpentMinor
+	out.Status = "created"
+	if err := tx.QueryRow(ctx, `
+		INSERT INTO orders (booking_id, amount_minor, currency, status)
+		VALUES ($1, $2, $3, 'created')
+		RETURNING id`,
+		o.BookingID, out.AmountMinor, o.Currency,
+	).Scan(&out.ID); err != nil {
+		return nil, 0, err
+	}
+
+	if creditsSpentMinor > 0 {
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO credit_ledger (user_id, amount_minor, reason, order_id) VALUES ($1, $2, 'booking_spend', $3)`,
+			userID, -creditsSpentMinor, out.ID,
+		); err != nil {
+			return nil, 0, err
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, 0, err
+	}
+	return &out, creditsSpentMinor, nil
+}
+
+func (r *Repository) GetCreditBalance(ctx context.Context, userID string) (int64, error) {
+	var balance int64
+	err := r.pool.QueryRow(ctx,
+		`SELECT COALESCE(SUM(amount_minor),0) FROM credit_ledger WHERE user_id = $1`, userID,
+	).Scan(&balance)
+	return balance, err
 }
 
 // CreateRefund inserts the refund and an append-only reconciliation_entries

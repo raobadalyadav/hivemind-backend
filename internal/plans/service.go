@@ -54,6 +54,17 @@ func (s *Service) GetPlan(ctx context.Context, id string) (*Plan, error) {
 	return s.repo.Get(ctx, id)
 }
 
+// GetPlanHostID satisfies promotions.PlanHostChecker — PurchasePromotion
+// uses it to verify the caller actually hosts the plan being promoted,
+// without importing this package's concrete Plan type.
+func (s *Service) GetPlanHostID(ctx context.Context, id string) (string, error) {
+	p, err := s.GetPlan(ctx, id)
+	if err != nil {
+		return "", err
+	}
+	return p.HostID, nil
+}
+
 func (s *Service) SearchPlans(ctx context.Context, f SearchFilter) ([]*Plan, error) {
 	return s.repo.Search(ctx, f, defaultSearchLimit)
 }

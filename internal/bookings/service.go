@@ -116,6 +116,17 @@ func (s *Service) GetBooking(ctx context.Context, id string) (*Booking, error) {
 	return s.repo.Get(ctx, id)
 }
 
+// GetBookingForReview satisfies reviews.BookingChecker — CreateReview uses
+// it to derive plan_id/user_id from the booking itself (never the request)
+// and to require the booking be 'attended' before a review can exist.
+func (s *Service) GetBookingForReview(ctx context.Context, id string) (planID, userID, status string, err error) {
+	b, err := s.GetBooking(ctx, id)
+	if err != nil {
+		return "", "", "", err
+	}
+	return b.PlanID, b.UserID, b.Status, nil
+}
+
 // GetBookingOwnerID satisfies payments.BookingOwnerChecker — payments.CreateOrder
 // uses it to verify the caller actually owns the booking they're paying
 // for, without importing this package's concrete Booking type.
