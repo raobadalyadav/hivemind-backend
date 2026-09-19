@@ -8,8 +8,10 @@ package admin
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -374,4 +376,125 @@ func (r *Repository) GetDashboardStats(ctx context.Context, cityID string) (*Das
 		return nil, err
 	}
 	return &stats, nil
+}
+
+type SOSEvent struct {
+	ID, UserID, UserName, PlanID string
+	Lat, Lng                     *float64
+	Note, Delivery, DeliveryErr  string
+	Acknowledged                 bool
+	CreatedAt                    time.Time
+}
+
+func (r *Repository) ListSOSEvents(ctx context.Context, onlyOpen bool, limit int) ([]SOSEvent, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT e.id::text, e.user_id::text, COALESCE(up.display_name,''), COALESCE(e.plan_id::text,''),
+			e.latitude, e.longitude, e.note, e.contact_delivery, e.delivery_error, e.acknowledged_at IS NOT NULL, e.created_at
+		FROM sos_events e LEFT JOIN user_profiles up ON up.user_id = e.user_id
+		WHERE (NOT $1 OR e.acknowledged_at IS NULL)
+		ORDER BY e.created_at DESC LIMIT $2`, onlyOpen, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []SOSEvent
+	for rows.Next() {
+		var e SOSEvent
+		if err := rows.Scan(&e.ID, &e.UserID, &e.UserName, &e.PlanID, &e.Lat, &e.Lng, &e.Note,
+			&e.Delivery, &e.DeliveryErr, &e.Acknowledged, &e.CreatedAt); err != nil {
+			return nil, err
+		}
+		out = append(out, e)
+	}
+	return out, rows.Err()
+}
+
+// AcknowledgeSOSEvent stamps the first acknowledgement only (the WHERE keeps
+// a later admin from overwriting who handled it) and audits it in the same tx.
+func (r *Repository) AcknowledgeSOSEvent(ctx context.Context, sosID, actorID string) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	tag, err := tx.Exec(ctx, `
+		UPDATE sos_events SET acknowledged_by = $2, acknowledged_at = now()
+		WHERE id = $1 AND acknowledged_at IS NULL`, sosID, actorID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 1 {
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO audit_logs (actor_id, action, subject_type, subject_id, details)
+			VALUES ($1, 'acknowledge_sos', 'sos_event', $2, '{}')`, actorID, sosID); err != nil {
+			return err
+		}
+	} else {
+		var exists bool
+		if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM sos_events WHERE id = $1)`, sosID).Scan(&exists); err != nil {
+			return err
+		}
+		if !exists {
+			return ErrNotFound
+		}
+	}
+	return tx.Commit(ctx)
+}
+
+type ExternalEvent struct {
+	ID, CityID, CategoryID, Title, Description, Source, SourceURL, VenueName, ImageURL string
+	StartsAt                                                                           time.Time
+	EndsAt                                                                             *time.Time
+}
+
+func (r *Repository) CreateExternalEvent(ctx context.Context, e ExternalEvent, actorID string) (*ExternalEvent, error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+	out := e
+	if err := tx.QueryRow(ctx, `
+		INSERT INTO external_events (city_id, category_id, title, description, source, source_url, venue_name, image_url,
+			starts_at, ends_at, created_by)
+		VALUES ($1::uuid, NULLIF($2,'')::uuid, $3, $4, $5, $6, $7, $8, $9, $10, $11::uuid)
+		RETURNING id::text`,
+		e.CityID, e.CategoryID, e.Title, e.Description, e.Source, e.SourceURL, e.VenueName, e.ImageURL,
+		e.StartsAt, e.EndsAt, actorID).Scan(&out.ID); err != nil {
+		return nil, err
+	}
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO audit_logs (actor_id, action, subject_type, subject_id, details)
+		VALUES ($1, 'create_external_event', 'external_event', $2, jsonb_build_object('title', $3::text))`,
+		actorID, out.ID, e.Title); err != nil {
+		return nil, err
+	}
+	return &out, tx.Commit(ctx)
+}
+
+func (r *Repository) DeactivateExternalEvent(ctx context.Context, eventID, actorID string) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	var wasActive bool
+	err = tx.QueryRow(ctx, `
+		UPDATE external_events x SET active = false
+		FROM (SELECT id, active FROM external_events WHERE id = $1 FOR UPDATE) old
+		WHERE x.id = old.id RETURNING old.active`, eventID).Scan(&wasActive)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrNotFound
+	}
+	if err != nil {
+		return err
+	}
+	if wasActive {
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO audit_logs (actor_id, action, subject_type, subject_id, details)
+			VALUES ($1, 'deactivate_external_event', 'external_event', $2, '{}')`, actorID, eventID); err != nil {
+			return err
+		}
+	}
+	return tx.Commit(ctx)
 }

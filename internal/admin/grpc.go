@@ -6,6 +6,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
 	"github.com/hivemind/backend/pkg/grpcmiddleware"
@@ -193,4 +194,78 @@ func couponToProto(c *Coupon) *socialv1.Coupon {
 		UsesCount:     c.UsesCount,
 		Active:        c.Active,
 	}
+}
+
+func adminErr(err error, fallback string) error {
+	switch err {
+	case ErrInvalidInput:
+		return status.Error(codes.InvalidArgument, err.Error())
+	case ErrNotFound:
+		return status.Error(codes.NotFound, err.Error())
+	}
+	return status.Error(codes.Internal, fallback)
+}
+
+func (h *Handler) ListSOSEvents(ctx context.Context, req *socialv1.ListSOSEventsRequest) (*socialv1.ListSOSEventsResponse, error) {
+	list, err := h.svc.ListSOSEvents(ctx, req.GetOnlyUnacknowledged(), req.GetLimit())
+	if err != nil {
+		return nil, adminErr(err, "failed to list SOS events")
+	}
+	out := &socialv1.ListSOSEventsResponse{}
+	for _, e := range list {
+		ev := &socialv1.SOSEvent{
+			Id: e.ID, UserId: e.UserID, UserName: e.UserName, PlanId: e.PlanID, Note: e.Note,
+			ContactDelivery: e.Delivery, DeliveryError: e.DeliveryErr, Acknowledged: e.Acknowledged,
+			CreatedAt: timestamppb.New(e.CreatedAt),
+		}
+		if e.Lat != nil && e.Lng != nil {
+			ev.Latitude, ev.Longitude, ev.HasLocation = *e.Lat, *e.Lng, true
+		}
+		out.Events = append(out.Events, ev)
+	}
+	return out, nil
+}
+
+func (h *Handler) AcknowledgeSOSEvent(ctx context.Context, req *socialv1.AcknowledgeSOSEventRequest) (*socialv1.AcknowledgeSOSEventResponse, error) {
+	actorID, _ := grpcmiddleware.UserIDFromContext(ctx)
+	if err := h.svc.AcknowledgeSOSEvent(ctx, req.GetSosId(), actorID); err != nil {
+		return nil, adminErr(err, "failed to acknowledge SOS event")
+	}
+	return &socialv1.AcknowledgeSOSEventResponse{}, nil
+}
+
+func (h *Handler) CreateExternalEvent(ctx context.Context, req *socialv1.CreateExternalEventRequest) (*socialv1.ExternalEvent, error) {
+	actorID, _ := grpcmiddleware.UserIDFromContext(ctx)
+	e := ExternalEvent{
+		CityID: req.GetCityId(), CategoryID: req.GetCategoryId(), Title: req.GetTitle(), Description: req.GetDescription(),
+		Source: req.GetSource(), SourceURL: req.GetSourceUrl(), VenueName: req.GetVenueName(), ImageURL: req.GetImageUrl(),
+	}
+	if req.GetStartsAt() != nil {
+		e.StartsAt = req.GetStartsAt().AsTime()
+	}
+	if req.GetEndsAt() != nil {
+		t := req.GetEndsAt().AsTime()
+		e.EndsAt = &t
+	}
+	out, err := h.svc.CreateExternalEvent(ctx, e, actorID)
+	if err != nil {
+		return nil, adminErr(err, "failed to create external event")
+	}
+	pe := &socialv1.ExternalEvent{
+		Id: out.ID, CityId: out.CityID, CategoryId: out.CategoryID, Title: out.Title, Description: out.Description,
+		Source: out.Source, SourceUrl: out.SourceURL, VenueName: out.VenueName, ImageUrl: out.ImageURL,
+		StartsAt: timestamppb.New(out.StartsAt),
+	}
+	if out.EndsAt != nil {
+		pe.EndsAt = timestamppb.New(*out.EndsAt)
+	}
+	return pe, nil
+}
+
+func (h *Handler) DeactivateExternalEvent(ctx context.Context, req *socialv1.DeactivateExternalEventRequest) (*socialv1.DeactivateExternalEventResponse, error) {
+	actorID, _ := grpcmiddleware.UserIDFromContext(ctx)
+	if err := h.svc.DeactivateExternalEvent(ctx, req.GetEventId(), actorID); err != nil {
+		return nil, adminErr(err, "failed to deactivate external event")
+	}
+	return &socialv1.DeactivateExternalEventResponse{}, nil
 }

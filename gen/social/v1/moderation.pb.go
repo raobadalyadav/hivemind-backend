@@ -548,6 +548,218 @@ func (x *TrustBadges) GetBadges() []string {
 	return nil
 }
 
+type ListBlockedUsersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListBlockedUsersRequest) Reset() {
+	*x = ListBlockedUsersRequest{}
+	mi := &file_social_v1_moderation_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListBlockedUsersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListBlockedUsersRequest) ProtoMessage() {}
+
+func (x *ListBlockedUsersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_moderation_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListBlockedUsersRequest.ProtoReflect.Descriptor instead.
+func (*ListBlockedUsersRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_moderation_proto_rawDescGZIP(), []int{8}
+}
+
+type BlockedUser struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	DisplayName   string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BlockedUser) Reset() {
+	*x = BlockedUser{}
+	mi := &file_social_v1_moderation_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BlockedUser) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BlockedUser) ProtoMessage() {}
+
+func (x *BlockedUser) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_moderation_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BlockedUser.ProtoReflect.Descriptor instead.
+func (*BlockedUser) Descriptor() ([]byte, []int) {
+	return file_social_v1_moderation_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *BlockedUser) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *BlockedUser) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+type ListBlockedUsersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Users         []*BlockedUser         `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListBlockedUsersResponse) Reset() {
+	*x = ListBlockedUsersResponse{}
+	mi := &file_social_v1_moderation_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListBlockedUsersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListBlockedUsersResponse) ProtoMessage() {}
+
+func (x *ListBlockedUsersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_moderation_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListBlockedUsersResponse.ProtoReflect.Descriptor instead.
+func (*ListBlockedUsersResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_moderation_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ListBlockedUsersResponse) GetUsers() []*BlockedUser {
+	if x != nil {
+		return x.Users
+	}
+	return nil
+}
+
+type UnblockUserRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BlockedUserId string                 `protobuf:"bytes,1,opt,name=blocked_user_id,json=blockedUserId,proto3" json:"blocked_user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnblockUserRequest) Reset() {
+	*x = UnblockUserRequest{}
+	mi := &file_social_v1_moderation_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnblockUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnblockUserRequest) ProtoMessage() {}
+
+func (x *UnblockUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_moderation_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnblockUserRequest.ProtoReflect.Descriptor instead.
+func (*UnblockUserRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_moderation_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *UnblockUserRequest) GetBlockedUserId() string {
+	if x != nil {
+		return x.BlockedUserId
+	}
+	return ""
+}
+
+type UnblockUserResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnblockUserResponse) Reset() {
+	*x = UnblockUserResponse{}
+	mi := &file_social_v1_moderation_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnblockUserResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnblockUserResponse) ProtoMessage() {}
+
+func (x *UnblockUserResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_moderation_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnblockUserResponse.ProtoReflect.Descriptor instead.
+func (*UnblockUserResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_moderation_proto_rawDescGZIP(), []int{12}
+}
+
 var File_social_v1_moderation_proto protoreflect.FileDescriptor
 
 const file_social_v1_moderation_proto_rawDesc = "" +
@@ -593,19 +805,30 @@ const file_social_v1_moderation_proto_rawDesc = "" +
 	"\x15GetTrustBadgesRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\"%\n" +
 	"\vTrustBadges\x12\x16\n" +
-	"\x06badges\x18\x01 \x03(\tR\x06badges*a\n" +
+	"\x06badges\x18\x01 \x03(\tR\x06badges\"\x19\n" +
+	"\x17ListBlockedUsersRequest\"I\n" +
+	"\vBlockedUser\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
+	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\"H\n" +
+	"\x18ListBlockedUsersResponse\x12,\n" +
+	"\x05users\x18\x01 \x03(\v2\x16.social.v1.BlockedUserR\x05users\"<\n" +
+	"\x12UnblockUserRequest\x12&\n" +
+	"\x0fblocked_user_id\x18\x01 \x01(\tR\rblockedUserId\"\x15\n" +
+	"\x13UnblockUserResponse*a\n" +
 	"\n" +
 	"CaseStatus\x12\x1b\n" +
 	"\x17CASE_STATUS_UNSPECIFIED\x10\x00\x12\b\n" +
 	"\x04OPEN\x10\x01\x12\x10\n" +
 	"\fUNDER_REVIEW\x10\x02\x12\f\n" +
 	"\bRESOLVED\x10\x03\x12\f\n" +
-	"\bAPPEALED\x10\x042\xfc\x02\n" +
+	"\bAPPEALED\x10\x042\xa7\x04\n" +
 	"\x11ModerationService\x12I\n" +
 	"\fSubmitReport\x12\x1e.social.v1.SubmitReportRequest\x1a\x19.social.v1.ModerationCase\x12?\n" +
 	"\aGetCase\x12\x19.social.v1.GetCaseRequest\x1a\x19.social.v1.ModerationCase\x12G\n" +
 	"\vResolveCase\x12\x1d.social.v1.ResolveCaseRequest\x1a\x19.social.v1.ModerationCase\x12F\n" +
-	"\tBlockUser\x12\x1b.social.v1.BlockUserRequest\x1a\x1c.social.v1.BlockUserResponse\x12J\n" +
+	"\tBlockUser\x12\x1b.social.v1.BlockUserRequest\x1a\x1c.social.v1.BlockUserResponse\x12[\n" +
+	"\x10ListBlockedUsers\x12\".social.v1.ListBlockedUsersRequest\x1a#.social.v1.ListBlockedUsersResponse\x12L\n" +
+	"\vUnblockUser\x12\x1d.social.v1.UnblockUserRequest\x1a\x1e.social.v1.UnblockUserResponse\x12J\n" +
 	"\x0eGetTrustBadges\x12 .social.v1.GetTrustBadgesRequest\x1a\x16.social.v1.TrustBadgesB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
 var (
@@ -621,37 +844,47 @@ func file_social_v1_moderation_proto_rawDescGZIP() []byte {
 }
 
 var file_social_v1_moderation_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_social_v1_moderation_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_social_v1_moderation_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_social_v1_moderation_proto_goTypes = []any{
-	(CaseStatus)(0),               // 0: social.v1.CaseStatus
-	(*ModerationCase)(nil),        // 1: social.v1.ModerationCase
-	(*SubmitReportRequest)(nil),   // 2: social.v1.SubmitReportRequest
-	(*GetCaseRequest)(nil),        // 3: social.v1.GetCaseRequest
-	(*ResolveCaseRequest)(nil),    // 4: social.v1.ResolveCaseRequest
-	(*BlockUserRequest)(nil),      // 5: social.v1.BlockUserRequest
-	(*BlockUserResponse)(nil),     // 6: social.v1.BlockUserResponse
-	(*GetTrustBadgesRequest)(nil), // 7: social.v1.GetTrustBadgesRequest
-	(*TrustBadges)(nil),           // 8: social.v1.TrustBadges
-	(*Audit)(nil),                 // 9: social.v1.Audit
+	(CaseStatus)(0),                  // 0: social.v1.CaseStatus
+	(*ModerationCase)(nil),           // 1: social.v1.ModerationCase
+	(*SubmitReportRequest)(nil),      // 2: social.v1.SubmitReportRequest
+	(*GetCaseRequest)(nil),           // 3: social.v1.GetCaseRequest
+	(*ResolveCaseRequest)(nil),       // 4: social.v1.ResolveCaseRequest
+	(*BlockUserRequest)(nil),         // 5: social.v1.BlockUserRequest
+	(*BlockUserResponse)(nil),        // 6: social.v1.BlockUserResponse
+	(*GetTrustBadgesRequest)(nil),    // 7: social.v1.GetTrustBadgesRequest
+	(*TrustBadges)(nil),              // 8: social.v1.TrustBadges
+	(*ListBlockedUsersRequest)(nil),  // 9: social.v1.ListBlockedUsersRequest
+	(*BlockedUser)(nil),              // 10: social.v1.BlockedUser
+	(*ListBlockedUsersResponse)(nil), // 11: social.v1.ListBlockedUsersResponse
+	(*UnblockUserRequest)(nil),       // 12: social.v1.UnblockUserRequest
+	(*UnblockUserResponse)(nil),      // 13: social.v1.UnblockUserResponse
+	(*Audit)(nil),                    // 14: social.v1.Audit
 }
 var file_social_v1_moderation_proto_depIdxs = []int32{
-	0, // 0: social.v1.ModerationCase.status:type_name -> social.v1.CaseStatus
-	9, // 1: social.v1.ModerationCase.audit:type_name -> social.v1.Audit
-	2, // 2: social.v1.ModerationService.SubmitReport:input_type -> social.v1.SubmitReportRequest
-	3, // 3: social.v1.ModerationService.GetCase:input_type -> social.v1.GetCaseRequest
-	4, // 4: social.v1.ModerationService.ResolveCase:input_type -> social.v1.ResolveCaseRequest
-	5, // 5: social.v1.ModerationService.BlockUser:input_type -> social.v1.BlockUserRequest
-	7, // 6: social.v1.ModerationService.GetTrustBadges:input_type -> social.v1.GetTrustBadgesRequest
-	1, // 7: social.v1.ModerationService.SubmitReport:output_type -> social.v1.ModerationCase
-	1, // 8: social.v1.ModerationService.GetCase:output_type -> social.v1.ModerationCase
-	1, // 9: social.v1.ModerationService.ResolveCase:output_type -> social.v1.ModerationCase
-	6, // 10: social.v1.ModerationService.BlockUser:output_type -> social.v1.BlockUserResponse
-	8, // 11: social.v1.ModerationService.GetTrustBadges:output_type -> social.v1.TrustBadges
-	7, // [7:12] is the sub-list for method output_type
-	2, // [2:7] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	0,  // 0: social.v1.ModerationCase.status:type_name -> social.v1.CaseStatus
+	14, // 1: social.v1.ModerationCase.audit:type_name -> social.v1.Audit
+	10, // 2: social.v1.ListBlockedUsersResponse.users:type_name -> social.v1.BlockedUser
+	2,  // 3: social.v1.ModerationService.SubmitReport:input_type -> social.v1.SubmitReportRequest
+	3,  // 4: social.v1.ModerationService.GetCase:input_type -> social.v1.GetCaseRequest
+	4,  // 5: social.v1.ModerationService.ResolveCase:input_type -> social.v1.ResolveCaseRequest
+	5,  // 6: social.v1.ModerationService.BlockUser:input_type -> social.v1.BlockUserRequest
+	9,  // 7: social.v1.ModerationService.ListBlockedUsers:input_type -> social.v1.ListBlockedUsersRequest
+	12, // 8: social.v1.ModerationService.UnblockUser:input_type -> social.v1.UnblockUserRequest
+	7,  // 9: social.v1.ModerationService.GetTrustBadges:input_type -> social.v1.GetTrustBadgesRequest
+	1,  // 10: social.v1.ModerationService.SubmitReport:output_type -> social.v1.ModerationCase
+	1,  // 11: social.v1.ModerationService.GetCase:output_type -> social.v1.ModerationCase
+	1,  // 12: social.v1.ModerationService.ResolveCase:output_type -> social.v1.ModerationCase
+	6,  // 13: social.v1.ModerationService.BlockUser:output_type -> social.v1.BlockUserResponse
+	11, // 14: social.v1.ModerationService.ListBlockedUsers:output_type -> social.v1.ListBlockedUsersResponse
+	13, // 15: social.v1.ModerationService.UnblockUser:output_type -> social.v1.UnblockUserResponse
+	8,  // 16: social.v1.ModerationService.GetTrustBadges:output_type -> social.v1.TrustBadges
+	10, // [10:17] is the sub-list for method output_type
+	3,  // [3:10] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_moderation_proto_init() }
@@ -666,7 +899,7 @@ func file_social_v1_moderation_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_moderation_proto_rawDesc), len(file_social_v1_moderation_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   8,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

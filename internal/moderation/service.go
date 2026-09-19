@@ -75,3 +75,17 @@ func (s *Service) BlockUser(ctx context.Context, userID, blockedUserID string) e
 	}
 	return s.repo.BlockUser(ctx, userID, blockedUserID)
 }
+
+func (s *Service) ListBlockedUsers(ctx context.Context, userID string) ([]BlockedUser, error) {
+	if userID == "" {
+		return nil, ErrInvalidInput
+	}
+	return s.repo.ListBlocked(ctx, userID)
+}
+
+func (s *Service) UnblockUser(ctx context.Context, userID, blockedUserID string) error {
+	if userID == "" || blockedUserID == "" {
+		return ErrInvalidInput
+	}
+	return s.repo.UnblockUser(ctx, userID, blockedUserID)
+}

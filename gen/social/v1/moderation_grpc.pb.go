@@ -19,11 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ModerationService_SubmitReport_FullMethodName   = "/social.v1.ModerationService/SubmitReport"
-	ModerationService_GetCase_FullMethodName        = "/social.v1.ModerationService/GetCase"
-	ModerationService_ResolveCase_FullMethodName    = "/social.v1.ModerationService/ResolveCase"
-	ModerationService_BlockUser_FullMethodName      = "/social.v1.ModerationService/BlockUser"
-	ModerationService_GetTrustBadges_FullMethodName = "/social.v1.ModerationService/GetTrustBadges"
+	ModerationService_SubmitReport_FullMethodName     = "/social.v1.ModerationService/SubmitReport"
+	ModerationService_GetCase_FullMethodName          = "/social.v1.ModerationService/GetCase"
+	ModerationService_ResolveCase_FullMethodName      = "/social.v1.ModerationService/ResolveCase"
+	ModerationService_BlockUser_FullMethodName        = "/social.v1.ModerationService/BlockUser"
+	ModerationService_ListBlockedUsers_FullMethodName = "/social.v1.ModerationService/ListBlockedUsers"
+	ModerationService_UnblockUser_FullMethodName      = "/social.v1.ModerationService/UnblockUser"
+	ModerationService_GetTrustBadges_FullMethodName   = "/social.v1.ModerationService/GetTrustBadges"
 )
 
 // ModerationServiceClient is the client API for ModerationService service.
@@ -36,6 +38,9 @@ type ModerationServiceClient interface {
 	GetCase(ctx context.Context, in *GetCaseRequest, opts ...grpc.CallOption) (*ModerationCase, error)
 	ResolveCase(ctx context.Context, in *ResolveCaseRequest, opts ...grpc.CallOption) (*ModerationCase, error)
 	BlockUser(ctx context.Context, in *BlockUserRequest, opts ...grpc.CallOption) (*BlockUserResponse, error)
+	// Blocked-users list and undo (flow.md §44 Safety Center). Caller-keyed.
+	ListBlockedUsers(ctx context.Context, in *ListBlockedUsersRequest, opts ...grpc.CallOption) (*ListBlockedUsersResponse, error)
+	UnblockUser(ctx context.Context, in *UnblockUserRequest, opts ...grpc.CallOption) (*UnblockUserResponse, error)
 	// GetTrustBadges — PRD §22: derived booleans/badges only, never a raw
 	// numeric risk score exposed to clients.
 	GetTrustBadges(ctx context.Context, in *GetTrustBadgesRequest, opts ...grpc.CallOption) (*TrustBadges, error)
@@ -89,6 +94,26 @@ func (c *moderationServiceClient) BlockUser(ctx context.Context, in *BlockUserRe
 	return out, nil
 }
 
+func (c *moderationServiceClient) ListBlockedUsers(ctx context.Context, in *ListBlockedUsersRequest, opts ...grpc.CallOption) (*ListBlockedUsersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListBlockedUsersResponse)
+	err := c.cc.Invoke(ctx, ModerationService_ListBlockedUsers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *moderationServiceClient) UnblockUser(ctx context.Context, in *UnblockUserRequest, opts ...grpc.CallOption) (*UnblockUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UnblockUserResponse)
+	err := c.cc.Invoke(ctx, ModerationService_UnblockUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *moderationServiceClient) GetTrustBadges(ctx context.Context, in *GetTrustBadgesRequest, opts ...grpc.CallOption) (*TrustBadges, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(TrustBadges)
@@ -109,6 +134,9 @@ type ModerationServiceServer interface {
 	GetCase(context.Context, *GetCaseRequest) (*ModerationCase, error)
 	ResolveCase(context.Context, *ResolveCaseRequest) (*ModerationCase, error)
 	BlockUser(context.Context, *BlockUserRequest) (*BlockUserResponse, error)
+	// Blocked-users list and undo (flow.md §44 Safety Center). Caller-keyed.
+	ListBlockedUsers(context.Context, *ListBlockedUsersRequest) (*ListBlockedUsersResponse, error)
+	UnblockUser(context.Context, *UnblockUserRequest) (*UnblockUserResponse, error)
 	// GetTrustBadges — PRD §22: derived booleans/badges only, never a raw
 	// numeric risk score exposed to clients.
 	GetTrustBadges(context.Context, *GetTrustBadgesRequest) (*TrustBadges, error)
@@ -133,6 +161,12 @@ func (UnimplementedModerationServiceServer) ResolveCase(context.Context, *Resolv
 }
 func (UnimplementedModerationServiceServer) BlockUser(context.Context, *BlockUserRequest) (*BlockUserResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method BlockUser not implemented")
+}
+func (UnimplementedModerationServiceServer) ListBlockedUsers(context.Context, *ListBlockedUsersRequest) (*ListBlockedUsersResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListBlockedUsers not implemented")
+}
+func (UnimplementedModerationServiceServer) UnblockUser(context.Context, *UnblockUserRequest) (*UnblockUserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UnblockUser not implemented")
 }
 func (UnimplementedModerationServiceServer) GetTrustBadges(context.Context, *GetTrustBadgesRequest) (*TrustBadges, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetTrustBadges not implemented")
@@ -230,6 +264,42 @@ func _ModerationService_BlockUser_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ModerationService_ListBlockedUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListBlockedUsersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModerationServiceServer).ListBlockedUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ModerationService_ListBlockedUsers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModerationServiceServer).ListBlockedUsers(ctx, req.(*ListBlockedUsersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ModerationService_UnblockUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnblockUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModerationServiceServer).UnblockUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ModerationService_UnblockUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModerationServiceServer).UnblockUser(ctx, req.(*UnblockUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ModerationService_GetTrustBadges_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetTrustBadgesRequest)
 	if err := dec(in); err != nil {
@@ -270,6 +340,14 @@ var ModerationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BlockUser",
 			Handler:    _ModerationService_BlockUser_Handler,
+		},
+		{
+			MethodName: "ListBlockedUsers",
+			Handler:    _ModerationService_ListBlockedUsers_Handler,
+		},
+		{
+			MethodName: "UnblockUser",
+			Handler:    _ModerationService_UnblockUser_Handler,
 		},
 		{
 			MethodName: "GetTrustBadges",

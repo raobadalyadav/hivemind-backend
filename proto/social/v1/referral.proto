@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package social.v1;
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// ReferralService — flow.md §50. A new user applies a friend's code within a
+// week of signing up; both get a platform credit (append-only credit_ledger).
+service ReferralService {
+  rpc GetMyReferralCode(GetMyReferralCodeRequest) returns (ReferralCode);
+  rpc ApplyReferralCode(ApplyReferralCodeRequest) returns (ApplyReferralCodeResponse);
+  rpc GetReferralStats(GetReferralStatsRequest) returns (ReferralStats);
+}
+
+message GetMyReferralCodeRequest {}
+message ReferralCode {
+  string code = 1;
+  int64 reward_minor = 2; // what each side gets, in paise
+  string currency = 3;
+}
+
+message ApplyReferralCodeRequest {
+  string code = 1;
+}
+message ApplyReferralCodeResponse {
+  int64 reward_minor = 1;
+  string currency = 2;
+}
+
+message GetReferralStatsRequest {}
+message ReferralStats {
+  int32 referral_count = 1;
+  int32 referral_cap = 2;
+  int64 total_earned_minor = 3;
+  string currency = 4;
+}

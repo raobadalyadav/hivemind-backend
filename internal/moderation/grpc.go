@@ -89,6 +89,36 @@ func (h *Handler) BlockUser(ctx context.Context, req *socialv1.BlockUserRequest)
 	return &socialv1.BlockUserResponse{}, nil
 }
 
+func (h *Handler) ListBlockedUsers(ctx context.Context, _ *socialv1.ListBlockedUsersRequest) (*socialv1.ListBlockedUsersResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	list, err := h.svc.ListBlockedUsers(ctx, userID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list blocked users")
+	}
+	out := &socialv1.ListBlockedUsersResponse{}
+	for _, u := range list {
+		out.Users = append(out.Users, &socialv1.BlockedUser{UserId: u.UserID, DisplayName: u.DisplayName})
+	}
+	return out, nil
+}
+
+func (h *Handler) UnblockUser(ctx context.Context, req *socialv1.UnblockUserRequest) (*socialv1.UnblockUserResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	if err := h.svc.UnblockUser(ctx, userID, req.GetBlockedUserId()); err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to unblock user")
+	}
+	return &socialv1.UnblockUserResponse{}, nil
+}
+
 var statusToProtoMap = map[string]socialv1.CaseStatus{
 	"open":         socialv1.CaseStatus_OPEN,
 	"under_review": socialv1.CaseStatus_UNDER_REVIEW,

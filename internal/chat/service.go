@@ -350,3 +350,13 @@ func (s *Service) ReportMessage(ctx context.Context, messageID, reporterID, reas
 	}
 	return s.reporter.SubmitReportForSubject(ctx, reporterID, "message", messageID, reason)
 }
+
+// AddRoomMember adds a user to an existing room (idempotent). It performs no
+// authorization itself — callers (e.g. internal/externalevents) must have
+// established the user's right to join first.
+func (s *Service) AddRoomMember(ctx context.Context, roomID, userID string) error {
+	if roomID == "" || userID == "" {
+		return ErrInvalidInput
+	}
+	return s.repo.AddMember(ctx, roomID, userID)
+}

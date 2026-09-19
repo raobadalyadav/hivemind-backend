@@ -1366,11 +1366,515 @@ func (*UpdateCityStatusResponse) Descriptor() ([]byte, []int) {
 	return file_social_v1_admin_proto_rawDescGZIP(), []int{25}
 }
 
+type SOSEvent struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Id              string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	UserId          string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserName        string                 `protobuf:"bytes,3,opt,name=user_name,json=userName,proto3" json:"user_name,omitempty"`
+	PlanId          string                 `protobuf:"bytes,4,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	Latitude        float64                `protobuf:"fixed64,5,opt,name=latitude,proto3" json:"latitude,omitempty"`
+	Longitude       float64                `protobuf:"fixed64,6,opt,name=longitude,proto3" json:"longitude,omitempty"`
+	HasLocation     bool                   `protobuf:"varint,7,opt,name=has_location,json=hasLocation,proto3" json:"has_location,omitempty"`
+	Note            string                 `protobuf:"bytes,8,opt,name=note,proto3" json:"note,omitempty"`
+	ContactDelivery string                 `protobuf:"bytes,9,opt,name=contact_delivery,json=contactDelivery,proto3" json:"contact_delivery,omitempty"` // sent | failed | no_contact
+	DeliveryError   string                 `protobuf:"bytes,10,opt,name=delivery_error,json=deliveryError,proto3" json:"delivery_error,omitempty"`
+	Acknowledged    bool                   `protobuf:"varint,11,opt,name=acknowledged,proto3" json:"acknowledged,omitempty"`
+	CreatedAt       *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *SOSEvent) Reset() {
+	*x = SOSEvent{}
+	mi := &file_social_v1_admin_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SOSEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SOSEvent) ProtoMessage() {}
+
+func (x *SOSEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SOSEvent.ProtoReflect.Descriptor instead.
+func (*SOSEvent) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *SOSEvent) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *SOSEvent) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *SOSEvent) GetUserName() string {
+	if x != nil {
+		return x.UserName
+	}
+	return ""
+}
+
+func (x *SOSEvent) GetPlanId() string {
+	if x != nil {
+		return x.PlanId
+	}
+	return ""
+}
+
+func (x *SOSEvent) GetLatitude() float64 {
+	if x != nil {
+		return x.Latitude
+	}
+	return 0
+}
+
+func (x *SOSEvent) GetLongitude() float64 {
+	if x != nil {
+		return x.Longitude
+	}
+	return 0
+}
+
+func (x *SOSEvent) GetHasLocation() bool {
+	if x != nil {
+		return x.HasLocation
+	}
+	return false
+}
+
+func (x *SOSEvent) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+func (x *SOSEvent) GetContactDelivery() string {
+	if x != nil {
+		return x.ContactDelivery
+	}
+	return ""
+}
+
+func (x *SOSEvent) GetDeliveryError() string {
+	if x != nil {
+		return x.DeliveryError
+	}
+	return ""
+}
+
+func (x *SOSEvent) GetAcknowledged() bool {
+	if x != nil {
+		return x.Acknowledged
+	}
+	return false
+}
+
+func (x *SOSEvent) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+type ListSOSEventsRequest struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	OnlyUnacknowledged bool                   `protobuf:"varint,1,opt,name=only_unacknowledged,json=onlyUnacknowledged,proto3" json:"only_unacknowledged,omitempty"`
+	Limit              int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *ListSOSEventsRequest) Reset() {
+	*x = ListSOSEventsRequest{}
+	mi := &file_social_v1_admin_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSOSEventsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSOSEventsRequest) ProtoMessage() {}
+
+func (x *ListSOSEventsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSOSEventsRequest.ProtoReflect.Descriptor instead.
+func (*ListSOSEventsRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *ListSOSEventsRequest) GetOnlyUnacknowledged() bool {
+	if x != nil {
+		return x.OnlyUnacknowledged
+	}
+	return false
+}
+
+func (x *ListSOSEventsRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+type ListSOSEventsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Events        []*SOSEvent            `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSOSEventsResponse) Reset() {
+	*x = ListSOSEventsResponse{}
+	mi := &file_social_v1_admin_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSOSEventsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSOSEventsResponse) ProtoMessage() {}
+
+func (x *ListSOSEventsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSOSEventsResponse.ProtoReflect.Descriptor instead.
+func (*ListSOSEventsResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *ListSOSEventsResponse) GetEvents() []*SOSEvent {
+	if x != nil {
+		return x.Events
+	}
+	return nil
+}
+
+type AcknowledgeSOSEventRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SosId         string                 `protobuf:"bytes,1,opt,name=sos_id,json=sosId,proto3" json:"sos_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AcknowledgeSOSEventRequest) Reset() {
+	*x = AcknowledgeSOSEventRequest{}
+	mi := &file_social_v1_admin_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AcknowledgeSOSEventRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AcknowledgeSOSEventRequest) ProtoMessage() {}
+
+func (x *AcknowledgeSOSEventRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AcknowledgeSOSEventRequest.ProtoReflect.Descriptor instead.
+func (*AcknowledgeSOSEventRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *AcknowledgeSOSEventRequest) GetSosId() string {
+	if x != nil {
+		return x.SosId
+	}
+	return ""
+}
+
+type AcknowledgeSOSEventResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AcknowledgeSOSEventResponse) Reset() {
+	*x = AcknowledgeSOSEventResponse{}
+	mi := &file_social_v1_admin_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AcknowledgeSOSEventResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AcknowledgeSOSEventResponse) ProtoMessage() {}
+
+func (x *AcknowledgeSOSEventResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AcknowledgeSOSEventResponse.ProtoReflect.Descriptor instead.
+func (*AcknowledgeSOSEventResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{30}
+}
+
+type CreateExternalEventRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CityId        string                 `protobuf:"bytes,1,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"`
+	CategoryId    string                 `protobuf:"bytes,2,opt,name=category_id,json=categoryId,proto3" json:"category_id,omitempty"`
+	Title         string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
+	Description   string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	Source        string                 `protobuf:"bytes,5,opt,name=source,proto3" json:"source,omitempty"`
+	SourceUrl     string                 `protobuf:"bytes,6,opt,name=source_url,json=sourceUrl,proto3" json:"source_url,omitempty"` // http(s)
+	VenueName     string                 `protobuf:"bytes,7,opt,name=venue_name,json=venueName,proto3" json:"venue_name,omitempty"`
+	ImageUrl      string                 `protobuf:"bytes,8,opt,name=image_url,json=imageUrl,proto3" json:"image_url,omitempty"`
+	StartsAt      *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=starts_at,json=startsAt,proto3" json:"starts_at,omitempty"`
+	EndsAt        *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=ends_at,json=endsAt,proto3" json:"ends_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateExternalEventRequest) Reset() {
+	*x = CreateExternalEventRequest{}
+	mi := &file_social_v1_admin_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateExternalEventRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateExternalEventRequest) ProtoMessage() {}
+
+func (x *CreateExternalEventRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateExternalEventRequest.ProtoReflect.Descriptor instead.
+func (*CreateExternalEventRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *CreateExternalEventRequest) GetCityId() string {
+	if x != nil {
+		return x.CityId
+	}
+	return ""
+}
+
+func (x *CreateExternalEventRequest) GetCategoryId() string {
+	if x != nil {
+		return x.CategoryId
+	}
+	return ""
+}
+
+func (x *CreateExternalEventRequest) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *CreateExternalEventRequest) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *CreateExternalEventRequest) GetSource() string {
+	if x != nil {
+		return x.Source
+	}
+	return ""
+}
+
+func (x *CreateExternalEventRequest) GetSourceUrl() string {
+	if x != nil {
+		return x.SourceUrl
+	}
+	return ""
+}
+
+func (x *CreateExternalEventRequest) GetVenueName() string {
+	if x != nil {
+		return x.VenueName
+	}
+	return ""
+}
+
+func (x *CreateExternalEventRequest) GetImageUrl() string {
+	if x != nil {
+		return x.ImageUrl
+	}
+	return ""
+}
+
+func (x *CreateExternalEventRequest) GetStartsAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartsAt
+	}
+	return nil
+}
+
+func (x *CreateExternalEventRequest) GetEndsAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.EndsAt
+	}
+	return nil
+}
+
+type DeactivateExternalEventRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EventId       string                 `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeactivateExternalEventRequest) Reset() {
+	*x = DeactivateExternalEventRequest{}
+	mi := &file_social_v1_admin_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeactivateExternalEventRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeactivateExternalEventRequest) ProtoMessage() {}
+
+func (x *DeactivateExternalEventRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeactivateExternalEventRequest.ProtoReflect.Descriptor instead.
+func (*DeactivateExternalEventRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *DeactivateExternalEventRequest) GetEventId() string {
+	if x != nil {
+		return x.EventId
+	}
+	return ""
+}
+
+type DeactivateExternalEventResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeactivateExternalEventResponse) Reset() {
+	*x = DeactivateExternalEventResponse{}
+	mi := &file_social_v1_admin_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeactivateExternalEventResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeactivateExternalEventResponse) ProtoMessage() {}
+
+func (x *DeactivateExternalEventResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeactivateExternalEventResponse.ProtoReflect.Descriptor instead.
+func (*DeactivateExternalEventResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{33}
+}
+
 var File_social_v1_admin_proto protoreflect.FileDescriptor
 
 const file_social_v1_admin_proto_rawDesc = "" +
 	"\n" +
-	"\x15social/v1/admin.proto\x12\tsocial.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x16social/v1/common.proto\"T\n" +
+	"\x15social/v1/admin.proto\x12\tsocial.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x16social/v1/common.proto\x1a\x1esocial/v1/external_event.proto\"T\n" +
 	"\x10ListUsersRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12*\n" +
 	"\x04page\x18\x02 \x01(\v2\x16.social.v1.PageRequestR\x04page\"[\n" +
@@ -1451,7 +1955,48 @@ const file_social_v1_admin_proto_rawDesc = "" +
 	"\x17UpdateCityStatusRequest\x12\x17\n" +
 	"\acity_id\x18\x01 \x01(\tR\x06cityId\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\"\x1a\n" +
-	"\x18UpdateCityStatusResponse2\xd7\b\n" +
+	"\x18UpdateCityStatusResponse\"\x8b\x03\n" +
+	"\bSOSEvent\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1b\n" +
+	"\tuser_name\x18\x03 \x01(\tR\buserName\x12\x17\n" +
+	"\aplan_id\x18\x04 \x01(\tR\x06planId\x12\x1a\n" +
+	"\blatitude\x18\x05 \x01(\x01R\blatitude\x12\x1c\n" +
+	"\tlongitude\x18\x06 \x01(\x01R\tlongitude\x12!\n" +
+	"\fhas_location\x18\a \x01(\bR\vhasLocation\x12\x12\n" +
+	"\x04note\x18\b \x01(\tR\x04note\x12)\n" +
+	"\x10contact_delivery\x18\t \x01(\tR\x0fcontactDelivery\x12%\n" +
+	"\x0edelivery_error\x18\n" +
+	" \x01(\tR\rdeliveryError\x12\"\n" +
+	"\facknowledged\x18\v \x01(\bR\facknowledged\x129\n" +
+	"\n" +
+	"created_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"]\n" +
+	"\x14ListSOSEventsRequest\x12/\n" +
+	"\x13only_unacknowledged\x18\x01 \x01(\bR\x12onlyUnacknowledged\x12\x14\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\"D\n" +
+	"\x15ListSOSEventsResponse\x12+\n" +
+	"\x06events\x18\x01 \x03(\v2\x13.social.v1.SOSEventR\x06events\"3\n" +
+	"\x1aAcknowledgeSOSEventRequest\x12\x15\n" +
+	"\x06sos_id\x18\x01 \x01(\tR\x05sosId\"\x1d\n" +
+	"\x1bAcknowledgeSOSEventResponse\"\xef\x02\n" +
+	"\x1aCreateExternalEventRequest\x12\x17\n" +
+	"\acity_id\x18\x01 \x01(\tR\x06cityId\x12\x1f\n" +
+	"\vcategory_id\x18\x02 \x01(\tR\n" +
+	"categoryId\x12\x14\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\x12 \n" +
+	"\vdescription\x18\x04 \x01(\tR\vdescription\x12\x16\n" +
+	"\x06source\x18\x05 \x01(\tR\x06source\x12\x1d\n" +
+	"\n" +
+	"source_url\x18\x06 \x01(\tR\tsourceUrl\x12\x1d\n" +
+	"\n" +
+	"venue_name\x18\a \x01(\tR\tvenueName\x12\x1b\n" +
+	"\timage_url\x18\b \x01(\tR\bimageUrl\x127\n" +
+	"\tstarts_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\bstartsAt\x123\n" +
+	"\aends_at\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\x06endsAt\";\n" +
+	"\x1eDeactivateExternalEventRequest\x12\x19\n" +
+	"\bevent_id\x18\x01 \x01(\tR\aeventId\"!\n" +
+	"\x1fDeactivateExternalEventResponse2\xdb\v\n" +
 	"\fAdminService\x12F\n" +
 	"\tListUsers\x12\x1b.social.v1.ListUsersRequest\x1a\x1c.social.v1.ListUsersResponse\x12L\n" +
 	"\vSuspendUser\x12\x1d.social.v1.SuspendUserRequest\x1a\x1e.social.v1.SuspendUserResponse\x12L\n" +
@@ -1463,7 +2008,11 @@ const file_social_v1_admin_proto_rawDesc = "" +
 	"\x10AdminGrantCredit\x12\".social.v1.AdminGrantCreditRequest\x1a#.social.v1.AdminGrantCreditResponse\x12A\n" +
 	"\fCreateCoupon\x12\x1e.social.v1.CreateCouponRequest\x1a\x11.social.v1.Coupon\x12L\n" +
 	"\vListCoupons\x12\x1d.social.v1.ListCouponsRequest\x1a\x1e.social.v1.ListCouponsResponse\x12[\n" +
-	"\x10DeactivateCoupon\x12\".social.v1.DeactivateCouponRequest\x1a#.social.v1.DeactivateCouponResponse\x12;\n" +
+	"\x10DeactivateCoupon\x12\".social.v1.DeactivateCouponRequest\x1a#.social.v1.DeactivateCouponResponse\x12R\n" +
+	"\rListSOSEvents\x12\x1f.social.v1.ListSOSEventsRequest\x1a .social.v1.ListSOSEventsResponse\x12d\n" +
+	"\x13AcknowledgeSOSEvent\x12%.social.v1.AcknowledgeSOSEventRequest\x1a&.social.v1.AcknowledgeSOSEventResponse\x12V\n" +
+	"\x13CreateExternalEvent\x12%.social.v1.CreateExternalEventRequest\x1a\x18.social.v1.ExternalEvent\x12p\n" +
+	"\x17DeactivateExternalEvent\x12).social.v1.DeactivateExternalEventRequest\x1a*.social.v1.DeactivateExternalEventResponse\x12;\n" +
 	"\n" +
 	"CreateCity\x12\x1c.social.v1.CreateCityRequest\x1a\x0f.social.v1.City\x12[\n" +
 	"\x10UpdateCityStatus\x12\".social.v1.UpdateCityStatusRequest\x1a#.social.v1.UpdateCityStatusResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
@@ -1480,78 +2029,99 @@ func file_social_v1_admin_proto_rawDescGZIP() []byte {
 	return file_social_v1_admin_proto_rawDescData
 }
 
-var file_social_v1_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
+var file_social_v1_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
 var file_social_v1_admin_proto_goTypes = []any{
-	(*ListUsersRequest)(nil),              // 0: social.v1.ListUsersRequest
-	(*ListUsersResponse)(nil),             // 1: social.v1.ListUsersResponse
-	(*SuspendUserRequest)(nil),            // 2: social.v1.SuspendUserRequest
-	(*SuspendUserResponse)(nil),           // 3: social.v1.SuspendUserResponse
-	(*ListReportsRequest)(nil),            // 4: social.v1.ListReportsRequest
-	(*ListReportsResponse)(nil),           // 5: social.v1.ListReportsResponse
-	(*OverrideBookingStatusRequest)(nil),  // 6: social.v1.OverrideBookingStatusRequest
-	(*OverrideBookingStatusResponse)(nil), // 7: social.v1.OverrideBookingStatusResponse
-	(*GetDashboardStatsRequest)(nil),      // 8: social.v1.GetDashboardStatsRequest
-	(*GetDashboardStatsResponse)(nil),     // 9: social.v1.GetDashboardStatsResponse
-	(*ApproveHostRequest)(nil),            // 10: social.v1.ApproveHostRequest
-	(*ApproveHostResponse)(nil),           // 11: social.v1.ApproveHostResponse
-	(*MarkPayoutProcessedRequest)(nil),    // 12: social.v1.MarkPayoutProcessedRequest
-	(*MarkPayoutProcessedResponse)(nil),   // 13: social.v1.MarkPayoutProcessedResponse
-	(*AdminGrantCreditRequest)(nil),       // 14: social.v1.AdminGrantCreditRequest
-	(*AdminGrantCreditResponse)(nil),      // 15: social.v1.AdminGrantCreditResponse
-	(*CreateCouponRequest)(nil),           // 16: social.v1.CreateCouponRequest
-	(*Coupon)(nil),                        // 17: social.v1.Coupon
-	(*ListCouponsRequest)(nil),            // 18: social.v1.ListCouponsRequest
-	(*ListCouponsResponse)(nil),           // 19: social.v1.ListCouponsResponse
-	(*DeactivateCouponRequest)(nil),       // 20: social.v1.DeactivateCouponRequest
-	(*DeactivateCouponResponse)(nil),      // 21: social.v1.DeactivateCouponResponse
-	(*City)(nil),                          // 22: social.v1.City
-	(*CreateCityRequest)(nil),             // 23: social.v1.CreateCityRequest
-	(*UpdateCityStatusRequest)(nil),       // 24: social.v1.UpdateCityStatusRequest
-	(*UpdateCityStatusResponse)(nil),      // 25: social.v1.UpdateCityStatusResponse
-	(*PageRequest)(nil),                   // 26: social.v1.PageRequest
-	(*PageResponse)(nil),                  // 27: social.v1.PageResponse
-	(*timestamppb.Timestamp)(nil),         // 28: google.protobuf.Timestamp
+	(*ListUsersRequest)(nil),                // 0: social.v1.ListUsersRequest
+	(*ListUsersResponse)(nil),               // 1: social.v1.ListUsersResponse
+	(*SuspendUserRequest)(nil),              // 2: social.v1.SuspendUserRequest
+	(*SuspendUserResponse)(nil),             // 3: social.v1.SuspendUserResponse
+	(*ListReportsRequest)(nil),              // 4: social.v1.ListReportsRequest
+	(*ListReportsResponse)(nil),             // 5: social.v1.ListReportsResponse
+	(*OverrideBookingStatusRequest)(nil),    // 6: social.v1.OverrideBookingStatusRequest
+	(*OverrideBookingStatusResponse)(nil),   // 7: social.v1.OverrideBookingStatusResponse
+	(*GetDashboardStatsRequest)(nil),        // 8: social.v1.GetDashboardStatsRequest
+	(*GetDashboardStatsResponse)(nil),       // 9: social.v1.GetDashboardStatsResponse
+	(*ApproveHostRequest)(nil),              // 10: social.v1.ApproveHostRequest
+	(*ApproveHostResponse)(nil),             // 11: social.v1.ApproveHostResponse
+	(*MarkPayoutProcessedRequest)(nil),      // 12: social.v1.MarkPayoutProcessedRequest
+	(*MarkPayoutProcessedResponse)(nil),     // 13: social.v1.MarkPayoutProcessedResponse
+	(*AdminGrantCreditRequest)(nil),         // 14: social.v1.AdminGrantCreditRequest
+	(*AdminGrantCreditResponse)(nil),        // 15: social.v1.AdminGrantCreditResponse
+	(*CreateCouponRequest)(nil),             // 16: social.v1.CreateCouponRequest
+	(*Coupon)(nil),                          // 17: social.v1.Coupon
+	(*ListCouponsRequest)(nil),              // 18: social.v1.ListCouponsRequest
+	(*ListCouponsResponse)(nil),             // 19: social.v1.ListCouponsResponse
+	(*DeactivateCouponRequest)(nil),         // 20: social.v1.DeactivateCouponRequest
+	(*DeactivateCouponResponse)(nil),        // 21: social.v1.DeactivateCouponResponse
+	(*City)(nil),                            // 22: social.v1.City
+	(*CreateCityRequest)(nil),               // 23: social.v1.CreateCityRequest
+	(*UpdateCityStatusRequest)(nil),         // 24: social.v1.UpdateCityStatusRequest
+	(*UpdateCityStatusResponse)(nil),        // 25: social.v1.UpdateCityStatusResponse
+	(*SOSEvent)(nil),                        // 26: social.v1.SOSEvent
+	(*ListSOSEventsRequest)(nil),            // 27: social.v1.ListSOSEventsRequest
+	(*ListSOSEventsResponse)(nil),           // 28: social.v1.ListSOSEventsResponse
+	(*AcknowledgeSOSEventRequest)(nil),      // 29: social.v1.AcknowledgeSOSEventRequest
+	(*AcknowledgeSOSEventResponse)(nil),     // 30: social.v1.AcknowledgeSOSEventResponse
+	(*CreateExternalEventRequest)(nil),      // 31: social.v1.CreateExternalEventRequest
+	(*DeactivateExternalEventRequest)(nil),  // 32: social.v1.DeactivateExternalEventRequest
+	(*DeactivateExternalEventResponse)(nil), // 33: social.v1.DeactivateExternalEventResponse
+	(*PageRequest)(nil),                     // 34: social.v1.PageRequest
+	(*PageResponse)(nil),                    // 35: social.v1.PageResponse
+	(*timestamppb.Timestamp)(nil),           // 36: google.protobuf.Timestamp
+	(*ExternalEvent)(nil),                   // 37: social.v1.ExternalEvent
 }
 var file_social_v1_admin_proto_depIdxs = []int32{
-	26, // 0: social.v1.ListUsersRequest.page:type_name -> social.v1.PageRequest
-	27, // 1: social.v1.ListUsersResponse.page:type_name -> social.v1.PageResponse
-	26, // 2: social.v1.ListReportsRequest.page:type_name -> social.v1.PageRequest
-	27, // 3: social.v1.ListReportsResponse.page:type_name -> social.v1.PageResponse
-	28, // 4: social.v1.CreateCouponRequest.expires_at:type_name -> google.protobuf.Timestamp
-	26, // 5: social.v1.ListCouponsRequest.page:type_name -> social.v1.PageRequest
+	34, // 0: social.v1.ListUsersRequest.page:type_name -> social.v1.PageRequest
+	35, // 1: social.v1.ListUsersResponse.page:type_name -> social.v1.PageResponse
+	34, // 2: social.v1.ListReportsRequest.page:type_name -> social.v1.PageRequest
+	35, // 3: social.v1.ListReportsResponse.page:type_name -> social.v1.PageResponse
+	36, // 4: social.v1.CreateCouponRequest.expires_at:type_name -> google.protobuf.Timestamp
+	34, // 5: social.v1.ListCouponsRequest.page:type_name -> social.v1.PageRequest
 	17, // 6: social.v1.ListCouponsResponse.coupons:type_name -> social.v1.Coupon
-	27, // 7: social.v1.ListCouponsResponse.page:type_name -> social.v1.PageResponse
-	0,  // 8: social.v1.AdminService.ListUsers:input_type -> social.v1.ListUsersRequest
-	2,  // 9: social.v1.AdminService.SuspendUser:input_type -> social.v1.SuspendUserRequest
-	4,  // 10: social.v1.AdminService.ListReports:input_type -> social.v1.ListReportsRequest
-	6,  // 11: social.v1.AdminService.OverrideBookingStatus:input_type -> social.v1.OverrideBookingStatusRequest
-	8,  // 12: social.v1.AdminService.GetDashboardStats:input_type -> social.v1.GetDashboardStatsRequest
-	10, // 13: social.v1.AdminService.ApproveHost:input_type -> social.v1.ApproveHostRequest
-	12, // 14: social.v1.AdminService.MarkPayoutProcessed:input_type -> social.v1.MarkPayoutProcessedRequest
-	14, // 15: social.v1.AdminService.AdminGrantCredit:input_type -> social.v1.AdminGrantCreditRequest
-	16, // 16: social.v1.AdminService.CreateCoupon:input_type -> social.v1.CreateCouponRequest
-	18, // 17: social.v1.AdminService.ListCoupons:input_type -> social.v1.ListCouponsRequest
-	20, // 18: social.v1.AdminService.DeactivateCoupon:input_type -> social.v1.DeactivateCouponRequest
-	23, // 19: social.v1.AdminService.CreateCity:input_type -> social.v1.CreateCityRequest
-	24, // 20: social.v1.AdminService.UpdateCityStatus:input_type -> social.v1.UpdateCityStatusRequest
-	1,  // 21: social.v1.AdminService.ListUsers:output_type -> social.v1.ListUsersResponse
-	3,  // 22: social.v1.AdminService.SuspendUser:output_type -> social.v1.SuspendUserResponse
-	5,  // 23: social.v1.AdminService.ListReports:output_type -> social.v1.ListReportsResponse
-	7,  // 24: social.v1.AdminService.OverrideBookingStatus:output_type -> social.v1.OverrideBookingStatusResponse
-	9,  // 25: social.v1.AdminService.GetDashboardStats:output_type -> social.v1.GetDashboardStatsResponse
-	11, // 26: social.v1.AdminService.ApproveHost:output_type -> social.v1.ApproveHostResponse
-	13, // 27: social.v1.AdminService.MarkPayoutProcessed:output_type -> social.v1.MarkPayoutProcessedResponse
-	15, // 28: social.v1.AdminService.AdminGrantCredit:output_type -> social.v1.AdminGrantCreditResponse
-	17, // 29: social.v1.AdminService.CreateCoupon:output_type -> social.v1.Coupon
-	19, // 30: social.v1.AdminService.ListCoupons:output_type -> social.v1.ListCouponsResponse
-	21, // 31: social.v1.AdminService.DeactivateCoupon:output_type -> social.v1.DeactivateCouponResponse
-	22, // 32: social.v1.AdminService.CreateCity:output_type -> social.v1.City
-	25, // 33: social.v1.AdminService.UpdateCityStatus:output_type -> social.v1.UpdateCityStatusResponse
-	21, // [21:34] is the sub-list for method output_type
-	8,  // [8:21] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	35, // 7: social.v1.ListCouponsResponse.page:type_name -> social.v1.PageResponse
+	36, // 8: social.v1.SOSEvent.created_at:type_name -> google.protobuf.Timestamp
+	26, // 9: social.v1.ListSOSEventsResponse.events:type_name -> social.v1.SOSEvent
+	36, // 10: social.v1.CreateExternalEventRequest.starts_at:type_name -> google.protobuf.Timestamp
+	36, // 11: social.v1.CreateExternalEventRequest.ends_at:type_name -> google.protobuf.Timestamp
+	0,  // 12: social.v1.AdminService.ListUsers:input_type -> social.v1.ListUsersRequest
+	2,  // 13: social.v1.AdminService.SuspendUser:input_type -> social.v1.SuspendUserRequest
+	4,  // 14: social.v1.AdminService.ListReports:input_type -> social.v1.ListReportsRequest
+	6,  // 15: social.v1.AdminService.OverrideBookingStatus:input_type -> social.v1.OverrideBookingStatusRequest
+	8,  // 16: social.v1.AdminService.GetDashboardStats:input_type -> social.v1.GetDashboardStatsRequest
+	10, // 17: social.v1.AdminService.ApproveHost:input_type -> social.v1.ApproveHostRequest
+	12, // 18: social.v1.AdminService.MarkPayoutProcessed:input_type -> social.v1.MarkPayoutProcessedRequest
+	14, // 19: social.v1.AdminService.AdminGrantCredit:input_type -> social.v1.AdminGrantCreditRequest
+	16, // 20: social.v1.AdminService.CreateCoupon:input_type -> social.v1.CreateCouponRequest
+	18, // 21: social.v1.AdminService.ListCoupons:input_type -> social.v1.ListCouponsRequest
+	20, // 22: social.v1.AdminService.DeactivateCoupon:input_type -> social.v1.DeactivateCouponRequest
+	27, // 23: social.v1.AdminService.ListSOSEvents:input_type -> social.v1.ListSOSEventsRequest
+	29, // 24: social.v1.AdminService.AcknowledgeSOSEvent:input_type -> social.v1.AcknowledgeSOSEventRequest
+	31, // 25: social.v1.AdminService.CreateExternalEvent:input_type -> social.v1.CreateExternalEventRequest
+	32, // 26: social.v1.AdminService.DeactivateExternalEvent:input_type -> social.v1.DeactivateExternalEventRequest
+	23, // 27: social.v1.AdminService.CreateCity:input_type -> social.v1.CreateCityRequest
+	24, // 28: social.v1.AdminService.UpdateCityStatus:input_type -> social.v1.UpdateCityStatusRequest
+	1,  // 29: social.v1.AdminService.ListUsers:output_type -> social.v1.ListUsersResponse
+	3,  // 30: social.v1.AdminService.SuspendUser:output_type -> social.v1.SuspendUserResponse
+	5,  // 31: social.v1.AdminService.ListReports:output_type -> social.v1.ListReportsResponse
+	7,  // 32: social.v1.AdminService.OverrideBookingStatus:output_type -> social.v1.OverrideBookingStatusResponse
+	9,  // 33: social.v1.AdminService.GetDashboardStats:output_type -> social.v1.GetDashboardStatsResponse
+	11, // 34: social.v1.AdminService.ApproveHost:output_type -> social.v1.ApproveHostResponse
+	13, // 35: social.v1.AdminService.MarkPayoutProcessed:output_type -> social.v1.MarkPayoutProcessedResponse
+	15, // 36: social.v1.AdminService.AdminGrantCredit:output_type -> social.v1.AdminGrantCreditResponse
+	17, // 37: social.v1.AdminService.CreateCoupon:output_type -> social.v1.Coupon
+	19, // 38: social.v1.AdminService.ListCoupons:output_type -> social.v1.ListCouponsResponse
+	21, // 39: social.v1.AdminService.DeactivateCoupon:output_type -> social.v1.DeactivateCouponResponse
+	28, // 40: social.v1.AdminService.ListSOSEvents:output_type -> social.v1.ListSOSEventsResponse
+	30, // 41: social.v1.AdminService.AcknowledgeSOSEvent:output_type -> social.v1.AcknowledgeSOSEventResponse
+	37, // 42: social.v1.AdminService.CreateExternalEvent:output_type -> social.v1.ExternalEvent
+	33, // 43: social.v1.AdminService.DeactivateExternalEvent:output_type -> social.v1.DeactivateExternalEventResponse
+	22, // 44: social.v1.AdminService.CreateCity:output_type -> social.v1.City
+	25, // 45: social.v1.AdminService.UpdateCityStatus:output_type -> social.v1.UpdateCityStatusResponse
+	29, // [29:46] is the sub-list for method output_type
+	12, // [12:29] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_admin_proto_init() }
@@ -1560,13 +2130,14 @@ func file_social_v1_admin_proto_init() {
 		return
 	}
 	file_social_v1_common_proto_init()
+	file_social_v1_external_event_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_admin_proto_rawDesc), len(file_social_v1_admin_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   26,
+			NumMessages:   34,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

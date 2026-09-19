@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// StoryService — flow.md §39: 24-hour content shown to connections or one
+// community, with an optional archive. The 24h lifetime is fixed server-side.
+service StoryService {
+  rpc CreateStory(CreateStoryRequest) returns (Story);
+  // ListStories returns unexpired stories the caller may see, grouped by
+  // author (the caller's own group first). No blocked authors.
+  rpc ListStories(ListStoriesRequest) returns (ListStoriesResponse);
+  // ListMyStories returns the caller's live stories; include_expired adds
+  // archived (keep_archive) ones that have expired.
+  rpc ListMyStories(ListMyStoriesRequest) returns (ListMyStoriesResponse);
+  rpc DeleteStory(DeleteStoryRequest) returns (DeleteStoryResponse);
+}
+
+enum StoryAudience {
+  STORY_AUDIENCE_CONNECTIONS = 0;
+  STORY_AUDIENCE_COMMUNITY = 1;
+}
+
+message Story {
+  string id = 1;
+  string author_id = 2;
+  string media_url = 3;
+  string media_type = 4; // image | video
+  string caption = 5;
+  StoryAudience audience = 6;
+  string community_id = 7;
+  bool keep_archive = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp expires_at = 10;
+}
+
+message CreateStoryRequest {
+  string media_url = 1; // https only
+  string media_type = 2; // image | video; default image
+  string caption = 3;
+  StoryAudience audience = 4;
+  string community_id = 5; // required for (and only for) the community audience; caller must be a member
+  bool keep_archive = 6;
+}
+
+message StoryGroup {
+  string author_id = 1;
+  string author_name = 2;
+  repeated Story stories = 3; // oldest first, so they play in order
+}
+
+message ListStoriesRequest {}
+message ListStoriesResponse {
+  repeated StoryGroup groups = 1;
+}
+
+message ListMyStoriesRequest {
+  bool include_expired = 1;
+}
+message ListMyStoriesResponse {
+  repeated Story stories = 1;
+}
+
+message DeleteStoryRequest {
+  string story_id = 1;
+}
+message DeleteStoryResponse {}

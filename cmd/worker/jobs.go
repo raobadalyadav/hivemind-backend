@@ -26,6 +26,7 @@ func (d *deps) jobs() []job {
 		{"sweep_waitlist", time.Minute, d.bookingsSvc.SweepWaitlist},
 		{"send_reminders", time.Minute, d.notificationsSvc.SendDueReminders},
 		{"extend_series", time.Hour, d.plansSvc.ExtendAllSeries},
+		{"purge_stories", time.Hour, d.storiesSvc.PurgeExpired},
 	}
 }
 

@@ -4,19 +4,38 @@ package social
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type Post struct {
-	ID         string
-	AuthorID   string
-	PlanID     string
-	Body       string
-	MediaURLs  []string
-	Visibility string
+type Media struct {
+	URL  string
+	Type string // image | video
 }
+
+type Post struct {
+	ID           string
+	AuthorID     string
+	PlanID       string
+	CommunityID  string
+	Body         string
+	MediaURLs    []string // legacy image list, kept for API compatibility
+	Media        []Media
+	Visibility   string // private | public | connections | community
+	CreatedAt    time.Time
+	LikeCount    int32
+	CommentCount int32
+	LikedByMe    bool
+	SavedByMe    bool
+}
+
+var ErrPostNotFound = errors.New("social: post not found")
 
 type Repository struct {
 	pool *pgxpool.Pool
@@ -24,6 +43,103 @@ type Repository struct {
 
 func NewRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
+}
+
+// visibleSQL is the ONE definition of "caller ($C) may see post p": the
+// author always; otherwise no block in either direction AND the post is
+// public, or connections-only with an accepted connection to the author, or
+// community-only with the caller in that community. Every read path
+// (single get, author list, feed, saved) filters through it.
+func visibleSQL(caller string) string {
+	return strings.ReplaceAll(`(p.author_id = $C::uuid OR (
+		NOT EXISTS (SELECT 1 FROM blocks b
+			WHERE (b.user_id = $C::uuid AND b.blocked_user_id = p.author_id)
+			   OR (b.user_id = p.author_id AND b.blocked_user_id = $C::uuid))
+		AND (p.visibility = 'public'
+		  OR (p.visibility = 'connections' AND EXISTS (SELECT 1 FROM connections c
+				WHERE c.status = 'accepted'::connection_status
+				  AND ((c.requester_id = $C::uuid AND c.recipient_id = p.author_id)
+				    OR (c.requester_id = p.author_id AND c.recipient_id = $C::uuid))))
+		  OR (p.visibility = 'community' AND EXISTS (SELECT 1 FROM community_members cm
+				WHERE cm.community_id = p.community_id AND cm.user_id = $C::uuid)))))`, "$C", caller)
+}
+
+const postCols = `p.id::text, p.author_id::text, COALESCE(p.plan_id::text,''), COALESCE(p.community_id::text,''),
+	p.body, p.visibility, p.created_at`
+
+func scanPosts(rows pgx.Rows) ([]*Post, error) {
+	defer rows.Close()
+	var out []*Post
+	for rows.Next() {
+		var p Post
+		if err := rows.Scan(&p.ID, &p.AuthorID, &p.PlanID, &p.CommunityID, &p.Body, &p.Visibility, &p.CreatedAt); err != nil {
+			return nil, err
+		}
+		out = append(out, &p)
+	}
+	return out, rows.Err()
+}
+
+// hydrate fills media, counts and the viewer's own like/save flags for a page
+// of posts with two queries (not one per post).
+func (r *Repository) hydrate(ctx context.Context, posts []*Post, viewerID string) error {
+	if len(posts) == 0 {
+		return nil
+	}
+	ids := make([]string, len(posts))
+	byID := make(map[string]*Post, len(posts))
+	for i, p := range posts {
+		ids[i], byID[p.ID] = p.ID, p
+	}
+	rows, err := r.pool.Query(ctx,
+		`SELECT post_id::text, media_url, media_type FROM post_media WHERE post_id = ANY($1::uuid[]) ORDER BY post_id, position`, ids)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var id string
+		var m Media
+		if err := rows.Scan(&id, &m.URL, &m.Type); err != nil {
+			rows.Close()
+			return err
+		}
+		p := byID[id]
+		p.Media = append(p.Media, m)
+		if m.Type == "image" {
+			p.MediaURLs = append(p.MediaURLs, m.URL)
+		}
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	stats, err := r.pool.Query(ctx, `
+		SELECT p.id::text,
+			(SELECT count(*) FROM likes l WHERE l.post_id = p.id),
+			(SELECT count(*) FROM comments c WHERE c.post_id = p.id),
+			EXISTS(SELECT 1 FROM likes l WHERE l.post_id = p.id AND l.user_id = $2),
+			EXISTS(SELECT 1 FROM post_saves s WHERE s.post_id = p.id AND s.user_id = $2)
+		FROM posts p WHERE p.id = ANY($1::uuid[])`, ids, viewerID)
+	if err != nil {
+		return err
+	}
+	defer stats.Close()
+	for stats.Next() {
+		var id string
+		var lc, cc int32
+		var liked, saved bool
+		if err := stats.Scan(&id, &lc, &cc, &liked, &saved); err != nil {
+			return err
+		}
+		p := byID[id]
+		p.LikeCount, p.CommentCount, p.LikedByMe, p.SavedByMe = lc, cc, liked, saved
+	}
+	return stats.Err()
+}
+
+func isBadUUID(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "22P02"
 }
 
 // Create inserts the post and its media rows in one transaction.
@@ -35,112 +151,140 @@ func (r *Repository) Create(ctx context.Context, p *Post) (*Post, error) {
 	defer tx.Rollback(ctx)
 
 	out := *p
-	if out.Visibility == "" {
-		out.Visibility = "private"
-	}
 	if err := tx.QueryRow(ctx, `
-		INSERT INTO posts (author_id, plan_id, body, visibility)
-		VALUES ($1, NULLIF($2,'')::uuid, $3, $4)
-		RETURNING id`,
-		p.AuthorID, p.PlanID, p.Body, out.Visibility,
-	).Scan(&out.ID); err != nil {
+		INSERT INTO posts (author_id, plan_id, community_id, body, visibility)
+		VALUES ($1, NULLIF($2,'')::uuid, NULLIF($3,'')::uuid, $4, $5)
+		RETURNING id::text, created_at`,
+		p.AuthorID, p.PlanID, p.CommunityID, p.Body, p.Visibility,
+	).Scan(&out.ID, &out.CreatedAt); err != nil {
 		return nil, err
 	}
-
-	for i, url := range p.MediaURLs {
+	for i, m := range p.Media {
 		if _, err := tx.Exec(ctx,
-			`INSERT INTO post_media (post_id, media_url, position) VALUES ($1, $2, $3)`,
-			out.ID, url, i,
+			`INSERT INTO post_media (post_id, media_url, media_type, position) VALUES ($1, $2, $3, $4)`,
+			out.ID, m.URL, m.Type, i,
 		); err != nil {
 			return nil, err
 		}
 	}
-
 	if err := tx.Commit(ctx); err != nil {
 		return nil, err
 	}
 	return &out, nil
 }
 
-func (r *Repository) Get(ctx context.Context, id string) (*Post, error) {
-	var p Post
-	err := r.pool.QueryRow(ctx, `
-		SELECT id, author_id, COALESCE(plan_id::text,''), body, visibility
-		FROM posts WHERE id = $1`, id,
-	).Scan(&p.ID, &p.AuthorID, &p.PlanID, &p.Body, &p.Visibility)
+// GetVisible returns the post only if viewerID may see it; a hidden post and
+// a missing one are both ErrPostNotFound.
+func (r *Repository) GetVisible(ctx context.Context, id, viewerID string) (*Post, error) {
+	rows, err := r.pool.Query(ctx, `SELECT `+postCols+` FROM posts p WHERE p.id = $1 AND `+visibleSQL("$2"), id, viewerID)
 	if err != nil {
-		return nil, err
-	}
-
-	rows, err := r.pool.Query(ctx,
-		`SELECT media_url FROM post_media WHERE post_id = $1 ORDER BY position`, id)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var url string
-		if err := rows.Scan(&url); err != nil {
-			return nil, err
+		if isBadUUID(err) {
+			return nil, ErrPostNotFound
 		}
-		p.MediaURLs = append(p.MediaURLs, url)
-	}
-	return &p, rows.Err()
-}
-
-// ListForAuthor returns posts by author, filtered to visibility='public'
-// unless the caller is the author themselves (private posts stay private —
-// see service.go).
-func (r *Repository) ListForAuthor(ctx context.Context, authorID string, publicOnly bool, limit int) ([]*Post, error) {
-	rows, err := r.pool.Query(ctx, `
-		SELECT id, author_id, COALESCE(plan_id::text,''), body, visibility
-		FROM posts WHERE author_id = $1 AND (NOT $2 OR visibility = 'public')
-		ORDER BY created_at DESC LIMIT $3`,
-		authorID, publicOnly, limit,
-	)
-	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	var posts []*Post
-	ids := make([]string, 0)
-	for rows.Next() {
-		var p Post
-		if err := rows.Scan(&p.ID, &p.AuthorID, &p.PlanID, &p.Body, &p.Visibility); err != nil {
-			return nil, err
+	posts, err := scanPosts(rows)
+	if err != nil {
+		if isBadUUID(err) {
+			return nil, ErrPostNotFound
 		}
-		posts = append(posts, &p)
-		ids = append(ids, p.ID)
-	}
-	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 	if len(posts) == 0 {
-		return posts, nil
+		return nil, ErrPostNotFound
 	}
+	return posts[0], r.hydrate(ctx, posts, viewerID)
+}
 
-	mediaRows, err := r.pool.Query(ctx,
-		`SELECT post_id, media_url FROM post_media WHERE post_id = ANY($1::uuid[]) ORDER BY post_id, position`, ids)
+// ListForAuthor returns the author's posts that viewerID may see.
+func (r *Repository) ListForAuthor(ctx context.Context, authorID, viewerID string, limit int) ([]*Post, error) {
+	rows, err := r.pool.Query(ctx, `SELECT `+postCols+` FROM posts p
+		WHERE p.author_id = $1 AND `+visibleSQL("$2")+`
+		ORDER BY p.created_at DESC, p.id DESC LIMIT $3`, authorID, viewerID, limit)
 	if err != nil {
 		return nil, err
 	}
-	defer mediaRows.Close()
-	mediaByPost := make(map[string][]string)
-	for mediaRows.Next() {
-		var postID, url string
-		if err := mediaRows.Scan(&postID, &url); err != nil {
-			return nil, err
-		}
-		mediaByPost[postID] = append(mediaByPost[postID], url)
-	}
-	if err := mediaRows.Err(); err != nil {
+	posts, err := scanPosts(rows)
+	if err != nil {
 		return nil, err
 	}
-	for _, p := range posts {
-		p.MediaURLs = mediaByPost[p.ID]
+	return posts, r.hydrate(ctx, posts, viewerID)
+}
+
+// Feed pages newest-first with a (created_at, id) keyset cursor so paging is
+// stable while new posts arrive. scope: global | connections | community.
+func (r *Repository) Feed(ctx context.Context, viewerID, scope, communityID string, cursor *cursor, limit int) ([]*Post, error) {
+	q := `SELECT ` + postCols + ` FROM posts p WHERE ` + visibleSQL("$1")
+	args := []any{viewerID}
+	switch scope {
+	case "global":
+		q += ` AND p.visibility <> 'private'`
+	case "connections":
+		q += ` AND p.author_id <> $1::uuid AND p.visibility IN ('public','connections') AND EXISTS (SELECT 1 FROM connections c
+			WHERE c.status = 'accepted'::connection_status
+			  AND ((c.requester_id = $1::uuid AND c.recipient_id = p.author_id) OR (c.requester_id = p.author_id AND c.recipient_id = $1::uuid)))`
+	case "community":
+		args = append(args, communityID)
+		q += ` AND p.community_id = $2::uuid`
 	}
-	return posts, nil
+	if cursor != nil {
+		args = append(args, cursor.At, cursor.ID)
+		q += fmt.Sprintf(` AND (p.created_at, p.id) < ($%d::timestamptz, $%d::uuid)`, len(args)-1, len(args))
+	}
+	args = append(args, limit)
+	q += fmt.Sprintf(` ORDER BY p.created_at DESC, p.id DESC LIMIT $%d`, len(args))
+	rows, err := r.pool.Query(ctx, q, args...)
+	if err != nil {
+		if isBadUUID(err) {
+			return nil, ErrPostNotFound
+		}
+		return nil, err
+	}
+	posts, err := scanPosts(rows)
+	if err != nil {
+		return nil, err
+	}
+	return posts, r.hydrate(ctx, posts, viewerID)
+}
+
+func (r *Repository) IsCommunityMember(ctx context.Context, communityID, userID string) (bool, error) {
+	var ok bool
+	err := r.pool.QueryRow(ctx,
+		`SELECT EXISTS(SELECT 1 FROM community_members WHERE community_id = $1 AND user_id = $2)`, communityID, userID).Scan(&ok)
+	if isBadUUID(err) {
+		return false, nil
+	}
+	return ok, err
+}
+
+// Save/Unsave are idempotent.
+func (r *Repository) Save(ctx context.Context, postID, userID string) error {
+	_, err := r.pool.Exec(ctx,
+		`INSERT INTO post_saves (user_id, post_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, userID, postID)
+	return err
+}
+
+func (r *Repository) Unsave(ctx context.Context, postID, userID string) error {
+	_, err := r.pool.Exec(ctx, `DELETE FROM post_saves WHERE user_id = $1 AND post_id = $2`, userID, postID)
+	if isBadUUID(err) {
+		return nil
+	}
+	return err
+}
+
+// ListSaved returns what the user saved that they can still see (a post that
+// has since become hidden — block, left community — drops out).
+func (r *Repository) ListSaved(ctx context.Context, userID string, limit int) ([]*Post, error) {
+	rows, err := r.pool.Query(ctx, `SELECT `+postCols+` FROM post_saves s JOIN posts p ON p.id = s.post_id
+		WHERE s.user_id = $1 AND `+visibleSQL("$1")+` ORDER BY s.created_at DESC LIMIT $2`, userID, limit)
+	if err != nil {
+		return nil, err
+	}
+	posts, err := scanPosts(rows)
+	if err != nil {
+		return nil, err
+	}
+	return posts, r.hydrate(ctx, posts, userID)
 }
 
 type Comment struct {

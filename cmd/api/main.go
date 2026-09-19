@@ -31,6 +31,7 @@ import (
 	"github.com/hivemind/backend/internal/company"
 	"github.com/hivemind/backend/internal/connections"
 	"github.com/hivemind/backend/internal/discovery"
+	"github.com/hivemind/backend/internal/externalevents"
 	"github.com/hivemind/backend/internal/host"
 	"github.com/hivemind/backend/internal/moderation"
 	"github.com/hivemind/backend/internal/notifications"
@@ -39,10 +40,13 @@ import (
 	"github.com/hivemind/backend/internal/profiles"
 	"github.com/hivemind/backend/internal/promotions"
 	"github.com/hivemind/backend/internal/recommendation"
+	"github.com/hivemind/backend/internal/referral"
 	"github.com/hivemind/backend/internal/reviews"
+	"github.com/hivemind/backend/internal/safety"
 	"github.com/hivemind/backend/internal/search"
 	"github.com/hivemind/backend/internal/smartgroups"
 	"github.com/hivemind/backend/internal/social"
+	"github.com/hivemind/backend/internal/stories"
 	"github.com/hivemind/backend/internal/subscriptions"
 	"github.com/hivemind/backend/internal/users"
 	"github.com/hivemind/backend/internal/venues"
@@ -184,6 +188,10 @@ func main() {
 	availabilitySvc := availability.NewService(availability.NewRepository(pool), chatSvc)
 	socialv1.RegisterChatServiceServer(srv, chat.NewHandler(chatSvc))
 	socialv1.RegisterAvailabilityServiceServer(srv, availability.NewHandler(availabilitySvc))
+	socialv1.RegisterReferralServiceServer(srv, referral.NewHandler(referral.NewService(referral.NewRepository(pool))))
+	socialv1.RegisterSafetyServiceServer(srv, safety.NewHandler(safety.NewService(safety.NewRepository(pool), emailSender, cfg.EmergencyNumber)))
+	socialv1.RegisterExternalEventServiceServer(srv, externalevents.NewHandler(externalevents.NewService(externalevents.NewRepository(pool), chatSvc)))
+	socialv1.RegisterStoryServiceServer(srv, stories.NewHandler(stories.NewService(stories.NewRepository(pool), contentScreener)))
 	socialv1.RegisterSocialServiceServer(srv, social.NewHandler(social.NewService(social.NewRepository(pool), moderationSvc, contentScreener)))
 	socialv1.RegisterModerationServiceServer(srv, moderation.NewHandler(moderationSvc))
 	socialv1.RegisterNotificationServiceServer(srv, notifications.NewHandler(notifications.NewService(notifications.NewRepository(pool), emailSender, pushSender, logger)))

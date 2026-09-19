@@ -73,6 +73,8 @@ All configuration is via environment variables (see `config/config.go`), each wi
 | `NATS_URL` | NATS server URL |
 | `MINIO_ENDPOINT` / `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY` / `MINIO_BUCKET` | MinIO object storage |
 | `JWT_SECRET` | HMAC secret for issued tokens |
+| `PASS_SECRET` | HMAC secret for signed digital-pass (QR) payloads (defaults to `JWT_SECRET` + `:pass`) |
+| `EMERGENCY_NUMBER` | Local emergency number shown in the Safety Center and SOS response (default `112`) |
 | `GOOGLE_CLIENT_ID` / `APPLE_BUNDLE_ID` | OAuth sign-in (optional — disabled if unset) |
 | `RESEND_API_KEY` / `EMAIL_FROM_ADDRESS` | Transactional email (optional) |
 | `FIREBASE_CREDENTIALS_PATH` | Push notifications (optional) |
@@ -101,5 +103,15 @@ The API surface is organized by domain service, each with its own proto file und
 **AI + Smart Social** — `recommendation` (rule-based ranking, no ML), `availability` (Who's Free / Activity Buddy), `smart_groups`, plus AI icebreaker/plan-draft generation exposed via `chat`/`plan`
 
 **Scale** — `company` (corporate/B2B team bookings), plus Travel Mode (an optional `travel_city_id` override on the recommendation/discovery RPCs) and the city-launch lifecycle (exposed via `admin`)
+
+**Plan lifecycle & access** — waitlist with timed seat offers, digital pass + host `ScanPass` check-in, no-show marking, 24h/3h/1h reminders, plan types (open / approval / invite-only; public / private / community; premium via entitlement), community types (public / private / approval / paid) and recurring plans (`FREQ=DAILY|WEEKLY|MONTHLY`, expanded into real plan rows). Time-based work runs as jobs in `cmd/worker/jobs.go` (1-minute ticker; each job is a single claiming SQL statement, so it is safe on several worker replicas).
+
+**Profile & people** — photos, gender/education/hobbies, interest catalog (5–15 interests), social intent + personality quiz (feeds people recommendations and smart-group balancing), "who's going" cards with privacy filtering, Meet Again groups, Memories.
+
+**Chat, feed & stories** — typed chat messages (image, voice, location, announcement), polls and pinned messages; a feed with connections/community visibility, save and share-link; 24-hour stories with optional archive.
+
+**Growth & safety** — referral codes (₹100 credit each side, append-only ledger), Safety Center, emergency contact and SOS (records the alert and emails the contact when an email provider is configured — it does **not** dispatch emergency services, and says so), blocked-users list, and admin-curated external events with interest and event group chats.
+
+Deliberately not built: ticket resale/ecosystem, brand partnerships, ML recommendation, third-party event sync, server-side QR image rendering (the server returns the signed payload; the client renders it), SMS to emergency contacts, community chat rooms.
 
 All rule-based/heuristic logic (recommendation ranking, content moderation, icebreakers, plan drafts) is intentionally SQL/Go-based rather than ML-backed, per the product's own non-goal against introducing heavy ML infrastructure before there's enough behavioral data to justify it.

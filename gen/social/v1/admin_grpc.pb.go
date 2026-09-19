@@ -19,19 +19,23 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AdminService_ListUsers_FullMethodName             = "/social.v1.AdminService/ListUsers"
-	AdminService_SuspendUser_FullMethodName           = "/social.v1.AdminService/SuspendUser"
-	AdminService_ListReports_FullMethodName           = "/social.v1.AdminService/ListReports"
-	AdminService_OverrideBookingStatus_FullMethodName = "/social.v1.AdminService/OverrideBookingStatus"
-	AdminService_GetDashboardStats_FullMethodName     = "/social.v1.AdminService/GetDashboardStats"
-	AdminService_ApproveHost_FullMethodName           = "/social.v1.AdminService/ApproveHost"
-	AdminService_MarkPayoutProcessed_FullMethodName   = "/social.v1.AdminService/MarkPayoutProcessed"
-	AdminService_AdminGrantCredit_FullMethodName      = "/social.v1.AdminService/AdminGrantCredit"
-	AdminService_CreateCoupon_FullMethodName          = "/social.v1.AdminService/CreateCoupon"
-	AdminService_ListCoupons_FullMethodName           = "/social.v1.AdminService/ListCoupons"
-	AdminService_DeactivateCoupon_FullMethodName      = "/social.v1.AdminService/DeactivateCoupon"
-	AdminService_CreateCity_FullMethodName            = "/social.v1.AdminService/CreateCity"
-	AdminService_UpdateCityStatus_FullMethodName      = "/social.v1.AdminService/UpdateCityStatus"
+	AdminService_ListUsers_FullMethodName               = "/social.v1.AdminService/ListUsers"
+	AdminService_SuspendUser_FullMethodName             = "/social.v1.AdminService/SuspendUser"
+	AdminService_ListReports_FullMethodName             = "/social.v1.AdminService/ListReports"
+	AdminService_OverrideBookingStatus_FullMethodName   = "/social.v1.AdminService/OverrideBookingStatus"
+	AdminService_GetDashboardStats_FullMethodName       = "/social.v1.AdminService/GetDashboardStats"
+	AdminService_ApproveHost_FullMethodName             = "/social.v1.AdminService/ApproveHost"
+	AdminService_MarkPayoutProcessed_FullMethodName     = "/social.v1.AdminService/MarkPayoutProcessed"
+	AdminService_AdminGrantCredit_FullMethodName        = "/social.v1.AdminService/AdminGrantCredit"
+	AdminService_CreateCoupon_FullMethodName            = "/social.v1.AdminService/CreateCoupon"
+	AdminService_ListCoupons_FullMethodName             = "/social.v1.AdminService/ListCoupons"
+	AdminService_DeactivateCoupon_FullMethodName        = "/social.v1.AdminService/DeactivateCoupon"
+	AdminService_ListSOSEvents_FullMethodName           = "/social.v1.AdminService/ListSOSEvents"
+	AdminService_AcknowledgeSOSEvent_FullMethodName     = "/social.v1.AdminService/AcknowledgeSOSEvent"
+	AdminService_CreateExternalEvent_FullMethodName     = "/social.v1.AdminService/CreateExternalEvent"
+	AdminService_DeactivateExternalEvent_FullMethodName = "/social.v1.AdminService/DeactivateExternalEvent"
+	AdminService_CreateCity_FullMethodName              = "/social.v1.AdminService/CreateCity"
+	AdminService_UpdateCityStatus_FullMethodName        = "/social.v1.AdminService/UpdateCityStatus"
 )
 
 // AdminServiceClient is the client API for AdminService service.
@@ -56,6 +60,12 @@ type AdminServiceClient interface {
 	ListCoupons(ctx context.Context, in *ListCouponsRequest, opts ...grpc.CallOption) (*ListCouponsResponse, error)
 	DeactivateCoupon(ctx context.Context, in *DeactivateCouponRequest, opts ...grpc.CallOption) (*DeactivateCouponResponse, error)
 	// Phase 5 city launch workflow (flow.md §55).
+	// Safety (flow.md §45) and external events (flow.md §29) — admin only,
+	// audited, and listed in adminMethods.
+	ListSOSEvents(ctx context.Context, in *ListSOSEventsRequest, opts ...grpc.CallOption) (*ListSOSEventsResponse, error)
+	AcknowledgeSOSEvent(ctx context.Context, in *AcknowledgeSOSEventRequest, opts ...grpc.CallOption) (*AcknowledgeSOSEventResponse, error)
+	CreateExternalEvent(ctx context.Context, in *CreateExternalEventRequest, opts ...grpc.CallOption) (*ExternalEvent, error)
+	DeactivateExternalEvent(ctx context.Context, in *DeactivateExternalEventRequest, opts ...grpc.CallOption) (*DeactivateExternalEventResponse, error)
 	CreateCity(ctx context.Context, in *CreateCityRequest, opts ...grpc.CallOption) (*City, error)
 	UpdateCityStatus(ctx context.Context, in *UpdateCityStatusRequest, opts ...grpc.CallOption) (*UpdateCityStatusResponse, error)
 }
@@ -178,6 +188,46 @@ func (c *adminServiceClient) DeactivateCoupon(ctx context.Context, in *Deactivat
 	return out, nil
 }
 
+func (c *adminServiceClient) ListSOSEvents(ctx context.Context, in *ListSOSEventsRequest, opts ...grpc.CallOption) (*ListSOSEventsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListSOSEventsResponse)
+	err := c.cc.Invoke(ctx, AdminService_ListSOSEvents_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) AcknowledgeSOSEvent(ctx context.Context, in *AcknowledgeSOSEventRequest, opts ...grpc.CallOption) (*AcknowledgeSOSEventResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AcknowledgeSOSEventResponse)
+	err := c.cc.Invoke(ctx, AdminService_AcknowledgeSOSEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) CreateExternalEvent(ctx context.Context, in *CreateExternalEventRequest, opts ...grpc.CallOption) (*ExternalEvent, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ExternalEvent)
+	err := c.cc.Invoke(ctx, AdminService_CreateExternalEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) DeactivateExternalEvent(ctx context.Context, in *DeactivateExternalEventRequest, opts ...grpc.CallOption) (*DeactivateExternalEventResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeactivateExternalEventResponse)
+	err := c.cc.Invoke(ctx, AdminService_DeactivateExternalEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *adminServiceClient) CreateCity(ctx context.Context, in *CreateCityRequest, opts ...grpc.CallOption) (*City, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(City)
@@ -220,6 +270,12 @@ type AdminServiceServer interface {
 	ListCoupons(context.Context, *ListCouponsRequest) (*ListCouponsResponse, error)
 	DeactivateCoupon(context.Context, *DeactivateCouponRequest) (*DeactivateCouponResponse, error)
 	// Phase 5 city launch workflow (flow.md §55).
+	// Safety (flow.md §45) and external events (flow.md §29) — admin only,
+	// audited, and listed in adminMethods.
+	ListSOSEvents(context.Context, *ListSOSEventsRequest) (*ListSOSEventsResponse, error)
+	AcknowledgeSOSEvent(context.Context, *AcknowledgeSOSEventRequest) (*AcknowledgeSOSEventResponse, error)
+	CreateExternalEvent(context.Context, *CreateExternalEventRequest) (*ExternalEvent, error)
+	DeactivateExternalEvent(context.Context, *DeactivateExternalEventRequest) (*DeactivateExternalEventResponse, error)
 	CreateCity(context.Context, *CreateCityRequest) (*City, error)
 	UpdateCityStatus(context.Context, *UpdateCityStatusRequest) (*UpdateCityStatusResponse, error)
 	mustEmbedUnimplementedAdminServiceServer()
@@ -264,6 +320,18 @@ func (UnimplementedAdminServiceServer) ListCoupons(context.Context, *ListCoupons
 }
 func (UnimplementedAdminServiceServer) DeactivateCoupon(context.Context, *DeactivateCouponRequest) (*DeactivateCouponResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeactivateCoupon not implemented")
+}
+func (UnimplementedAdminServiceServer) ListSOSEvents(context.Context, *ListSOSEventsRequest) (*ListSOSEventsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListSOSEvents not implemented")
+}
+func (UnimplementedAdminServiceServer) AcknowledgeSOSEvent(context.Context, *AcknowledgeSOSEventRequest) (*AcknowledgeSOSEventResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AcknowledgeSOSEvent not implemented")
+}
+func (UnimplementedAdminServiceServer) CreateExternalEvent(context.Context, *CreateExternalEventRequest) (*ExternalEvent, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateExternalEvent not implemented")
+}
+func (UnimplementedAdminServiceServer) DeactivateExternalEvent(context.Context, *DeactivateExternalEventRequest) (*DeactivateExternalEventResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeactivateExternalEvent not implemented")
 }
 func (UnimplementedAdminServiceServer) CreateCity(context.Context, *CreateCityRequest) (*City, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateCity not implemented")
@@ -490,6 +558,78 @@ func _AdminService_DeactivateCoupon_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AdminService_ListSOSEvents_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSOSEventsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ListSOSEvents(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ListSOSEvents_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ListSOSEvents(ctx, req.(*ListSOSEventsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_AcknowledgeSOSEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AcknowledgeSOSEventRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).AcknowledgeSOSEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_AcknowledgeSOSEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).AcknowledgeSOSEvent(ctx, req.(*AcknowledgeSOSEventRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_CreateExternalEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateExternalEventRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).CreateExternalEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_CreateExternalEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).CreateExternalEvent(ctx, req.(*CreateExternalEventRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_DeactivateExternalEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeactivateExternalEventRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).DeactivateExternalEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_DeactivateExternalEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).DeactivateExternalEvent(ctx, req.(*DeactivateExternalEventRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AdminService_CreateCity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateCityRequest)
 	if err := dec(in); err != nil {
@@ -576,6 +716,22 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeactivateCoupon",
 			Handler:    _AdminService_DeactivateCoupon_Handler,
+		},
+		{
+			MethodName: "ListSOSEvents",
+			Handler:    _AdminService_ListSOSEvents_Handler,
+		},
+		{
+			MethodName: "AcknowledgeSOSEvent",
+			Handler:    _AdminService_AcknowledgeSOSEvent_Handler,
+		},
+		{
+			MethodName: "CreateExternalEvent",
+			Handler:    _AdminService_CreateExternalEvent_Handler,
+		},
+		{
+			MethodName: "DeactivateExternalEvent",
+			Handler:    _AdminService_DeactivateExternalEvent_Handler,
 		},
 		{
 			MethodName: "CreateCity",

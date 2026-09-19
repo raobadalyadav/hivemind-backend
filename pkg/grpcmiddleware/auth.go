@@ -53,6 +53,10 @@ var adminMethods = map[string]bool{
 	"/social.v1.AdminService/DeactivateCoupon":        true,
 	"/social.v1.AdminService/CreateCity":              true,
 	"/social.v1.AdminService/UpdateCityStatus":        true,
+	"/social.v1.AdminService/ListSOSEvents":           true,
+	"/social.v1.AdminService/AcknowledgeSOSEvent":     true,
+	"/social.v1.AdminService/CreateExternalEvent":     true,
+	"/social.v1.AdminService/DeactivateExternalEvent": true,
 }
 
 func isAdminRole(role string) bool {

@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// ExternalEventService — flow.md §29: third-party events (concerts, workshops…)
+// curated by admins. Users mark interest, see other interested people and
+// start an event group chat. Ticketing/sync with providers is out of scope.
+service ExternalEventService {
+  rpc ListExternalEvents(ListExternalEventsRequest) returns (ListExternalEventsResponse);
+  rpc GetExternalEvent(GetExternalEventRequest) returns (ExternalEvent);
+  rpc SetEventInterest(SetEventInterestRequest) returns (ExternalEvent);
+  rpc ListInterestedPeople(ListInterestedPeopleRequest) returns (ListInterestedPeopleResponse);
+  rpc JoinEventGroup(JoinEventGroupRequest) returns (JoinEventGroupResponse);
+}
+
+message ExternalEvent {
+  string id = 1;
+  string city_id = 2;
+  string category_id = 3;
+  string title = 4;
+  string description = 5;
+  string source = 6;
+  string source_url = 7;
+  string venue_name = 8;
+  string image_url = 9;
+  google.protobuf.Timestamp starts_at = 10;
+  google.protobuf.Timestamp ends_at = 11;
+  int32 interested_count = 12;
+  bool i_am_interested = 13;
+  bool has_group = 14;
+}
+
+message ListExternalEventsRequest {
+  string city_id = 1;     // default: the caller's city
+  string category_id = 2; // optional
+  int32 page_size = 3;
+}
+message ListExternalEventsResponse {
+  repeated ExternalEvent events = 1;
+}
+
+message GetExternalEventRequest { string event_id = 1; }
+
+message SetEventInterestRequest {
+  string event_id = 1;
+  bool interested = 2;
+}
+
+message ListInterestedPeopleRequest { string event_id = 1; }
+message InterestedPerson {
+  string user_id = 1;
+  string display_name = 2;
+}
+message ListInterestedPeopleResponse {
+  repeated InterestedPerson people = 1;
+}
+
+message JoinEventGroupRequest { string event_id = 1; }
+message JoinEventGroupResponse { string room_id = 1; }

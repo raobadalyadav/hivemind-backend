@@ -174,3 +174,35 @@ func (r *Repository) BlockUser(ctx context.Context, userID, blockedUserID string
 	)
 	return err
 }
+
+type BlockedUser struct {
+	UserID      string
+	DisplayName string
+}
+
+func (r *Repository) ListBlocked(ctx context.Context, userID string) ([]BlockedUser, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT b.blocked_user_id::text, COALESCE(up.display_name, '')
+		FROM blocks b LEFT JOIN user_profiles up ON up.user_id = b.blocked_user_id
+		WHERE b.user_id = $1 ORDER BY b.created_at DESC`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []BlockedUser
+	for rows.Next() {
+		var u BlockedUser
+		if err := rows.Scan(&u.UserID, &u.DisplayName); err != nil {
+			return nil, err
+		}
+		out = append(out, u)
+	}
+	return out, rows.Err()
+}
+
+// UnblockUser is idempotent: removing a block that isn't there is not an error.
+// It only ever touches the caller's own block row.
+func (r *Repository) UnblockUser(ctx context.Context, userID, blockedUserID string) error {
+	_, err := r.pool.Exec(ctx, `DELETE FROM blocks WHERE user_id = $1 AND blocked_user_id = $2`, userID, blockedUserID)
+	return err
+}

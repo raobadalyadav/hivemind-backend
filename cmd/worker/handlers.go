@@ -10,6 +10,7 @@ import (
 	"github.com/hivemind/backend/internal/notifications"
 	"github.com/hivemind/backend/internal/payments"
 	"github.com/hivemind/backend/internal/plans"
+	"github.com/hivemind/backend/internal/stories"
 	"github.com/hivemind/backend/pkg/analytics"
 	"github.com/hivemind/backend/pkg/eventbus"
 )
@@ -22,6 +23,7 @@ type deps struct {
 	paymentsSvc      *payments.Service
 	bookingsSvc      *bookings.Service
 	plansSvc         *plans.Service
+	storiesSvc       *stories.Service
 	analyticsRec     *analytics.Recorder
 	logger           *slog.Logger
 }

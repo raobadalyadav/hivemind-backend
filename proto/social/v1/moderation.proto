@@ -12,6 +12,9 @@ service ModerationService {
   rpc GetCase(GetCaseRequest) returns (ModerationCase);
   rpc ResolveCase(ResolveCaseRequest) returns (ModerationCase);
   rpc BlockUser(BlockUserRequest) returns (BlockUserResponse);
+  // Blocked-users list and undo (flow.md §44 Safety Center). Caller-keyed.
+  rpc ListBlockedUsers(ListBlockedUsersRequest) returns (ListBlockedUsersResponse);
+  rpc UnblockUser(UnblockUserRequest) returns (UnblockUserResponse);
   // GetTrustBadges — PRD §22: derived booleans/badges only, never a raw
   // numeric risk score exposed to clients.
   rpc GetTrustBadges(GetTrustBadgesRequest) returns (TrustBadges);
@@ -70,3 +73,17 @@ message GetTrustBadgesRequest {
 message TrustBadges {
   repeated string badges = 1; // e.g. "reliable_attendee", "trusted_host", "id_verified", "community_veteran", "under_review" — never a numeric field
 }
+
+message ListBlockedUsersRequest {}
+message BlockedUser {
+  string user_id = 1;
+  string display_name = 2;
+}
+message ListBlockedUsersResponse {
+  repeated BlockedUser users = 1;
+}
+
+message UnblockUserRequest {
+  string blocked_user_id = 1;
+}
+message UnblockUserResponse {}

@@ -22,6 +22,7 @@ import (
 	"github.com/hivemind/backend/internal/notifications"
 	"github.com/hivemind/backend/internal/payments"
 	"github.com/hivemind/backend/internal/plans"
+	"github.com/hivemind/backend/internal/stories"
 	"github.com/hivemind/backend/pkg/analytics"
 	"github.com/hivemind/backend/pkg/email"
 	"github.com/hivemind/backend/pkg/eventbus"
@@ -82,6 +83,7 @@ func main() {
 		// for the gRPC-facing Service constructed in cmd/api.
 		paymentsSvc:  payments.NewService(payments.NewRepository(pool), nil, nil, logger),
 		plansSvc:     plans.NewService(plans.NewRepository(pool), nil, nil, nil),
+		storiesSvc:   stories.NewService(stories.NewRepository(pool), nil),
 		bookingsSvc:  bookings.NewService(bookings.NewRepository(pool), idempotency.NewGuard(rdb)),
 		analyticsRec: analytics.NewRecorder(pool),
 		logger:       logger,

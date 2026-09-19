@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package social.v1;
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// SafetyService — flow.md §44/§45. HiveMind does NOT dispatch emergency
+// services; SOS records the alert, emails the user's emergency contact when
+// one is configured, and always tells the user to call the local number.
+service SafetyService {
+  rpc GetSafetyCenter(GetSafetyCenterRequest) returns (SafetyCenter);
+  rpc SetEmergencyContact(SetEmergencyContactRequest) returns (EmergencyContact);
+  rpc GetEmergencyContact(GetEmergencyContactRequest) returns (EmergencyContact);
+  rpc DeleteEmergencyContact(DeleteEmergencyContactRequest) returns (DeleteEmergencyContactResponse);
+  rpc TriggerSOS(TriggerSOSRequest) returns (TriggerSOSResponse);
+}
+
+message GetSafetyCenterRequest {}
+message SafetyCenter {
+  string verification_status = 1;
+  bool has_emergency_contact = 2;
+  int32 blocked_count = 3;
+  repeated string guidelines = 4;
+  string emergency_number = 5;
+  string disclaimer = 6;
+}
+
+message EmergencyContact {
+  string name = 1;
+  string email = 2;
+  string phone = 3;
+  string relationship = 4;
+}
+
+message SetEmergencyContactRequest {
+  string name = 1;
+  string email = 2;
+  string phone = 3;
+  string relationship = 4;
+}
+message GetEmergencyContactRequest {}
+message DeleteEmergencyContactRequest {}
+message DeleteEmergencyContactResponse {}
+
+message TriggerSOSRequest {
+  bool confirmed = 1; // must be true — guards against accidental taps
+  string plan_id = 2; // optional; must be a plan the caller hosts/attends
+  double latitude = 3;
+  double longitude = 4;
+  bool has_location = 5;
+  string note = 6;
+}
+
+message TriggerSOSResponse {
+  string sos_id = 1;
+  bool contact_notified = 2;
+  string emergency_number = 3;
+  string disclaimer = 4;
+}

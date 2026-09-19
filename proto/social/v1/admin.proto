@@ -4,6 +4,7 @@ package social.v1;
 
 import "google/protobuf/timestamp.proto";
 import "social/v1/common.proto";
+import "social/v1/external_event.proto";
 
 option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
 
@@ -27,6 +28,13 @@ service AdminService {
   rpc DeactivateCoupon(DeactivateCouponRequest) returns (DeactivateCouponResponse);
 
   // Phase 5 city launch workflow (flow.md §55).
+  // Safety (flow.md §45) and external events (flow.md §29) — admin only,
+  // audited, and listed in adminMethods.
+  rpc ListSOSEvents(ListSOSEventsRequest) returns (ListSOSEventsResponse);
+  rpc AcknowledgeSOSEvent(AcknowledgeSOSEventRequest) returns (AcknowledgeSOSEventResponse);
+  rpc CreateExternalEvent(CreateExternalEventRequest) returns (ExternalEvent);
+  rpc DeactivateExternalEvent(DeactivateExternalEventRequest) returns (DeactivateExternalEventResponse);
+
   rpc CreateCity(CreateCityRequest) returns (City);
   rpc UpdateCityStatus(UpdateCityStatusRequest) returns (UpdateCityStatusResponse);
 }
@@ -152,3 +160,46 @@ message UpdateCityStatusRequest {
 }
 
 message UpdateCityStatusResponse {}
+
+message SOSEvent {
+  string id = 1;
+  string user_id = 2;
+  string user_name = 3;
+  string plan_id = 4;
+  double latitude = 5;
+  double longitude = 6;
+  bool has_location = 7;
+  string note = 8;
+  string contact_delivery = 9; // sent | failed | no_contact
+  string delivery_error = 10;
+  bool acknowledged = 11;
+  google.protobuf.Timestamp created_at = 12;
+}
+message ListSOSEventsRequest {
+  bool only_unacknowledged = 1;
+  int32 limit = 2;
+}
+message ListSOSEventsResponse {
+  repeated SOSEvent events = 1;
+}
+message AcknowledgeSOSEventRequest {
+  string sos_id = 1;
+}
+message AcknowledgeSOSEventResponse {}
+
+message CreateExternalEventRequest {
+  string city_id = 1;
+  string category_id = 2;
+  string title = 3;
+  string description = 4;
+  string source = 5;
+  string source_url = 6; // http(s)
+  string venue_name = 7;
+  string image_url = 8;
+  google.protobuf.Timestamp starts_at = 9;
+  google.protobuf.Timestamp ends_at = 10;
+}
+message DeactivateExternalEventRequest {
+  string event_id = 1;
+}
+message DeactivateExternalEventResponse {}

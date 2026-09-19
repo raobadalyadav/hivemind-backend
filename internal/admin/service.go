@@ -3,10 +3,16 @@ package admin
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
-var ErrInvalidInput = errors.New("admin: invalid input")
+var (
+	ErrInvalidInput = errors.New("admin: invalid input")
+	ErrNotFound     = errors.New("admin: not found")
+)
 
 const defaultPageSize = 50
 
@@ -99,4 +105,46 @@ func (s *Service) UpdateCityStatus(ctx context.Context, cityID, status, actorID 
 		return ErrInvalidInput
 	}
 	return s.repo.UpdateCityStatus(ctx, cityID, status, actorID)
+}
+
+func (s *Service) ListSOSEvents(ctx context.Context, onlyOpen bool, limit int32) ([]SOSEvent, error) {
+	if limit <= 0 || limit > 100 {
+		limit = defaultPageSize
+	}
+	return s.repo.ListSOSEvents(ctx, onlyOpen, int(limit))
+}
+
+func (s *Service) AcknowledgeSOSEvent(ctx context.Context, sosID, actorID string) error {
+	if sosID == "" || actorID == "" {
+		return ErrInvalidInput
+	}
+	return s.repo.AcknowledgeSOSEvent(ctx, sosID, actorID)
+}
+
+func (s *Service) CreateExternalEvent(ctx context.Context, e ExternalEvent, actorID string) (*ExternalEvent, error) {
+	e.Title = strings.TrimSpace(e.Title)
+	if e.CityID == "" || e.Title == "" || len(e.Title) > 200 || e.StartsAt.IsZero() || actorID == "" ||
+		(e.EndsAt != nil && !e.EndsAt.After(e.StartsAt)) || len(e.SourceURL) > 2048 || len(e.ImageURL) > 2048 ||
+		!(strings.HasPrefix(e.SourceURL, "https://") || strings.HasPrefix(e.SourceURL, "http://")) ||
+		(e.ImageURL != "" && !strings.HasPrefix(e.ImageURL, "https://")) {
+		return nil, ErrInvalidInput
+	}
+	out, err := s.repo.CreateExternalEvent(ctx, e, actorID)
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && (pgErr.Code == "23503" || pgErr.Code == "22P02") { // unknown city/category
+		return nil, ErrInvalidInput
+	}
+	return out, err
+}
+
+func (s *Service) DeactivateExternalEvent(ctx context.Context, eventID, actorID string) error {
+	if eventID == "" || actorID == "" {
+		return ErrInvalidInput
+	}
+	err := s.repo.DeactivateExternalEvent(ctx, eventID, actorID)
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == "22P02" {
+		return ErrNotFound
+	}
+	return err
 }
