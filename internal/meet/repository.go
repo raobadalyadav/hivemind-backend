@@ -198,6 +198,11 @@ func (r *Repository) Swipe(ctx context.Context, actor, target, action string) (*
 		return nil, ErrRateLimited
 	}
 
+	var prev string // "" when there was no earlier decision
+	if err := tx.QueryRow(ctx, `SELECT action FROM swipes WHERE actor_id = $1 AND target_id = $2`, actor, target).Scan(&prev); err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return nil, err
+	}
+	unchanged := prev == action // repeating a swipe must not notify again
 	if _, err := tx.Exec(ctx, `
 		INSERT INTO swipes (actor_id, target_id, action, created_at) VALUES ($1, $2, $3, $4::timestamptz)
 		ON CONFLICT (actor_id, target_id) DO UPDATE SET action = EXCLUDED.action, created_at = EXCLUDED.created_at`,
@@ -218,6 +223,9 @@ func (r *Repository) Swipe(ctx context.Context, actor, target, action string) (*
 	_ = tx.QueryRow(ctx, `SELECT COALESCE(display_name, '') FROM user_profiles WHERE user_id = $1`, actor).Scan(&actorName)
 
 	if !mutual {
+		if unchanged {
+			return res, tx.Commit(ctx)
+		}
 		title, body := actorName+" waved at you 👋", "Wave back to start chatting."
 		if action == "super" {
 			title, body = actorName+" sent you a super wave ⭐", "They really want to meet you — wave back!"
@@ -241,6 +249,10 @@ func (r *Repository) Swipe(ctx context.Context, actor, target, action string) (*
 			return nil, err
 		}
 	}
+	res.Matched = true
+	if unchanged {
+		return res, tx.Commit(ctx)
+	}
 	for _, p := range []struct{ to, other string }{{target, actorName}, {actor, name}} {
 		if err := eventbus.EnqueueNotifyUser(ctx, tx, eventbus.NotifyUserPayload{
 			UserID: p.to, Title: "It's a match! 🎉", Body: "You and " + p.other + " waved at each other — say hi.",
@@ -248,7 +260,6 @@ func (r *Repository) Swipe(ctx context.Context, actor, target, action string) (*
 			return nil, err
 		}
 	}
-	res.Matched = true
 	return res, tx.Commit(ctx)
 }
 

@@ -122,6 +122,7 @@ var scopeToDB = map[socialv1.FeedScope]string{
 	socialv1.FeedScope_FEED_SCOPE_GLOBAL:      "global",
 	socialv1.FeedScope_FEED_SCOPE_CONNECTIONS: "connections",
 	socialv1.FeedScope_FEED_SCOPE_COMMUNITY:   "community",
+	socialv1.FeedScope_FEED_SCOPE_FOR_YOU:     "for_you",
 }
 
 func (h *Handler) GetFeed(ctx context.Context, req *socialv1.GetFeedRequest) (*socialv1.GetFeedResponse, error) {

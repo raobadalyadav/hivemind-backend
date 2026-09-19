@@ -128,6 +128,8 @@ The API surface is organized by domain service, each with its own proto file und
 
 **Profile & people** — photos, gender/education/hobbies, interest catalog (5–15 interests), social intent + personality quiz (feeds people recommendations and smart-group balancing), "who's going" cards with privacy filtering, Meet Again groups, Memories.
 
+**Meet, waves & verification** — `MeetService`: a same-city swipe deck (shared interests/communities first; blocked, connected and recently passed people never appear), `Swipe` pass/wave/super with daily limits (300/50/5), mutual wave = accepted connection + DM room, 30-minute profile boosts (one free per week, then ₹19 from wallet credits). `VerificationService`: live-selfie blue tick — random pose challenge, selfie upload, admin approve/reject (`ListVerificationRequests` / `ReviewVerification`, audited); the selfie is detached and garbage-collected after review. Chat inbox: `ListMyChats` (Primary = friend DMs + upcoming plan chats, General = the rest), `MarkRead`, `OpenDirectChat` (connections only). Feed `FOR_YOU` scope and `ListUpcomingPlans` power Home and Events.
+
 **Chat, feed & stories** — typed chat messages (image, voice, location, announcement), polls and pinned messages; a feed with connections/community visibility, save and share-link; 24-hour stories with optional archive.
 
 **Growth & safety** — referral codes (₹100 credit each side, append-only ledger), Safety Center, emergency contact and SOS (records the alert and emails the contact when an email provider is configured — it does **not** dispatch emergency services, and says so), blocked-users list, and admin-curated external events with interest and event group chats.

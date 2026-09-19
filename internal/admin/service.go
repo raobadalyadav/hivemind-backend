@@ -16,8 +16,15 @@ var (
 
 const defaultPageSize = 50
 
+// WithMediaBaseURL lets the review queue return viewable selfie URLs.
+func (s *Service) WithMediaBaseURL(u string) *Service {
+	s.mediaBase = strings.TrimRight(u, "/")
+	return s
+}
+
 type Service struct {
-	repo *Repository
+	mediaBase string
+	repo      *Repository
 }
 
 func NewService(repo *Repository) *Service {
@@ -142,6 +149,32 @@ func (s *Service) DeactivateExternalEvent(ctx context.Context, eventID, actorID 
 		return ErrInvalidInput
 	}
 	err := s.repo.DeactivateExternalEvent(ctx, eventID, actorID)
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == "22P02" {
+		return ErrNotFound
+	}
+	return err
+}
+
+func (s *Service) ListVerificationRequests(ctx context.Context, limit int32) ([]VerificationItem, error) {
+	if limit <= 0 || limit > 100 {
+		limit = defaultPageSize
+	}
+	items, err := s.repo.ListVerificationRequests(ctx, int(limit))
+	for i := range items {
+		if items[i].ObjectKey != "" {
+			items[i].ObjectKey = s.mediaBase + "/media/" + items[i].ObjectKey // now a URL
+		}
+	}
+	return items, err
+}
+
+func (s *Service) ReviewVerification(ctx context.Context, requestID string, approve bool, reason, actorID string) error {
+	reason = strings.TrimSpace(reason)
+	if requestID == "" || actorID == "" || len(reason) > 300 {
+		return ErrInvalidInput
+	}
+	err := s.repo.ReviewVerification(ctx, requestID, approve, reason, actorID)
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == "22P02" {
 		return ErrNotFound

@@ -13,6 +13,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/hivemind/backend/pkg/eventbus"
 )
 
 type Repository struct {
@@ -495,6 +497,81 @@ func (r *Repository) DeactivateExternalEvent(ctx context.Context, eventID, actor
 			VALUES ($1, 'deactivate_external_event', 'external_event', $2, '{}')`, actorID, eventID); err != nil {
 			return err
 		}
+	}
+	return tx.Commit(ctx)
+}
+
+type VerificationItem struct {
+	ID, UserID, UserName, Challenge, ObjectKey string
+	CreatedAt                                  time.Time
+}
+
+// ListVerificationRequests: pending selfies, oldest first (review queue).
+func (r *Repository) ListVerificationRequests(ctx context.Context, limit int) ([]VerificationItem, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT v.id::text, v.user_id::text, COALESCE(up.display_name, ''), v.challenge, COALESCE(m.object_key, ''), v.created_at
+		FROM verification_requests v
+		LEFT JOIN user_profiles up ON up.user_id = v.user_id
+		LEFT JOIN media_uploads m ON m.id = v.media_id
+		WHERE v.status = 'pending' ORDER BY v.created_at LIMIT $1`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []VerificationItem
+	for rows.Next() {
+		var v VerificationItem
+		if err := rows.Scan(&v.ID, &v.UserID, &v.UserName, &v.Challenge, &v.ObjectKey, &v.CreatedAt); err != nil {
+			return nil, err
+		}
+		out = append(out, v)
+	}
+	return out, rows.Err()
+}
+
+// ReviewVerification decides a pending request once. The selfie is detached
+// (media_id NULL) so the media GC deletes it; approval sets the blue tick.
+// Decision, tick, audit row and the user's notification are one transaction.
+func (r *Repository) ReviewVerification(ctx context.Context, requestID string, approve bool, reason, actorID string) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	status := "rejected"
+	if approve {
+		status = "approved"
+	}
+	var userID string
+	err = tx.QueryRow(ctx, `
+		UPDATE verification_requests SET status = $2, reject_reason = $3, reviewed_by = $4::uuid, reviewed_at = now(), media_id = NULL
+		WHERE id = $1 AND status = 'pending' RETURNING user_id::text`, requestID, status, reason, actorID).Scan(&userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrNotFound
+	}
+	if err != nil {
+		return err
+	}
+	title, body := "You're verified ✓", "Your blue tick is now on your profile."
+	if approve {
+		if _, err := tx.Exec(ctx, `UPDATE user_profiles SET selfie_verified_at = now() WHERE user_id = $1`, userID); err != nil {
+			return err
+		}
+	} else {
+		title, body = "Verification not approved", "Your selfie didn't pass review. You can try again."
+		if reason != "" {
+			body = reason + " You can try again."
+		}
+	}
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO audit_logs (actor_id, action, subject_type, subject_id, details)
+		VALUES ($1, $2, 'user', $3::uuid, jsonb_build_object('request_id', $4::text, 'reason', $5::text))`,
+		actorID, "verification_"+status, userID, requestID, reason); err != nil {
+		return err
+	}
+	if err := eventbus.EnqueueNotifyUser(ctx, tx, eventbus.NotifyUserPayload{
+		UserID: userID, Title: title, Body: body, DeepLink: "hivemind://verification", Channel: "push"}); err != nil {
+		return err
 	}
 	return tx.Commit(ctx)
 }

@@ -49,6 +49,8 @@ func NewService(repo *Repository, reporter ReportSubmitter, screener ContentScre
 	return &Service{repo: repo, reporter: reporter, screener: screener}
 }
 
+const maxForYouOffset = 200
+
 const (
 	maxPostBody   = 5000
 	maxCommentLen = 2000
@@ -239,8 +241,34 @@ func decodeCursor(tok string) (*cursor, error) {
 // community scope requires membership — a non-member gets the same empty-ish
 // NotFound as a missing community, not an empty feed that confirms it exists.
 func (s *Service) GetFeed(ctx context.Context, callerID, scope, communityID string, pageSize int32, pageToken string) ([]*Post, string, error) {
-	if callerID == "" || (scope != "global" && scope != "connections" && scope != "community") {
+	if callerID == "" || (scope != "global" && scope != "connections" && scope != "community" && scope != "for_you") {
 		return nil, "", ErrInvalidInput
+	}
+	if scope == "for_you" {
+		offset := 0
+		if pageToken != "" {
+			n, err := strconv.Atoi(pageToken)
+			if err != nil || n < 0 || n > maxForYouOffset {
+				return nil, "", ErrInvalidInput
+			}
+			offset = n
+		}
+		limit := int(pageSize)
+		if limit <= 0 || limit > 50 {
+			limit = defaultPostPageSize
+		}
+		posts, err := s.repo.ForYou(ctx, callerID, offset, limit+1)
+		if err != nil {
+			return nil, "", err
+		}
+		next := ""
+		if len(posts) > limit {
+			posts = posts[:limit]
+			if offset+limit <= maxForYouOffset {
+				next = strconv.Itoa(offset + limit)
+			}
+		}
+		return posts, next, nil
 	}
 	if (scope == "community") != (communityID != "") {
 		return nil, "", ErrInvalidInput

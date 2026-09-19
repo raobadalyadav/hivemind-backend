@@ -397,3 +397,26 @@ func (s *Service) CancelPlan(ctx context.Context, planID, callerID, callerRole, 
 	}
 	return s.repo.Cancel(ctx, planID, reason)
 }
+
+func (s *Service) ListUpcomingPlans(ctx context.Context, callerID string, f UpcomingFilter) ([]*Plan, error) {
+	if callerID == "" {
+		return nil, ErrInvalidInput
+	}
+	now := time.Now()
+	if f.From.IsZero() {
+		f.From = now
+	}
+	if f.To.IsZero() {
+		f.To = f.From.Add(30 * 24 * time.Hour)
+	}
+	if !f.To.After(f.From) || f.To.Sub(f.From) > 366*24*time.Hour {
+		return nil, ErrInvalidInput
+	}
+	if f.Limit <= 0 {
+		f.Limit = 50
+	}
+	if f.Limit > 100 {
+		f.Limit = 100
+	}
+	return s.repo.Upcoming(ctx, callerID, f)
+}

@@ -75,7 +75,7 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 func (r *Repository) GetOrCreateRoomForPlan(ctx context.Context, planID string) (*Room, error) {
 	var id string
 	err := r.pool.QueryRow(ctx, `
-		INSERT INTO chat_rooms (plan_id) VALUES ($1)
+		INSERT INTO chat_rooms (plan_id, kind) VALUES ($1, 'plan')
 		ON CONFLICT (plan_id) DO UPDATE SET plan_id = EXCLUDED.plan_id
 		RETURNING id`,
 		planID,

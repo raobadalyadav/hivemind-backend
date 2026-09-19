@@ -405,3 +405,26 @@ func (h *Handler) SetParticipantVisibility(ctx context.Context, req *socialv1.Se
 	}
 	return &socialv1.SetParticipantVisibilityResponse{}, nil
 }
+
+func (h *Handler) ListUpcomingPlans(ctx context.Context, req *socialv1.ListUpcomingPlansRequest) (*socialv1.ListUpcomingPlansResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	f := UpcomingFilter{CategoryID: req.GetCategoryId(), CityID: req.GetCityId(), FreeOnly: req.GetFreeOnly(), Limit: int(req.GetLimit())}
+	if req.GetFrom() != nil {
+		f.From = req.GetFrom().AsTime()
+	}
+	if req.GetTo() != nil {
+		f.To = req.GetTo().AsTime()
+	}
+	plans, err := h.svc.ListUpcomingPlans(ctx, userID, f)
+	if err != nil {
+		return nil, planErr(err, "failed to list plans")
+	}
+	out := &socialv1.ListUpcomingPlansResponse{}
+	for _, p := range plans {
+		out.Plans = append(out.Plans, toProto(p))
+	}
+	return out, nil
+}

@@ -34,6 +34,7 @@ import (
 	"github.com/hivemind/backend/internal/externalevents"
 	"github.com/hivemind/backend/internal/host"
 	"github.com/hivemind/backend/internal/media"
+	"github.com/hivemind/backend/internal/meet"
 	"github.com/hivemind/backend/internal/moderation"
 	"github.com/hivemind/backend/internal/notifications"
 	"github.com/hivemind/backend/internal/payments"
@@ -51,6 +52,7 @@ import (
 	"github.com/hivemind/backend/internal/subscriptions"
 	"github.com/hivemind/backend/internal/users"
 	"github.com/hivemind/backend/internal/venues"
+	"github.com/hivemind/backend/internal/verification"
 	"github.com/hivemind/backend/pkg/analytics"
 	"github.com/hivemind/backend/pkg/cashfree"
 	"github.com/hivemind/backend/pkg/email"
@@ -205,13 +207,15 @@ func main() {
 	socialv1.RegisterReferralServiceServer(srv, referral.NewHandler(referral.NewService(referral.NewRepository(pool))))
 	socialv1.RegisterSafetyServiceServer(srv, safety.NewHandler(safety.NewService(safety.NewRepository(pool), emailSender, cfg.EmergencyNumber)))
 	socialv1.RegisterExternalEventServiceServer(srv, externalevents.NewHandler(externalevents.NewService(externalevents.NewRepository(pool), chatSvc)))
+	socialv1.RegisterMeetServiceServer(srv, meet.NewHandler(meet.NewService(meet.NewRepository(pool)).WithDM(chatSvc)))
+	socialv1.RegisterVerificationServiceServer(srv, verification.NewHandler(verification.NewService(pool).WithMedia(mediaResolver)))
 	socialv1.RegisterStoryServiceServer(srv, stories.NewHandler(stories.NewService(stories.NewRepository(pool), contentScreener).WithMedia(mediaResolver)))
 	socialv1.RegisterSocialServiceServer(srv, social.NewHandler(social.NewService(social.NewRepository(pool), moderationSvc, contentScreener).WithMedia(mediaResolver)))
 	socialv1.RegisterModerationServiceServer(srv, moderation.NewHandler(moderationSvc))
 	socialv1.RegisterNotificationServiceServer(srv, notifications.NewHandler(notifications.NewService(notifications.NewRepository(pool), emailSender, pushSender, logger)))
 	socialv1.RegisterSearchServiceServer(srv, search.NewHandler(search.NewService(search.NewRepository(pool))))
 	socialv1.RegisterRecommendationServiceServer(srv, recommendation.NewHandler(recommendation.NewService(recommendation.NewRepository(pool))))
-	socialv1.RegisterAdminServiceServer(srv, admin.NewHandler(admin.NewService(admin.NewRepository(pool))))
+	socialv1.RegisterAdminServiceServer(srv, admin.NewHandler(admin.NewService(admin.NewRepository(pool)).WithMediaBaseURL(cfg.MediaPublicBaseURL)))
 	socialv1.RegisterVenueServiceServer(srv, venues.NewHandler(venuesSvc))
 	socialv1.RegisterHostServiceServer(srv, host.NewHandler(hostSvc))
 	socialv1.RegisterPromotionServiceServer(srv, promotions.NewHandler(promotionsSvc))

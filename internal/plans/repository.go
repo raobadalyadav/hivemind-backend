@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/hivemind/backend/pkg/eventbus"
@@ -423,4 +424,56 @@ func (r *Repository) Notify(ctx context.Context, p eventbus.NotifyUserPayload) e
 		return err
 	}
 	return tx.Commit(ctx)
+}
+
+type UpcomingFilter struct {
+	From, To   time.Time
+	CategoryID string
+	CityID     string // empty → the caller's city
+	FreeOnly   bool
+	Limit      int
+}
+
+// Upcoming lists discoverable plans starting in [From, To), soonest first. It
+// filters through plans_discoverable (published + public, one row per
+// recurring series) but reads the full row from plans, since the view's column
+// list predates later columns.
+func (r *Repository) Upcoming(ctx context.Context, callerID string, f UpcomingFilter) ([]*Plan, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT `+planColumns+` FROM plans
+		WHERE id IN (
+			SELECT d.id FROM plans_discoverable d
+			WHERE d.starts_at >= $2::timestamptz AND d.starts_at < $3::timestamptz
+			  AND (d.city_id = COALESCE(NULLIF($4,'')::uuid, (SELECT city_id FROM users WHERE id = $1::uuid))
+			       OR COALESCE(NULLIF($4,'')::uuid, (SELECT city_id FROM users WHERE id = $1::uuid)) IS NULL)
+			  AND (NULLIF($5,'') IS NULL OR d.category_id = NULLIF($5,'')::uuid)
+			  AND (NOT $6 OR d.price_minor = 0))
+		ORDER BY starts_at LIMIT $7`, callerID, f.From, f.To, f.CityID, f.CategoryID, f.FreeOnly, f.Limit)
+	if err != nil {
+		if isBadUUID(err) {
+			return nil, ErrInvalidInput
+		}
+		return nil, err
+	}
+	defer rows.Close()
+	var out []*Plan
+	for rows.Next() {
+		var p Plan
+		if err := scanPlan(rows, &p); err != nil {
+			return nil, err
+		}
+		out = append(out, &p)
+	}
+	if err := rows.Err(); err != nil {
+		if isBadUUID(err) {
+			return nil, ErrInvalidInput
+		}
+		return nil, err
+	}
+	return out, nil
+}
+
+func isBadUUID(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "22P02"
 }

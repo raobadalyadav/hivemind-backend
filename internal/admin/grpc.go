@@ -269,3 +269,26 @@ func (h *Handler) DeactivateExternalEvent(ctx context.Context, req *socialv1.Dea
 	}
 	return &socialv1.DeactivateExternalEventResponse{}, nil
 }
+
+func (h *Handler) ListVerificationRequests(ctx context.Context, req *socialv1.ListVerificationRequestsRequest) (*socialv1.ListVerificationRequestsResponse, error) {
+	list, err := h.svc.ListVerificationRequests(ctx, req.GetLimit())
+	if err != nil {
+		return nil, adminErr(err, "failed to list verification requests")
+	}
+	out := &socialv1.ListVerificationRequestsResponse{}
+	for _, v := range list {
+		out.Requests = append(out.Requests, &socialv1.VerificationRequest{
+			Id: v.ID, UserId: v.UserID, UserName: v.UserName, Challenge: v.Challenge, SelfieUrl: v.ObjectKey,
+			CreatedAt: timestamppb.New(v.CreatedAt),
+		})
+	}
+	return out, nil
+}
+
+func (h *Handler) ReviewVerification(ctx context.Context, req *socialv1.ReviewVerificationRequest) (*socialv1.ReviewVerificationResponse, error) {
+	actorID, _ := grpcmiddleware.UserIDFromContext(ctx)
+	if err := h.svc.ReviewVerification(ctx, req.GetRequestId(), req.GetApprove(), req.GetReason(), actorID); err != nil {
+		return nil, adminErr(err, "failed to review verification")
+	}
+	return &socialv1.ReviewVerificationResponse{}, nil
+}

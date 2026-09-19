@@ -328,3 +328,8 @@ func (r *Repository) CanUsePlanRoom(ctx context.Context, planID, userID string) 
 	}
 	return ok, err
 }
+
+func isBadUUID(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "22P02"
+}

@@ -43,7 +43,7 @@ func chatErr(err error, fallback string) error {
 	switch err {
 	case ErrInvalidInput:
 		return status.Error(codes.InvalidArgument, err.Error())
-	case ErrNotAMember, ErrNotHost:
+	case ErrNotAMember, ErrNotHost, ErrNotConnected:
 		return status.Error(codes.PermissionDenied, err.Error())
 	case ErrContentRejected:
 		return status.Error(codes.FailedPrecondition, err.Error())
@@ -202,4 +202,53 @@ func toProtoMessage(m *Message) *socialv1.Message {
 		out.Poll = pollToProto(m.Poll)
 	}
 	return out
+}
+
+var kindToProto = map[string]socialv1.ChatKind{"dm": socialv1.ChatKind_CHAT_KIND_DM, "plan": socialv1.ChatKind_CHAT_KIND_PLAN}
+
+func (h *Handler) ListMyChats(ctx context.Context, req *socialv1.ListMyChatsRequest) (*socialv1.ListMyChatsResponse, error) {
+	uid, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	chats, pu, gu, err := h.svc.Inbox(ctx, uid, req.GetTab() == socialv1.ChatTab_CHAT_TAB_PRIMARY)
+	if err != nil {
+		return nil, chatErr(err, "failed to load chats")
+	}
+	out := &socialv1.ListMyChatsResponse{PrimaryUnread: pu, GeneralUnread: gu}
+	for _, c := range chats {
+		pc := &socialv1.ChatSummary{
+			RoomId: c.RoomID, Kind: kindToProto[c.Kind], Title: c.Title, OtherUserId: c.OtherUserID, PlanId: c.PlanID,
+			AvatarUrl: c.AvatarURL, OtherVerified: c.OtherVerified, LastMessage: c.LastMessage,
+			UnreadCount: c.Unread, Muted: c.Muted,
+		}
+		if c.LastMessageAt != nil {
+			pc.LastMessageAt = timestamppb.New(*c.LastMessageAt)
+		}
+		out.Chats = append(out.Chats, pc)
+	}
+	return out, nil
+}
+
+func (h *Handler) MarkRead(ctx context.Context, req *socialv1.MarkReadRequest) (*socialv1.MarkReadResponse, error) {
+	uid, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	if err := h.svc.MarkRead(ctx, req.GetRoomId(), uid); err != nil {
+		return nil, chatErr(err, "failed to mark read")
+	}
+	return &socialv1.MarkReadResponse{}, nil
+}
+
+func (h *Handler) OpenDirectChat(ctx context.Context, req *socialv1.OpenDirectChatRequest) (*socialv1.ChatRoom, error) {
+	uid, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	id, err := h.svc.OpenDirectChat(ctx, uid, req.GetUserId())
+	if err != nil {
+		return nil, chatErr(err, "failed to open chat")
+	}
+	return &socialv1.ChatRoom{Id: id}, nil
 }

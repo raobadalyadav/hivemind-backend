@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/hivemind/backend/pkg/media"
 )
@@ -234,6 +235,11 @@ func (s *Service) SendMessage(ctx context.Context, m *Message, senderRole string
 	if err := s.requireMember(ctx, m.RoomID, m.SenderID); err != nil {
 		return nil, err
 	}
+	if blocked, err := s.repo.DMBlocked(ctx, m.RoomID, m.SenderID); err != nil {
+		return nil, err
+	} else if blocked {
+		return nil, ErrNotAMember
+	}
 	if m.Type == "announcement" {
 		if err := s.requireHost(ctx, m.RoomID, m.SenderID, senderRole); err != nil {
 			return nil, err
@@ -376,4 +382,56 @@ func (s *Service) AddRoomMember(ctx context.Context, roomID, userID string) erro
 		return ErrInvalidInput
 	}
 	return s.repo.AddMember(ctx, roomID, userID)
+}
+
+// Inbox splits the user's chats into Primary / General and totals unread for
+// each (the bar badge shows both regardless of which tab is open).
+func (s *Service) Inbox(ctx context.Context, userID string, primary bool) (chats []Summary, primaryUnread, generalUnread int32, err error) {
+	if userID == "" {
+		return nil, 0, 0, ErrInvalidInput
+	}
+	all, err := s.repo.Inbox(ctx, userID, time.Now())
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	for _, c := range all {
+		if c.Primary {
+			primaryUnread += c.Unread
+		} else {
+			generalUnread += c.Unread
+		}
+		if c.Primary == primary {
+			chats = append(chats, c)
+		}
+	}
+	return chats, primaryUnread, generalUnread, nil
+}
+
+func (s *Service) MarkRead(ctx context.Context, roomID, userID string) error {
+	if roomID == "" || userID == "" {
+		return ErrInvalidInput
+	}
+	return s.repo.MarkRead(ctx, roomID, userID, time.Now())
+}
+
+// OpenDirectChat requires an accepted connection: flow.md §25 — messaging is
+// never exposed to everyone, only to people who agreed to connect (accepting a
+// request, or a mutual wave).
+func (s *Service) OpenDirectChat(ctx context.Context, userID, otherID string) (string, error) {
+	if userID == "" || otherID == "" || userID == otherID {
+		return "", ErrInvalidInput
+	}
+	ok, err := s.repo.AreConnected(ctx, userID, otherID)
+	if err != nil {
+		return "", err
+	}
+	if !ok {
+		return "", ErrNotConnected
+	}
+	return s.repo.OpenDM(ctx, userID, otherID)
+}
+
+// OpenDM satisfies internal/meet's DMOpener (the connection already exists).
+func (s *Service) OpenDM(ctx context.Context, a, b string) (string, error) {
+	return s.OpenDirectChat(ctx, a, b)
 }

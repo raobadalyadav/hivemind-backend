@@ -380,3 +380,32 @@ func (r *Repository) ListMemories(ctx context.Context, userID string, year int32
 	}
 	return out, rows.Err()
 }
+
+// ForYou ranks recent posts the viewer may see (never their own or private
+// ones): freshness decays by ~1/e per day, boosted by being a friend's post,
+// by the author's interests overlapping the viewer's, and by likes.
+// ponytail: offset paging (ranking isn't a stable keyset); capped at 200 rows
+// deep — move to a precomputed feed table if this becomes hot.
+func (r *Repository) ForYou(ctx context.Context, viewerID string, offset, limit int) ([]*Post, error) {
+	rows, err := r.pool.Query(ctx, `SELECT `+postCols+` FROM posts p
+		WHERE p.author_id <> $1::uuid AND p.visibility <> 'private'
+		  AND p.created_at > now() - interval '30 days' AND `+visibleSQL("$1")+`
+		ORDER BY exp(-extract(epoch FROM (now() - p.created_at)) / 86400.0)
+			* (1
+			   + CASE WHEN EXISTS (SELECT 1 FROM connections c WHERE c.status = 'accepted'::connection_status
+					AND ((c.requester_id = $1::uuid AND c.recipient_id = p.author_id) OR (c.requester_id = p.author_id AND c.recipient_id = $1::uuid)))
+					THEN 1.0 ELSE 0 END
+			   + 0.15 * cardinality(ARRAY(SELECT unnest(COALESCE((SELECT interests FROM user_profiles WHERE user_id = p.author_id), '{}'))
+					INTERSECT SELECT unnest(COALESCE((SELECT interests FROM user_profiles WHERE user_id = $1::uuid), '{}'))))
+			   + ln(1 + (SELECT count(*) FROM likes l WHERE l.post_id = p.id))) DESC,
+			p.id DESC
+		OFFSET $2 LIMIT $3`, viewerID, offset, limit)
+	if err != nil {
+		return nil, err
+	}
+	posts, err := scanPosts(rows)
+	if err != nil {
+		return nil, err
+	}
+	return posts, r.hydrate(ctx, posts, viewerID)
+}

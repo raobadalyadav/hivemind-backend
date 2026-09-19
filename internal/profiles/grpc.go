@@ -102,6 +102,7 @@ func toProto(p *Profile) *socialv1.Profile {
 		Education:          p.Education,
 		Hobbies:            p.Hobbies,
 		Photos:             photosToProto(p.Photos),
+		SelfieVerified:     p.SelfieVerified,
 	}
 }
 
