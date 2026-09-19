@@ -64,6 +64,17 @@ func (h *Handler) ResolveCase(ctx context.Context, req *socialv1.ResolveCaseRequ
 	return toProto(c), nil
 }
 
+func (h *Handler) GetTrustBadges(ctx context.Context, req *socialv1.GetTrustBadgesRequest) (*socialv1.TrustBadges, error) {
+	badges, err := h.svc.GetTrustBadges(ctx, req.GetUserId())
+	if err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to load trust badges")
+	}
+	return &socialv1.TrustBadges{Badges: badges}, nil
+}
+
 func (h *Handler) BlockUser(ctx context.Context, req *socialv1.BlockUserRequest) (*socialv1.BlockUserResponse, error) {
 	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
 	if !ok {
@@ -98,5 +109,7 @@ func toProto(c *Case) *socialv1.ModerationCase {
 		Reason:      c.Reason,
 		Status:      st,
 		Resolution:  c.Resolution,
+		Severity:    c.Severity,
+		AutoFlagged: c.AutoFlagged,
 	}
 }

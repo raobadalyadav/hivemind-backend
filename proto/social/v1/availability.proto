@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package social.v1;
+
+import "google/protobuf/timestamp.proto";
+import "social/v1/common.proto";
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// AvailabilityService — flow.md §27 "Who's Free" + §28 "Activity Buddy",
+// one mechanism for both. user_id always comes from the JWT, never a
+// request field. Matching is mutual-consent (FindActivityMatches only
+// browses candidates; AcceptActivityMatch is the commit step), mirroring
+// ConnectionService's request/accept shape — never auto-groups strangers.
+service AvailabilityService {
+  rpc SetAvailability(SetAvailabilityRequest) returns (AvailabilityWindow);
+  rpc CancelAvailability(CancelAvailabilityRequest) returns (CancelAvailabilityResponse);
+  rpc FindActivityMatches(FindActivityMatchesRequest) returns (FindActivityMatchesResponse);
+  rpc AcceptActivityMatch(AcceptActivityMatchRequest) returns (ActivityGroup);
+}
+
+message AvailabilityWindow {
+  string id = 1;
+  string activity_type = 2;
+  google.protobuf.Timestamp starts_at = 3;
+  google.protobuf.Timestamp ends_at = 4;
+  string status = 5; // open | matched | cancelled | expired
+}
+
+message SetAvailabilityRequest {
+  string activity_type = 1;
+  google.protobuf.Timestamp starts_at = 2;
+  google.protobuf.Timestamp ends_at = 3;
+}
+
+message CancelAvailabilityRequest {
+  string window_id = 1;
+}
+
+message CancelAvailabilityResponse {}
+
+message FindActivityMatchesRequest {
+  string window_id = 1;
+}
+
+message FindActivityMatchesResponse {
+  repeated CandidateMatch candidates = 1;
+}
+
+message CandidateMatch {
+  string window_id = 1;
+  string user_id = 2;
+}
+
+message AcceptActivityMatchRequest {
+  string my_window_id = 1;
+  string their_window_id = 2;
+}
+
+message ActivityGroup {
+  string chat_room_id = 1;
+  repeated string member_user_ids = 2;
+}

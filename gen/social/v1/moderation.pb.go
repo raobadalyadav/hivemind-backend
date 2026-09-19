@@ -86,6 +86,8 @@ type ModerationCase struct {
 	Status        CaseStatus             `protobuf:"varint,6,opt,name=status,proto3,enum=social.v1.CaseStatus" json:"status,omitempty"`
 	Resolution    string                 `protobuf:"bytes,7,opt,name=resolution,proto3" json:"resolution,omitempty"`
 	Audit         *Audit                 `protobuf:"bytes,8,opt,name=audit,proto3" json:"audit,omitempty"`
+	Severity      string                 `protobuf:"bytes,9,opt,name=severity,proto3" json:"severity,omitempty"`                            // safe | review | severe
+	AutoFlagged   bool                   `protobuf:"varint,10,opt,name=auto_flagged,json=autoFlagged,proto3" json:"auto_flagged,omitempty"` // true when created by the rule-based ContentScreener, not a human SubmitReport call
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -174,6 +176,20 @@ func (x *ModerationCase) GetAudit() *Audit {
 		return x.Audit
 	}
 	return nil
+}
+
+func (x *ModerationCase) GetSeverity() string {
+	if x != nil {
+		return x.Severity
+	}
+	return ""
+}
+
+func (x *ModerationCase) GetAutoFlagged() bool {
+	if x != nil {
+		return x.AutoFlagged
+	}
+	return false
 }
 
 type SubmitReportRequest struct {
@@ -444,11 +460,99 @@ func (*BlockUserResponse) Descriptor() ([]byte, []int) {
 	return file_social_v1_moderation_proto_rawDescGZIP(), []int{5}
 }
 
+type GetTrustBadgesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTrustBadgesRequest) Reset() {
+	*x = GetTrustBadgesRequest{}
+	mi := &file_social_v1_moderation_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTrustBadgesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTrustBadgesRequest) ProtoMessage() {}
+
+func (x *GetTrustBadgesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_moderation_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTrustBadgesRequest.ProtoReflect.Descriptor instead.
+func (*GetTrustBadgesRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_moderation_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *GetTrustBadgesRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type TrustBadges struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Badges        []string               `protobuf:"bytes,1,rep,name=badges,proto3" json:"badges,omitempty"` // e.g. "reliable_attendee", "trusted_host", "id_verified", "community_veteran", "under_review" — never a numeric field
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TrustBadges) Reset() {
+	*x = TrustBadges{}
+	mi := &file_social_v1_moderation_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TrustBadges) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TrustBadges) ProtoMessage() {}
+
+func (x *TrustBadges) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_moderation_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TrustBadges.ProtoReflect.Descriptor instead.
+func (*TrustBadges) Descriptor() ([]byte, []int) {
+	return file_social_v1_moderation_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *TrustBadges) GetBadges() []string {
+	if x != nil {
+		return x.Badges
+	}
+	return nil
+}
+
 var File_social_v1_moderation_proto protoreflect.FileDescriptor
 
 const file_social_v1_moderation_proto_rawDesc = "" +
 	"\n" +
-	"\x1asocial/v1/moderation.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"\x92\x02\n" +
+	"\x1asocial/v1/moderation.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"\xd1\x02\n" +
 	"\x0eModerationCase\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
 	"\vreporter_id\x18\x02 \x01(\tR\n" +
@@ -461,7 +565,10 @@ const file_social_v1_moderation_proto_rawDesc = "" +
 	"\n" +
 	"resolution\x18\a \x01(\tR\n" +
 	"resolution\x12&\n" +
-	"\x05audit\x18\b \x01(\v2\x10.social.v1.AuditR\x05audit\"\xac\x01\n" +
+	"\x05audit\x18\b \x01(\v2\x10.social.v1.AuditR\x05audit\x12\x1a\n" +
+	"\bseverity\x18\t \x01(\tR\bseverity\x12!\n" +
+	"\fauto_flagged\x18\n" +
+	" \x01(\bR\vautoFlagged\"\xac\x01\n" +
 	"\x13SubmitReportRequest\x12\x1f\n" +
 	"\vreporter_id\x18\x01 \x01(\tR\n" +
 	"reporterId\x12!\n" +
@@ -482,19 +589,24 @@ const file_social_v1_moderation_proto_rawDesc = "" +
 	"\x10BlockUserRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12&\n" +
 	"\x0fblocked_user_id\x18\x02 \x01(\tR\rblockedUserId\"\x13\n" +
-	"\x11BlockUserResponse*a\n" +
+	"\x11BlockUserResponse\"0\n" +
+	"\x15GetTrustBadgesRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"%\n" +
+	"\vTrustBadges\x12\x16\n" +
+	"\x06badges\x18\x01 \x03(\tR\x06badges*a\n" +
 	"\n" +
 	"CaseStatus\x12\x1b\n" +
 	"\x17CASE_STATUS_UNSPECIFIED\x10\x00\x12\b\n" +
 	"\x04OPEN\x10\x01\x12\x10\n" +
 	"\fUNDER_REVIEW\x10\x02\x12\f\n" +
 	"\bRESOLVED\x10\x03\x12\f\n" +
-	"\bAPPEALED\x10\x042\xb0\x02\n" +
+	"\bAPPEALED\x10\x042\xfc\x02\n" +
 	"\x11ModerationService\x12I\n" +
 	"\fSubmitReport\x12\x1e.social.v1.SubmitReportRequest\x1a\x19.social.v1.ModerationCase\x12?\n" +
 	"\aGetCase\x12\x19.social.v1.GetCaseRequest\x1a\x19.social.v1.ModerationCase\x12G\n" +
 	"\vResolveCase\x12\x1d.social.v1.ResolveCaseRequest\x1a\x19.social.v1.ModerationCase\x12F\n" +
-	"\tBlockUser\x12\x1b.social.v1.BlockUserRequest\x1a\x1c.social.v1.BlockUserResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
+	"\tBlockUser\x12\x1b.social.v1.BlockUserRequest\x1a\x1c.social.v1.BlockUserResponse\x12J\n" +
+	"\x0eGetTrustBadges\x12 .social.v1.GetTrustBadgesRequest\x1a\x16.social.v1.TrustBadgesB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
 var (
 	file_social_v1_moderation_proto_rawDescOnce sync.Once
@@ -509,30 +621,34 @@ func file_social_v1_moderation_proto_rawDescGZIP() []byte {
 }
 
 var file_social_v1_moderation_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_social_v1_moderation_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_social_v1_moderation_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_social_v1_moderation_proto_goTypes = []any{
-	(CaseStatus)(0),             // 0: social.v1.CaseStatus
-	(*ModerationCase)(nil),      // 1: social.v1.ModerationCase
-	(*SubmitReportRequest)(nil), // 2: social.v1.SubmitReportRequest
-	(*GetCaseRequest)(nil),      // 3: social.v1.GetCaseRequest
-	(*ResolveCaseRequest)(nil),  // 4: social.v1.ResolveCaseRequest
-	(*BlockUserRequest)(nil),    // 5: social.v1.BlockUserRequest
-	(*BlockUserResponse)(nil),   // 6: social.v1.BlockUserResponse
-	(*Audit)(nil),               // 7: social.v1.Audit
+	(CaseStatus)(0),               // 0: social.v1.CaseStatus
+	(*ModerationCase)(nil),        // 1: social.v1.ModerationCase
+	(*SubmitReportRequest)(nil),   // 2: social.v1.SubmitReportRequest
+	(*GetCaseRequest)(nil),        // 3: social.v1.GetCaseRequest
+	(*ResolveCaseRequest)(nil),    // 4: social.v1.ResolveCaseRequest
+	(*BlockUserRequest)(nil),      // 5: social.v1.BlockUserRequest
+	(*BlockUserResponse)(nil),     // 6: social.v1.BlockUserResponse
+	(*GetTrustBadgesRequest)(nil), // 7: social.v1.GetTrustBadgesRequest
+	(*TrustBadges)(nil),           // 8: social.v1.TrustBadges
+	(*Audit)(nil),                 // 9: social.v1.Audit
 }
 var file_social_v1_moderation_proto_depIdxs = []int32{
 	0, // 0: social.v1.ModerationCase.status:type_name -> social.v1.CaseStatus
-	7, // 1: social.v1.ModerationCase.audit:type_name -> social.v1.Audit
+	9, // 1: social.v1.ModerationCase.audit:type_name -> social.v1.Audit
 	2, // 2: social.v1.ModerationService.SubmitReport:input_type -> social.v1.SubmitReportRequest
 	3, // 3: social.v1.ModerationService.GetCase:input_type -> social.v1.GetCaseRequest
 	4, // 4: social.v1.ModerationService.ResolveCase:input_type -> social.v1.ResolveCaseRequest
 	5, // 5: social.v1.ModerationService.BlockUser:input_type -> social.v1.BlockUserRequest
-	1, // 6: social.v1.ModerationService.SubmitReport:output_type -> social.v1.ModerationCase
-	1, // 7: social.v1.ModerationService.GetCase:output_type -> social.v1.ModerationCase
-	1, // 8: social.v1.ModerationService.ResolveCase:output_type -> social.v1.ModerationCase
-	6, // 9: social.v1.ModerationService.BlockUser:output_type -> social.v1.BlockUserResponse
-	6, // [6:10] is the sub-list for method output_type
-	2, // [2:6] is the sub-list for method input_type
+	7, // 6: social.v1.ModerationService.GetTrustBadges:input_type -> social.v1.GetTrustBadgesRequest
+	1, // 7: social.v1.ModerationService.SubmitReport:output_type -> social.v1.ModerationCase
+	1, // 8: social.v1.ModerationService.GetCase:output_type -> social.v1.ModerationCase
+	1, // 9: social.v1.ModerationService.ResolveCase:output_type -> social.v1.ModerationCase
+	6, // 10: social.v1.ModerationService.BlockUser:output_type -> social.v1.BlockUserResponse
+	8, // 11: social.v1.ModerationService.GetTrustBadges:output_type -> social.v1.TrustBadges
+	7, // [7:12] is the sub-list for method output_type
+	2, // [2:7] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
 	2, // [2:2] is the sub-list for extension extendee
 	0, // [0:2] is the sub-list for field type_name
@@ -550,7 +666,7 @@ func file_social_v1_moderation_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_moderation_proto_rawDesc), len(file_social_v1_moderation_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -221,6 +221,102 @@ func (x *GetSmartMatchResponse) GetCompatibleUserIds() []string {
 	return nil
 }
 
+type GetPeopleRecommendationsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Page          *PageRequest           `protobuf:"bytes,1,opt,name=page,proto3" json:"page,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPeopleRecommendationsRequest) Reset() {
+	*x = GetPeopleRecommendationsRequest{}
+	mi := &file_social_v1_recommendation_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPeopleRecommendationsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPeopleRecommendationsRequest) ProtoMessage() {}
+
+func (x *GetPeopleRecommendationsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_recommendation_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPeopleRecommendationsRequest.ProtoReflect.Descriptor instead.
+func (*GetPeopleRecommendationsRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_recommendation_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *GetPeopleRecommendationsRequest) GetPage() *PageRequest {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+type GetPeopleRecommendationsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserIds       []string               `protobuf:"bytes,1,rep,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
+	Page          *PageResponse          `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPeopleRecommendationsResponse) Reset() {
+	*x = GetPeopleRecommendationsResponse{}
+	mi := &file_social_v1_recommendation_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPeopleRecommendationsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPeopleRecommendationsResponse) ProtoMessage() {}
+
+func (x *GetPeopleRecommendationsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_recommendation_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPeopleRecommendationsResponse.ProtoReflect.Descriptor instead.
+func (*GetPeopleRecommendationsResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_recommendation_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetPeopleRecommendationsResponse) GetUserIds() []string {
+	if x != nil {
+		return x.UserIds
+	}
+	return nil
+}
+
+func (x *GetPeopleRecommendationsResponse) GetPage() *PageResponse {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
 var File_social_v1_recommendation_proto protoreflect.FileDescriptor
 
 const file_social_v1_recommendation_proto_rawDesc = "" +
@@ -236,10 +332,16 @@ const file_social_v1_recommendation_proto_rawDesc = "" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x17\n" +
 	"\aplan_id\x18\x02 \x01(\tR\x06planId\"G\n" +
 	"\x15GetSmartMatchResponse\x12.\n" +
-	"\x13compatible_user_ids\x18\x01 \x03(\tR\x11compatibleUserIds2\xd1\x01\n" +
+	"\x13compatible_user_ids\x18\x01 \x03(\tR\x11compatibleUserIds\"M\n" +
+	"\x1fGetPeopleRecommendationsRequest\x12*\n" +
+	"\x04page\x18\x01 \x01(\v2\x16.social.v1.PageRequestR\x04page\"j\n" +
+	" GetPeopleRecommendationsResponse\x12\x19\n" +
+	"\buser_ids\x18\x01 \x03(\tR\auserIds\x12+\n" +
+	"\x04page\x18\x02 \x01(\v2\x17.social.v1.PageResponseR\x04page2\xc6\x02\n" +
 	"\x15RecommendationService\x12d\n" +
 	"\x13GetRecommendedPlans\x12%.social.v1.GetRecommendedPlansRequest\x1a&.social.v1.GetRecommendedPlansResponse\x12R\n" +
-	"\rGetSmartMatch\x12\x1f.social.v1.GetSmartMatchRequest\x1a .social.v1.GetSmartMatchResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
+	"\rGetSmartMatch\x12\x1f.social.v1.GetSmartMatchRequest\x1a .social.v1.GetSmartMatchResponse\x12s\n" +
+	"\x18GetPeopleRecommendations\x12*.social.v1.GetPeopleRecommendationsRequest\x1a+.social.v1.GetPeopleRecommendationsResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
 var (
 	file_social_v1_recommendation_proto_rawDescOnce sync.Once
@@ -253,27 +355,33 @@ func file_social_v1_recommendation_proto_rawDescGZIP() []byte {
 	return file_social_v1_recommendation_proto_rawDescData
 }
 
-var file_social_v1_recommendation_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_social_v1_recommendation_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_social_v1_recommendation_proto_goTypes = []any{
-	(*GetRecommendedPlansRequest)(nil),  // 0: social.v1.GetRecommendedPlansRequest
-	(*GetRecommendedPlansResponse)(nil), // 1: social.v1.GetRecommendedPlansResponse
-	(*GetSmartMatchRequest)(nil),        // 2: social.v1.GetSmartMatchRequest
-	(*GetSmartMatchResponse)(nil),       // 3: social.v1.GetSmartMatchResponse
-	(*PageRequest)(nil),                 // 4: social.v1.PageRequest
-	(*PageResponse)(nil),                // 5: social.v1.PageResponse
+	(*GetRecommendedPlansRequest)(nil),       // 0: social.v1.GetRecommendedPlansRequest
+	(*GetRecommendedPlansResponse)(nil),      // 1: social.v1.GetRecommendedPlansResponse
+	(*GetSmartMatchRequest)(nil),             // 2: social.v1.GetSmartMatchRequest
+	(*GetSmartMatchResponse)(nil),            // 3: social.v1.GetSmartMatchResponse
+	(*GetPeopleRecommendationsRequest)(nil),  // 4: social.v1.GetPeopleRecommendationsRequest
+	(*GetPeopleRecommendationsResponse)(nil), // 5: social.v1.GetPeopleRecommendationsResponse
+	(*PageRequest)(nil),                      // 6: social.v1.PageRequest
+	(*PageResponse)(nil),                     // 7: social.v1.PageResponse
 }
 var file_social_v1_recommendation_proto_depIdxs = []int32{
-	4, // 0: social.v1.GetRecommendedPlansRequest.page:type_name -> social.v1.PageRequest
-	5, // 1: social.v1.GetRecommendedPlansResponse.page:type_name -> social.v1.PageResponse
-	0, // 2: social.v1.RecommendationService.GetRecommendedPlans:input_type -> social.v1.GetRecommendedPlansRequest
-	2, // 3: social.v1.RecommendationService.GetSmartMatch:input_type -> social.v1.GetSmartMatchRequest
-	1, // 4: social.v1.RecommendationService.GetRecommendedPlans:output_type -> social.v1.GetRecommendedPlansResponse
-	3, // 5: social.v1.RecommendationService.GetSmartMatch:output_type -> social.v1.GetSmartMatchResponse
-	4, // [4:6] is the sub-list for method output_type
-	2, // [2:4] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	6, // 0: social.v1.GetRecommendedPlansRequest.page:type_name -> social.v1.PageRequest
+	7, // 1: social.v1.GetRecommendedPlansResponse.page:type_name -> social.v1.PageResponse
+	6, // 2: social.v1.GetPeopleRecommendationsRequest.page:type_name -> social.v1.PageRequest
+	7, // 3: social.v1.GetPeopleRecommendationsResponse.page:type_name -> social.v1.PageResponse
+	0, // 4: social.v1.RecommendationService.GetRecommendedPlans:input_type -> social.v1.GetRecommendedPlansRequest
+	2, // 5: social.v1.RecommendationService.GetSmartMatch:input_type -> social.v1.GetSmartMatchRequest
+	4, // 6: social.v1.RecommendationService.GetPeopleRecommendations:input_type -> social.v1.GetPeopleRecommendationsRequest
+	1, // 7: social.v1.RecommendationService.GetRecommendedPlans:output_type -> social.v1.GetRecommendedPlansResponse
+	3, // 8: social.v1.RecommendationService.GetSmartMatch:output_type -> social.v1.GetSmartMatchResponse
+	5, // 9: social.v1.RecommendationService.GetPeopleRecommendations:output_type -> social.v1.GetPeopleRecommendationsResponse
+	7, // [7:10] is the sub-list for method output_type
+	4, // [4:7] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_recommendation_proto_init() }
@@ -288,7 +396,7 @@ func file_social_v1_recommendation_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_recommendation_proto_rawDesc), len(file_social_v1_recommendation_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

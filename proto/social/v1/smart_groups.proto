@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package social.v1;
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// SmartGroupService — flow.md §12 "Smart Group Matching". Only the plan's
+// host or an admin may trigger generation; group membership is derived
+// server-side from confirmed plan_participants, never client-supplied.
+service SmartGroupService {
+  rpc GenerateSmartGroups(GenerateSmartGroupsRequest) returns (GenerateSmartGroupsResponse);
+  rpc ListSmartGroups(ListSmartGroupsRequest) returns (GenerateSmartGroupsResponse);
+}
+
+message GenerateSmartGroupsRequest {
+  string plan_id = 1;
+}
+
+message ListSmartGroupsRequest {
+  string plan_id = 1;
+}
+
+message GenerateSmartGroupsResponse {
+  repeated PlanGroup groups = 1;
+}
+
+message PlanGroup {
+  string id = 1;
+  string chat_room_id = 2;
+  string label = 3;
+  repeated string member_user_ids = 4;
+}

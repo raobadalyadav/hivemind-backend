@@ -35,10 +35,14 @@ func (h *Handler) CreatePost(ctx context.Context, req *socialv1.CreatePostReques
 	}
 	created, err := h.svc.CreatePost(ctx, p)
 	if err != nil {
-		if err == ErrInvalidInput {
+		switch err {
+		case ErrInvalidInput:
 			return nil, status.Error(codes.InvalidArgument, err.Error())
+		case ErrContentRejected:
+			return nil, status.Error(codes.FailedPrecondition, err.Error())
+		default:
+			return nil, status.Error(codes.Internal, "failed to create post")
 		}
-		return nil, status.Error(codes.Internal, "failed to create post")
 	}
 	return toProto(created), nil
 }

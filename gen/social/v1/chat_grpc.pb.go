@@ -19,10 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ChatService_CreateRoom_FullMethodName    = "/social.v1.ChatService/CreateRoom"
-	ChatService_SendMessage_FullMethodName   = "/social.v1.ChatService/SendMessage"
-	ChatService_ListMessages_FullMethodName  = "/social.v1.ChatService/ListMessages"
-	ChatService_ReportMessage_FullMethodName = "/social.v1.ChatService/ReportMessage"
+	ChatService_CreateRoom_FullMethodName         = "/social.v1.ChatService/CreateRoom"
+	ChatService_SendMessage_FullMethodName        = "/social.v1.ChatService/SendMessage"
+	ChatService_ListMessages_FullMethodName       = "/social.v1.ChatService/ListMessages"
+	ChatService_ReportMessage_FullMethodName      = "/social.v1.ChatService/ReportMessage"
+	ChatService_GenerateIcebreaker_FullMethodName = "/social.v1.ChatService/GenerateIcebreaker"
 )
 
 // ChatServiceClient is the client API for ChatService service.
@@ -37,6 +38,9 @@ type ChatServiceClient interface {
 	SendMessage(ctx context.Context, in *SendMessageRequest, opts ...grpc.CallOption) (*Message, error)
 	ListMessages(ctx context.Context, in *ListMessagesRequest, opts ...grpc.CallOption) (*ListMessagesResponse, error)
 	ReportMessage(ctx context.Context, in *ReportMessageRequest, opts ...grpc.CallOption) (*ReportMessageResponse, error)
+	// GenerateIcebreaker — flow.md §42 "AI Icebreaker", rule-based shared-
+	// interest suggestion (no LLM call, per the PRD's non-goal).
+	GenerateIcebreaker(ctx context.Context, in *GenerateIcebreakerRequest, opts ...grpc.CallOption) (*GenerateIcebreakerResponse, error)
 }
 
 type chatServiceClient struct {
@@ -87,6 +91,16 @@ func (c *chatServiceClient) ReportMessage(ctx context.Context, in *ReportMessage
 	return out, nil
 }
 
+func (c *chatServiceClient) GenerateIcebreaker(ctx context.Context, in *GenerateIcebreakerRequest, opts ...grpc.CallOption) (*GenerateIcebreakerResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenerateIcebreakerResponse)
+	err := c.cc.Invoke(ctx, ChatService_GenerateIcebreaker_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ChatServiceServer is the server API for ChatService service.
 // All implementations must embed UnimplementedChatServiceServer
 // for forward compatibility.
@@ -99,6 +113,9 @@ type ChatServiceServer interface {
 	SendMessage(context.Context, *SendMessageRequest) (*Message, error)
 	ListMessages(context.Context, *ListMessagesRequest) (*ListMessagesResponse, error)
 	ReportMessage(context.Context, *ReportMessageRequest) (*ReportMessageResponse, error)
+	// GenerateIcebreaker — flow.md §42 "AI Icebreaker", rule-based shared-
+	// interest suggestion (no LLM call, per the PRD's non-goal).
+	GenerateIcebreaker(context.Context, *GenerateIcebreakerRequest) (*GenerateIcebreakerResponse, error)
 	mustEmbedUnimplementedChatServiceServer()
 }
 
@@ -120,6 +137,9 @@ func (UnimplementedChatServiceServer) ListMessages(context.Context, *ListMessage
 }
 func (UnimplementedChatServiceServer) ReportMessage(context.Context, *ReportMessageRequest) (*ReportMessageResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ReportMessage not implemented")
+}
+func (UnimplementedChatServiceServer) GenerateIcebreaker(context.Context, *GenerateIcebreakerRequest) (*GenerateIcebreakerResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GenerateIcebreaker not implemented")
 }
 func (UnimplementedChatServiceServer) mustEmbedUnimplementedChatServiceServer() {}
 func (UnimplementedChatServiceServer) testEmbeddedByValue()                     {}
@@ -214,6 +234,24 @@ func _ChatService_ReportMessage_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ChatService_GenerateIcebreaker_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenerateIcebreakerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServiceServer).GenerateIcebreaker(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatService_GenerateIcebreaker_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServiceServer).GenerateIcebreaker(ctx, req.(*GenerateIcebreakerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ChatService_ServiceDesc is the grpc.ServiceDesc for ChatService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -236,6 +274,10 @@ var ChatService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReportMessage",
 			Handler:    _ChatService_ReportMessage_Handler,
+		},
+		{
+			MethodName: "GenerateIcebreaker",
+			Handler:    _ChatService_GenerateIcebreaker_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -16,6 +16,8 @@ type Case struct {
 	Reason      string
 	Status      string
 	Resolution  string
+	Severity    string
+	AutoFlagged bool
 }
 
 type Repository struct {
@@ -59,15 +61,55 @@ func (r *Repository) Create(ctx context.Context, c *Case) (*Case, error) {
 	return &out, nil
 }
 
+// CreateAutoFlagged is what the ContentScreener path calls for a 'review'
+// severity result — same shape as Create (a report + a case referencing
+// it, in one transaction), so GetCase/Resolve's existing JOIN on reports
+// keeps working unchanged for auto-flagged cases too. actorID (the
+// content's own author) becomes reports.reporter_id since that column is
+// NOT NULL with no "system" reporter concept in this schema — the
+// auto_flagged column is what distinguishes this from a human report, not
+// who's recorded as reporter_id.
+func (r *Repository) CreateAutoFlagged(ctx context.Context, subjectType, subjectID, actorID, severity, reason string) (string, error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer tx.Rollback(ctx)
+
+	var reportID string
+	if err := tx.QueryRow(ctx, `
+		INSERT INTO reports (reporter_id, subject_type, subject_id, reason)
+		VALUES ($1, $2, $3, $4) RETURNING id`,
+		actorID, subjectType, subjectID, reason,
+	).Scan(&reportID); err != nil {
+		return "", err
+	}
+
+	var caseID string
+	if err := tx.QueryRow(ctx, `
+		INSERT INTO moderation_cases (report_id, status, severity, auto_flagged)
+		VALUES ($1, 'open', $2::case_severity, true)
+		RETURNING id`,
+		reportID, severity,
+	).Scan(&caseID); err != nil {
+		return "", err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return "", err
+	}
+	return caseID, nil
+}
+
 func (r *Repository) Get(ctx context.Context, id string) (*Case, error) {
 	var c Case
 	err := r.pool.QueryRow(ctx, `
 		SELECT mc.id, r.reporter_id, r.subject_type, r.subject_id::text, r.reason,
-			mc.status, mc.resolution
+			mc.status, mc.resolution, mc.severity::text, mc.auto_flagged
 		FROM moderation_cases mc
 		JOIN reports r ON r.id = mc.report_id
 		WHERE mc.id = $1`, id,
-	).Scan(&c.ID, &c.ReporterID, &c.SubjectType, &c.SubjectID, &c.Reason, &c.Status, &c.Resolution)
+	).Scan(&c.ID, &c.ReporterID, &c.SubjectType, &c.SubjectID, &c.Reason, &c.Status, &c.Resolution, &c.Severity, &c.AutoFlagged)
 	if err != nil {
 		return nil, err
 	}
@@ -91,6 +133,37 @@ func (r *Repository) Resolve(ctx context.Context, caseID, resolution string) (*C
 		return nil, err
 	}
 	return &c, nil
+}
+
+// TrustSignals are the raw inputs to DeriveBadges — never returned to a
+// client directly (PRD §22: expose badges/policy outcomes, not a number).
+type TrustSignals struct {
+	NoShowCount      int
+	ReportCount      int
+	AttendedCount    int
+	HostAvgRating    float64
+	VerificationTier string
+	TenureDays       int
+}
+
+// GetTrustSignals aggregates from existing event tables live — no cached
+// column, same convention as avg_rating elsewhere in this codebase.
+func (r *Repository) GetTrustSignals(ctx context.Context, userID string) (*TrustSignals, error) {
+	var sig TrustSignals
+	err := r.pool.QueryRow(ctx, `
+		SELECT
+			(SELECT COUNT(*) FROM bookings WHERE user_id = $1 AND status = 'no_show'::booking_status),
+			(SELECT COUNT(*) FROM reports WHERE subject_type = 'user' AND subject_id = $1),
+			(SELECT COUNT(*) FROM bookings WHERE user_id = $1 AND status = 'attended'::booking_status),
+			COALESCE((SELECT AVG(rv.rating) FROM reviews rv JOIN plans p ON p.id = rv.plan_id WHERE p.host_id = $1), 0),
+			COALESCE((SELECT verification_status FROM user_profiles WHERE user_id = $1), 'unverified'),
+			COALESCE((SELECT EXTRACT(DAY FROM now() - created_at)::int FROM users WHERE id = $1), 0)`,
+		userID,
+	).Scan(&sig.NoShowCount, &sig.ReportCount, &sig.AttendedCount, &sig.HostAvgRating, &sig.VerificationTier, &sig.TenureDays)
+	if err != nil {
+		return nil, err
+	}
+	return &sig, nil
 }
 
 func (r *Repository) BlockUser(ctx context.Context, userID, blockedUserID string) error {

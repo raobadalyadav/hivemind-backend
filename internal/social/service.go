@@ -6,23 +6,50 @@ import (
 )
 
 var (
-	ErrInvalidInput = errors.New("social: invalid input")
-	ErrForbidden    = errors.New("social: this post is private")
+	ErrInvalidInput    = errors.New("social: invalid input")
+	ErrForbidden       = errors.New("social: this post is private")
+	ErrContentRejected = errors.New("social: post violates content policy")
 )
 
-type Service struct {
-	repo *Repository
+// ReportSubmitter is satisfied by *moderation.Service — duplicated locally
+// per the existing no-cross-import convention (see internal/chat's
+// identical interface).
+type ReportSubmitter interface {
+	AutoFlagForSubject(ctx context.Context, subjectType, subjectID, actorID, severity, reason string) (caseID string, err error)
 }
 
-func NewService(repo *Repository) *Service {
-	return &Service{repo: repo}
+// ContentScreener is satisfied by *moderation.Screener — always available
+// (never nil, never errors), unlike truly-optional external services.
+type ContentScreener interface {
+	Screen(ctx context.Context, body string) (severity, reason string)
+}
+
+type Service struct {
+	repo     *Repository
+	reporter ReportSubmitter
+	screener ContentScreener
+}
+
+func NewService(repo *Repository, reporter ReportSubmitter, screener ContentScreener) *Service {
+	return &Service{repo: repo, reporter: reporter, screener: screener}
 }
 
 func (s *Service) CreatePost(ctx context.Context, p *Post) (*Post, error) {
 	if p.AuthorID == "" {
 		return nil, ErrInvalidInput
 	}
-	return s.repo.Create(ctx, p)
+	severity, reason := s.screener.Screen(ctx, p.Body)
+	if severity == "severe" {
+		return nil, ErrContentRejected
+	}
+	created, err := s.repo.Create(ctx, p)
+	if err != nil {
+		return nil, err
+	}
+	if severity == "review" {
+		_, _ = s.reporter.AutoFlagForSubject(ctx, "post", created.ID, p.AuthorID, severity, reason)
+	}
+	return created, nil
 }
 
 // checkVisible is the one place private-post access control lives — GetPost,

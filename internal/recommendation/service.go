@@ -32,3 +32,10 @@ func (s *Service) GetSmartMatch(ctx context.Context, callerID, planID string) ([
 	}
 	return s.repo.SmartMatchUserIDs(ctx, callerID, planID, defaultMatchLimit)
 }
+
+func (s *Service) GetPeopleRecommendations(ctx context.Context, callerID string) ([]string, error) {
+	if callerID == "" {
+		return nil, ErrInvalidInput
+	}
+	return s.repo.PeopleRecommendationUserIDs(ctx, callerID, defaultPageSize)
+}

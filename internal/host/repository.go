@@ -90,12 +90,37 @@ func (r *Repository) GetPayoutAccountByHostID(ctx context.Context, hostID string
 	return &a, nil
 }
 
-// GetPayoutBalance computes the host's current payable balance live: net
-// captured revenue (captured payments minus processed refunds) minus prior
-// payouts. Two correlated subqueries, not a join+group-by — a join would
-// fan out rows across refunds and double-count payments.amount_minor.
-func (r *Repository) GetPayoutBalance(ctx context.Context, hostID string) (netCapturedMinor, priorPayoutsMinor int64, err error) {
-	err = r.pool.QueryRow(ctx, `
+// RequestPayoutLocked computes the host's payable balance and inserts the
+// payout row in one transaction, with SELECT...FOR UPDATE on the host's
+// payout_accounts row as the serialization lock. Without this lock, two
+// concurrent RequestPayout calls could both read the same net-captured/
+// prior-payouts numbers and both insert a payout — a double payout. A
+// second caller now blocks on the lock until the first commits, then
+// recomputes prior_payouts including that now-committed row, so its own
+// available balance correctly shrinks (a HIGH-severity TOCTOU race flagged
+// by security review, fixed here rather than patched around).
+func (r *Repository) RequestPayoutLocked(ctx context.Context, hostID string, rate float64) (*Payout, error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	var accountID, status string
+	if err := tx.QueryRow(ctx,
+		`SELECT id, status FROM payout_accounts WHERE host_id = $1 FOR UPDATE`, hostID,
+	).Scan(&accountID, &status); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrPayoutAccountNotFound
+		}
+		return nil, err
+	}
+	if status != "active" {
+		return nil, ErrHostNotApproved
+	}
+
+	var netCapturedMinor, priorPayoutsMinor int64
+	if err := tx.QueryRow(ctx, `
 		SELECT
 			COALESCE((
 				SELECT SUM(p.amount_minor) FROM payments p
@@ -119,22 +144,29 @@ func (r *Repository) GetPayoutBalance(ctx context.Context, hostID string) (netCa
 				WHERE pa.host_id = $1 AND po.status IN ('pending'::payout_status, 'processed'::payout_status)
 			), 0) AS prior_payouts`,
 		hostID,
-	).Scan(&netCapturedMinor, &priorPayoutsMinor)
-	return netCapturedMinor, priorPayoutsMinor, err
-}
+	).Scan(&netCapturedMinor, &priorPayoutsMinor); err != nil {
+		return nil, err
+	}
 
-func (r *Repository) CreatePayout(ctx context.Context, payoutAccountID string, amountMinor int64) (*Payout, error) {
+	available := netCapturedMinor - int64(float64(netCapturedMinor)*rate) - priorPayoutsMinor
+	if available <= 0 {
+		return nil, ErrNoPayoutBalance
+	}
+
 	var p Payout
-	p.PayoutAccountID = payoutAccountID
-	p.AmountMinor = amountMinor
+	p.PayoutAccountID = accountID
+	p.AmountMinor = available
 	p.Status = "pending"
-	err := r.pool.QueryRow(ctx, `
+	if err := tx.QueryRow(ctx, `
 		INSERT INTO payouts (payout_account_id, amount_minor, status)
 		VALUES ($1, $2, 'pending')
 		RETURNING id`,
-		payoutAccountID, amountMinor,
-	).Scan(&p.ID)
-	if err != nil {
+		accountID, available,
+	).Scan(&p.ID); err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
 		return nil, err
 	}
 	return &p, nil

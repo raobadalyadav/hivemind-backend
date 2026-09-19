@@ -12,6 +12,9 @@ service ModerationService {
   rpc GetCase(GetCaseRequest) returns (ModerationCase);
   rpc ResolveCase(ResolveCaseRequest) returns (ModerationCase);
   rpc BlockUser(BlockUserRequest) returns (BlockUserResponse);
+  // GetTrustBadges — PRD §22: derived booleans/badges only, never a raw
+  // numeric risk score exposed to clients.
+  rpc GetTrustBadges(GetTrustBadgesRequest) returns (TrustBadges);
 }
 
 enum CaseStatus {
@@ -31,6 +34,8 @@ message ModerationCase {
   CaseStatus status = 6;
   string resolution = 7;
   Audit audit = 8;
+  string severity = 9;   // safe | review | severe
+  bool auto_flagged = 10; // true when created by the rule-based ContentScreener, not a human SubmitReport call
 }
 
 message SubmitReportRequest {
@@ -57,3 +62,11 @@ message BlockUserRequest {
 }
 
 message BlockUserResponse {}
+
+message GetTrustBadgesRequest {
+  string user_id = 1;
+}
+
+message TrustBadges {
+  repeated string badges = 1; // e.g. "reliable_attendee", "trusted_host", "id_verified", "community_veteran", "under_review" — never a numeric field
+}

@@ -15,6 +15,9 @@ service ChatService {
   rpc SendMessage(SendMessageRequest) returns (Message);
   rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse);
   rpc ReportMessage(ReportMessageRequest) returns (ReportMessageResponse);
+  // GenerateIcebreaker — flow.md §42 "AI Icebreaker", rule-based shared-
+  // interest suggestion (no LLM call, per the PRD's non-goal).
+  rpc GenerateIcebreaker(GenerateIcebreakerRequest) returns (GenerateIcebreakerResponse);
 }
 
 message ChatRoom {
@@ -59,4 +62,12 @@ message ReportMessageRequest {
 
 message ReportMessageResponse {
   string moderation_case_id = 1;
+}
+
+message GenerateIcebreakerRequest {
+  string room_id = 1;
+}
+
+message GenerateIcebreakerResponse {
+  string text = 1;
 }

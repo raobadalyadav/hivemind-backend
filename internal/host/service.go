@@ -60,30 +60,13 @@ func (s *Service) RequestPayout(ctx context.Context, hostID string) (*Payout, er
 	if hostID == "" {
 		return nil, ErrInvalidInput
 	}
-	account, err := s.repo.GetPayoutAccountByHostID(ctx, hostID)
-	if err != nil {
-		return nil, err
-	}
-	if account.Status != "active" {
-		return nil, ErrHostNotApproved
-	}
-
-	netCaptured, priorPayouts, err := s.repo.GetPayoutBalance(ctx, hostID)
-	if err != nil {
-		return nil, err
-	}
-
 	rate := commissionRate
 	if s.entitlements != nil {
 		if ok, _ := s.entitlements.HasEntitlement(ctx, hostID, businessEntitlementKey); ok {
 			rate = businessCommissionRate
 		}
 	}
-	available := netCaptured - int64(float64(netCaptured)*rate) - priorPayouts
-	if available <= 0 {
-		return nil, ErrNoPayoutBalance
-	}
-	return s.repo.CreatePayout(ctx, account.ID, available)
+	return s.repo.RequestPayoutLocked(ctx, hostID, rate)
 }
 
 func (s *Service) ListPayouts(ctx context.Context, hostID string) ([]*Payout, error) {

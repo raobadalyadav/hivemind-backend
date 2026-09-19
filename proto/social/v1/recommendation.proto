@@ -7,11 +7,13 @@ import "social/v1/common.proto";
 option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
 
 // RecommendationService — PRD §11 Intelligence and Trust at Scale (Phase 4) +
-// §20 (MVP ranking formula: rules + behavior weights, no ML). This scaffold
-// implements only the interface; ranking logic is a TODO(phase4) stub.
+// §20's full rule-based ranking formula (0.30*distance + 0.25*interest_match
+// + 0.15*time_fit + 0.10*capacity_fit + 0.10*quality + 0.10*personalization),
+// computed live in SQL — no ML service, per the PRD's explicit non-goal.
 service RecommendationService {
   rpc GetRecommendedPlans(GetRecommendedPlansRequest) returns (GetRecommendedPlansResponse);
   rpc GetSmartMatch(GetSmartMatchRequest) returns (GetSmartMatchResponse);
+  rpc GetPeopleRecommendations(GetPeopleRecommendationsRequest) returns (GetPeopleRecommendationsResponse);
 }
 
 message GetRecommendedPlansRequest {
@@ -31,4 +33,13 @@ message GetSmartMatchRequest {
 
 message GetSmartMatchResponse {
   repeated string compatible_user_ids = 1;
+}
+
+message GetPeopleRecommendationsRequest {
+  PageRequest page = 1;
+}
+
+message GetPeopleRecommendationsResponse {
+  repeated string user_ids = 1;
+  PageResponse page = 2;
 }

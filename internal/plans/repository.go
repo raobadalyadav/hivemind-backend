@@ -72,6 +72,24 @@ func (r *Repository) Create(ctx context.Context, p *Plan) (*Plan, error) {
 	return &out, nil
 }
 
+// GetCategoryName is used by SuggestPlanDraft — empty string (not an
+// error) when categoryID is empty or unknown, since a draft suggestion has
+// a sensible generic fallback either way.
+func (r *Repository) GetCategoryName(ctx context.Context, categoryID string) (string, error) {
+	if categoryID == "" {
+		return "", nil
+	}
+	var name string
+	err := r.pool.QueryRow(ctx, `SELECT name FROM categories WHERE id = $1`, categoryID).Scan(&name)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", nil
+		}
+		return "", err
+	}
+	return name, nil
+}
+
 func (r *Repository) Get(ctx context.Context, id string) (*Plan, error) {
 	row := r.pool.QueryRow(ctx, `
 		SELECT id, title, description, COALESCE(category_id::text,''), host_id::text,

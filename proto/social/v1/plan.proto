@@ -17,6 +17,10 @@ service PlanService {
   rpc JoinPlan(JoinPlanRequest) returns (JoinPlanResponse);
   rpc LeavePlan(LeavePlanRequest) returns (LeavePlanResponse);
   rpc CancelPlan(CancelPlanRequest) returns (Plan);
+  // SuggestPlanDraft — flow.md §43 "AI Plan Creator", rule-based (no LLM
+  // call, per the PRD's non-goal). Purely advisory: the host still calls
+  // CreatePlan with whatever they choose.
+  rpc SuggestPlanDraft(SuggestPlanDraftRequest) returns (PlanDraft);
 }
 
 enum PlanStatus {
@@ -97,4 +101,13 @@ message LeavePlanResponse {}
 message CancelPlanRequest {
   string plan_id = 1;
   string reason = 2;
+}
+
+message SuggestPlanDraftRequest {
+  string category_id = 1;
+}
+
+message PlanDraft {
+  string title = 1;
+  string description = 2;
 }

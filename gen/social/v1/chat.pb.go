@@ -470,6 +470,94 @@ func (x *ReportMessageResponse) GetModerationCaseId() string {
 	return ""
 }
 
+type GenerateIcebreakerRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RoomId        string                 `protobuf:"bytes,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GenerateIcebreakerRequest) Reset() {
+	*x = GenerateIcebreakerRequest{}
+	mi := &file_social_v1_chat_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenerateIcebreakerRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenerateIcebreakerRequest) ProtoMessage() {}
+
+func (x *GenerateIcebreakerRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_chat_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenerateIcebreakerRequest.ProtoReflect.Descriptor instead.
+func (*GenerateIcebreakerRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_chat_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *GenerateIcebreakerRequest) GetRoomId() string {
+	if x != nil {
+		return x.RoomId
+	}
+	return ""
+}
+
+type GenerateIcebreakerResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GenerateIcebreakerResponse) Reset() {
+	*x = GenerateIcebreakerResponse{}
+	mi := &file_social_v1_chat_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenerateIcebreakerResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenerateIcebreakerResponse) ProtoMessage() {}
+
+func (x *GenerateIcebreakerResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_chat_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenerateIcebreakerResponse.ProtoReflect.Descriptor instead.
+func (*GenerateIcebreakerResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_chat_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *GenerateIcebreakerResponse) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
 var File_social_v1_chat_proto protoreflect.FileDescriptor
 
 const file_social_v1_chat_proto_rawDesc = "" +
@@ -504,13 +592,18 @@ const file_social_v1_chat_proto_rawDesc = "" +
 	"reporterId\x12\x16\n" +
 	"\x06reason\x18\x03 \x01(\tR\x06reason\"E\n" +
 	"\x15ReportMessageResponse\x12,\n" +
-	"\x12moderation_case_id\x18\x01 \x01(\tR\x10moderationCaseId2\xb5\x02\n" +
+	"\x12moderation_case_id\x18\x01 \x01(\tR\x10moderationCaseId\"4\n" +
+	"\x19GenerateIcebreakerRequest\x12\x17\n" +
+	"\aroom_id\x18\x01 \x01(\tR\x06roomId\"0\n" +
+	"\x1aGenerateIcebreakerResponse\x12\x12\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text2\x98\x03\n" +
 	"\vChatService\x12?\n" +
 	"\n" +
 	"CreateRoom\x12\x1c.social.v1.CreateRoomRequest\x1a\x13.social.v1.ChatRoom\x12@\n" +
 	"\vSendMessage\x12\x1d.social.v1.SendMessageRequest\x1a\x12.social.v1.Message\x12O\n" +
 	"\fListMessages\x12\x1e.social.v1.ListMessagesRequest\x1a\x1f.social.v1.ListMessagesResponse\x12R\n" +
-	"\rReportMessage\x12\x1f.social.v1.ReportMessageRequest\x1a .social.v1.ReportMessageResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
+	"\rReportMessage\x12\x1f.social.v1.ReportMessageRequest\x1a .social.v1.ReportMessageResponse\x12a\n" +
+	"\x12GenerateIcebreaker\x12$.social.v1.GenerateIcebreakerRequest\x1a%.social.v1.GenerateIcebreakerResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
 var (
 	file_social_v1_chat_proto_rawDescOnce sync.Once
@@ -524,37 +617,41 @@ func file_social_v1_chat_proto_rawDescGZIP() []byte {
 	return file_social_v1_chat_proto_rawDescData
 }
 
-var file_social_v1_chat_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_social_v1_chat_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_social_v1_chat_proto_goTypes = []any{
-	(*ChatRoom)(nil),              // 0: social.v1.ChatRoom
-	(*Message)(nil),               // 1: social.v1.Message
-	(*CreateRoomRequest)(nil),     // 2: social.v1.CreateRoomRequest
-	(*SendMessageRequest)(nil),    // 3: social.v1.SendMessageRequest
-	(*ListMessagesRequest)(nil),   // 4: social.v1.ListMessagesRequest
-	(*ListMessagesResponse)(nil),  // 5: social.v1.ListMessagesResponse
-	(*ReportMessageRequest)(nil),  // 6: social.v1.ReportMessageRequest
-	(*ReportMessageResponse)(nil), // 7: social.v1.ReportMessageResponse
-	(*Audit)(nil),                 // 8: social.v1.Audit
-	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
-	(*PageRequest)(nil),           // 10: social.v1.PageRequest
-	(*PageResponse)(nil),          // 11: social.v1.PageResponse
+	(*ChatRoom)(nil),                   // 0: social.v1.ChatRoom
+	(*Message)(nil),                    // 1: social.v1.Message
+	(*CreateRoomRequest)(nil),          // 2: social.v1.CreateRoomRequest
+	(*SendMessageRequest)(nil),         // 3: social.v1.SendMessageRequest
+	(*ListMessagesRequest)(nil),        // 4: social.v1.ListMessagesRequest
+	(*ListMessagesResponse)(nil),       // 5: social.v1.ListMessagesResponse
+	(*ReportMessageRequest)(nil),       // 6: social.v1.ReportMessageRequest
+	(*ReportMessageResponse)(nil),      // 7: social.v1.ReportMessageResponse
+	(*GenerateIcebreakerRequest)(nil),  // 8: social.v1.GenerateIcebreakerRequest
+	(*GenerateIcebreakerResponse)(nil), // 9: social.v1.GenerateIcebreakerResponse
+	(*Audit)(nil),                      // 10: social.v1.Audit
+	(*timestamppb.Timestamp)(nil),      // 11: google.protobuf.Timestamp
+	(*PageRequest)(nil),                // 12: social.v1.PageRequest
+	(*PageResponse)(nil),               // 13: social.v1.PageResponse
 }
 var file_social_v1_chat_proto_depIdxs = []int32{
-	8,  // 0: social.v1.ChatRoom.audit:type_name -> social.v1.Audit
-	9,  // 1: social.v1.Message.sent_at:type_name -> google.protobuf.Timestamp
-	10, // 2: social.v1.ListMessagesRequest.page:type_name -> social.v1.PageRequest
+	10, // 0: social.v1.ChatRoom.audit:type_name -> social.v1.Audit
+	11, // 1: social.v1.Message.sent_at:type_name -> google.protobuf.Timestamp
+	12, // 2: social.v1.ListMessagesRequest.page:type_name -> social.v1.PageRequest
 	1,  // 3: social.v1.ListMessagesResponse.messages:type_name -> social.v1.Message
-	11, // 4: social.v1.ListMessagesResponse.page:type_name -> social.v1.PageResponse
+	13, // 4: social.v1.ListMessagesResponse.page:type_name -> social.v1.PageResponse
 	2,  // 5: social.v1.ChatService.CreateRoom:input_type -> social.v1.CreateRoomRequest
 	3,  // 6: social.v1.ChatService.SendMessage:input_type -> social.v1.SendMessageRequest
 	4,  // 7: social.v1.ChatService.ListMessages:input_type -> social.v1.ListMessagesRequest
 	6,  // 8: social.v1.ChatService.ReportMessage:input_type -> social.v1.ReportMessageRequest
-	0,  // 9: social.v1.ChatService.CreateRoom:output_type -> social.v1.ChatRoom
-	1,  // 10: social.v1.ChatService.SendMessage:output_type -> social.v1.Message
-	5,  // 11: social.v1.ChatService.ListMessages:output_type -> social.v1.ListMessagesResponse
-	7,  // 12: social.v1.ChatService.ReportMessage:output_type -> social.v1.ReportMessageResponse
-	9,  // [9:13] is the sub-list for method output_type
-	5,  // [5:9] is the sub-list for method input_type
+	8,  // 9: social.v1.ChatService.GenerateIcebreaker:input_type -> social.v1.GenerateIcebreakerRequest
+	0,  // 10: social.v1.ChatService.CreateRoom:output_type -> social.v1.ChatRoom
+	1,  // 11: social.v1.ChatService.SendMessage:output_type -> social.v1.Message
+	5,  // 12: social.v1.ChatService.ListMessages:output_type -> social.v1.ListMessagesResponse
+	7,  // 13: social.v1.ChatService.ReportMessage:output_type -> social.v1.ReportMessageResponse
+	9,  // 14: social.v1.ChatService.GenerateIcebreaker:output_type -> social.v1.GenerateIcebreakerResponse
+	10, // [10:15] is the sub-list for method output_type
+	5,  // [5:10] is the sub-list for method input_type
 	5,  // [5:5] is the sub-list for extension type_name
 	5,  // [5:5] is the sub-list for extension extendee
 	0,  // [0:5] is the sub-list for field type_name
@@ -572,7 +669,7 @@ func file_social_v1_chat_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_chat_proto_rawDesc), len(file_social_v1_chat_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

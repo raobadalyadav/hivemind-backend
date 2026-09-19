@@ -57,6 +57,18 @@ func (r *Repository) GetOrCreateRoomForPlan(ctx context.Context, planID string) 
 	return &Room{ID: id, PlanID: planID}, nil
 }
 
+// CreateAdHocRoom creates a plan-less chat room (plan_id NULL) — the one
+// room-creation path used by ephemeral groups (Who's Free/Activity Buddy,
+// Smart Groups), distinct from GetOrCreateRoomForPlan's plan-scoped path.
+func (r *Repository) CreateAdHocRoom(ctx context.Context) (*Room, error) {
+	var id string
+	err := r.pool.QueryRow(ctx, `INSERT INTO chat_rooms (plan_id) VALUES (NULL) RETURNING id`).Scan(&id)
+	if err != nil {
+		return nil, err
+	}
+	return &Room{ID: id}, nil
+}
+
 func (r *Repository) AddMember(ctx context.Context, roomID, userID string) error {
 	_, err := r.pool.Exec(ctx, `
 		INSERT INTO chat_members (room_id, user_id) VALUES ($1, $2)
@@ -64,6 +76,34 @@ func (r *Repository) AddMember(ctx context.Context, roomID, userID string) error
 		roomID, userID,
 	)
 	return err
+}
+
+// MemberInterests is used by GenerateIcebreaker — one interests slice per
+// room member (empty slice, not skipped, for a member with no profile
+// interests set, so intersectAll still sees them as a member with zero
+// overlap rather than silently excluding them).
+func (r *Repository) MemberInterests(ctx context.Context, roomID string) ([][]string, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT COALESCE(up.interests, '{}')
+		FROM chat_members cm
+		LEFT JOIN user_profiles up ON up.user_id = cm.user_id
+		WHERE cm.room_id = $1`,
+		roomID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out [][]string
+	for rows.Next() {
+		var interests []string
+		if err := rows.Scan(&interests); err != nil {
+			return nil, err
+		}
+		out = append(out, interests)
+	}
+	return out, rows.Err()
 }
 
 func (r *Repository) IsMember(ctx context.Context, roomID, userID string) (bool, error) {

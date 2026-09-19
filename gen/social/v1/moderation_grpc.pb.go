@@ -19,10 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ModerationService_SubmitReport_FullMethodName = "/social.v1.ModerationService/SubmitReport"
-	ModerationService_GetCase_FullMethodName      = "/social.v1.ModerationService/GetCase"
-	ModerationService_ResolveCase_FullMethodName  = "/social.v1.ModerationService/ResolveCase"
-	ModerationService_BlockUser_FullMethodName    = "/social.v1.ModerationService/BlockUser"
+	ModerationService_SubmitReport_FullMethodName   = "/social.v1.ModerationService/SubmitReport"
+	ModerationService_GetCase_FullMethodName        = "/social.v1.ModerationService/GetCase"
+	ModerationService_ResolveCase_FullMethodName    = "/social.v1.ModerationService/ResolveCase"
+	ModerationService_BlockUser_FullMethodName      = "/social.v1.ModerationService/BlockUser"
+	ModerationService_GetTrustBadges_FullMethodName = "/social.v1.ModerationService/GetTrustBadges"
 )
 
 // ModerationServiceClient is the client API for ModerationService service.
@@ -35,6 +36,9 @@ type ModerationServiceClient interface {
 	GetCase(ctx context.Context, in *GetCaseRequest, opts ...grpc.CallOption) (*ModerationCase, error)
 	ResolveCase(ctx context.Context, in *ResolveCaseRequest, opts ...grpc.CallOption) (*ModerationCase, error)
 	BlockUser(ctx context.Context, in *BlockUserRequest, opts ...grpc.CallOption) (*BlockUserResponse, error)
+	// GetTrustBadges — PRD §22: derived booleans/badges only, never a raw
+	// numeric risk score exposed to clients.
+	GetTrustBadges(ctx context.Context, in *GetTrustBadgesRequest, opts ...grpc.CallOption) (*TrustBadges, error)
 }
 
 type moderationServiceClient struct {
@@ -85,6 +89,16 @@ func (c *moderationServiceClient) BlockUser(ctx context.Context, in *BlockUserRe
 	return out, nil
 }
 
+func (c *moderationServiceClient) GetTrustBadges(ctx context.Context, in *GetTrustBadgesRequest, opts ...grpc.CallOption) (*TrustBadges, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TrustBadges)
+	err := c.cc.Invoke(ctx, ModerationService_GetTrustBadges_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ModerationServiceServer is the server API for ModerationService service.
 // All implementations must embed UnimplementedModerationServiceServer
 // for forward compatibility.
@@ -95,6 +109,9 @@ type ModerationServiceServer interface {
 	GetCase(context.Context, *GetCaseRequest) (*ModerationCase, error)
 	ResolveCase(context.Context, *ResolveCaseRequest) (*ModerationCase, error)
 	BlockUser(context.Context, *BlockUserRequest) (*BlockUserResponse, error)
+	// GetTrustBadges — PRD §22: derived booleans/badges only, never a raw
+	// numeric risk score exposed to clients.
+	GetTrustBadges(context.Context, *GetTrustBadgesRequest) (*TrustBadges, error)
 	mustEmbedUnimplementedModerationServiceServer()
 }
 
@@ -116,6 +133,9 @@ func (UnimplementedModerationServiceServer) ResolveCase(context.Context, *Resolv
 }
 func (UnimplementedModerationServiceServer) BlockUser(context.Context, *BlockUserRequest) (*BlockUserResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method BlockUser not implemented")
+}
+func (UnimplementedModerationServiceServer) GetTrustBadges(context.Context, *GetTrustBadgesRequest) (*TrustBadges, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetTrustBadges not implemented")
 }
 func (UnimplementedModerationServiceServer) mustEmbedUnimplementedModerationServiceServer() {}
 func (UnimplementedModerationServiceServer) testEmbeddedByValue()                           {}
@@ -210,6 +230,24 @@ func _ModerationService_BlockUser_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ModerationService_GetTrustBadges_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTrustBadgesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModerationServiceServer).GetTrustBadges(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ModerationService_GetTrustBadges_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModerationServiceServer).GetTrustBadges(ctx, req.(*GetTrustBadgesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ModerationService_ServiceDesc is the grpc.ServiceDesc for ModerationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -232,6 +270,10 @@ var ModerationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BlockUser",
 			Handler:    _ModerationService_BlockUser_Handler,
+		},
+		{
+			MethodName: "GetTrustBadges",
+			Handler:    _ModerationService_GetTrustBadges_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

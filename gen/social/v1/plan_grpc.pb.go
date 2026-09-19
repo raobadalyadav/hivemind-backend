@@ -19,12 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	PlanService_CreatePlan_FullMethodName  = "/social.v1.PlanService/CreatePlan"
-	PlanService_GetPlan_FullMethodName     = "/social.v1.PlanService/GetPlan"
-	PlanService_SearchPlans_FullMethodName = "/social.v1.PlanService/SearchPlans"
-	PlanService_JoinPlan_FullMethodName    = "/social.v1.PlanService/JoinPlan"
-	PlanService_LeavePlan_FullMethodName   = "/social.v1.PlanService/LeavePlan"
-	PlanService_CancelPlan_FullMethodName  = "/social.v1.PlanService/CancelPlan"
+	PlanService_CreatePlan_FullMethodName       = "/social.v1.PlanService/CreatePlan"
+	PlanService_GetPlan_FullMethodName          = "/social.v1.PlanService/GetPlan"
+	PlanService_SearchPlans_FullMethodName      = "/social.v1.PlanService/SearchPlans"
+	PlanService_JoinPlan_FullMethodName         = "/social.v1.PlanService/JoinPlan"
+	PlanService_LeavePlan_FullMethodName        = "/social.v1.PlanService/LeavePlan"
+	PlanService_CancelPlan_FullMethodName       = "/social.v1.PlanService/CancelPlan"
+	PlanService_SuggestPlanDraft_FullMethodName = "/social.v1.PlanService/SuggestPlanDraft"
 )
 
 // PlanServiceClient is the client API for PlanService service.
@@ -41,6 +42,10 @@ type PlanServiceClient interface {
 	JoinPlan(ctx context.Context, in *JoinPlanRequest, opts ...grpc.CallOption) (*JoinPlanResponse, error)
 	LeavePlan(ctx context.Context, in *LeavePlanRequest, opts ...grpc.CallOption) (*LeavePlanResponse, error)
 	CancelPlan(ctx context.Context, in *CancelPlanRequest, opts ...grpc.CallOption) (*Plan, error)
+	// SuggestPlanDraft — flow.md §43 "AI Plan Creator", rule-based (no LLM
+	// call, per the PRD's non-goal). Purely advisory: the host still calls
+	// CreatePlan with whatever they choose.
+	SuggestPlanDraft(ctx context.Context, in *SuggestPlanDraftRequest, opts ...grpc.CallOption) (*PlanDraft, error)
 }
 
 type planServiceClient struct {
@@ -111,6 +116,16 @@ func (c *planServiceClient) CancelPlan(ctx context.Context, in *CancelPlanReques
 	return out, nil
 }
 
+func (c *planServiceClient) SuggestPlanDraft(ctx context.Context, in *SuggestPlanDraftRequest, opts ...grpc.CallOption) (*PlanDraft, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PlanDraft)
+	err := c.cc.Invoke(ctx, PlanService_SuggestPlanDraft_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PlanServiceServer is the server API for PlanService service.
 // All implementations must embed UnimplementedPlanServiceServer
 // for forward compatibility.
@@ -125,6 +140,10 @@ type PlanServiceServer interface {
 	JoinPlan(context.Context, *JoinPlanRequest) (*JoinPlanResponse, error)
 	LeavePlan(context.Context, *LeavePlanRequest) (*LeavePlanResponse, error)
 	CancelPlan(context.Context, *CancelPlanRequest) (*Plan, error)
+	// SuggestPlanDraft — flow.md §43 "AI Plan Creator", rule-based (no LLM
+	// call, per the PRD's non-goal). Purely advisory: the host still calls
+	// CreatePlan with whatever they choose.
+	SuggestPlanDraft(context.Context, *SuggestPlanDraftRequest) (*PlanDraft, error)
 	mustEmbedUnimplementedPlanServiceServer()
 }
 
@@ -152,6 +171,9 @@ func (UnimplementedPlanServiceServer) LeavePlan(context.Context, *LeavePlanReque
 }
 func (UnimplementedPlanServiceServer) CancelPlan(context.Context, *CancelPlanRequest) (*Plan, error) {
 	return nil, status.Error(codes.Unimplemented, "method CancelPlan not implemented")
+}
+func (UnimplementedPlanServiceServer) SuggestPlanDraft(context.Context, *SuggestPlanDraftRequest) (*PlanDraft, error) {
+	return nil, status.Error(codes.Unimplemented, "method SuggestPlanDraft not implemented")
 }
 func (UnimplementedPlanServiceServer) mustEmbedUnimplementedPlanServiceServer() {}
 func (UnimplementedPlanServiceServer) testEmbeddedByValue()                     {}
@@ -282,6 +304,24 @@ func _PlanService_CancelPlan_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PlanService_SuggestPlanDraft_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SuggestPlanDraftRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlanServiceServer).SuggestPlanDraft(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlanService_SuggestPlanDraft_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlanServiceServer).SuggestPlanDraft(ctx, req.(*SuggestPlanDraftRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PlanService_ServiceDesc is the grpc.ServiceDesc for PlanService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -312,6 +352,10 @@ var PlanService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CancelPlan",
 			Handler:    _PlanService_CancelPlan_Handler,
+		},
+		{
+			MethodName: "SuggestPlanDraft",
+			Handler:    _PlanService_SuggestPlanDraft_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

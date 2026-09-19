@@ -776,6 +776,102 @@ func (x *CancelPlanRequest) GetReason() string {
 	return ""
 }
 
+type SuggestPlanDraftRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CategoryId    string                 `protobuf:"bytes,1,opt,name=category_id,json=categoryId,proto3" json:"category_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SuggestPlanDraftRequest) Reset() {
+	*x = SuggestPlanDraftRequest{}
+	mi := &file_social_v1_plan_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SuggestPlanDraftRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SuggestPlanDraftRequest) ProtoMessage() {}
+
+func (x *SuggestPlanDraftRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_plan_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SuggestPlanDraftRequest.ProtoReflect.Descriptor instead.
+func (*SuggestPlanDraftRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_plan_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *SuggestPlanDraftRequest) GetCategoryId() string {
+	if x != nil {
+		return x.CategoryId
+	}
+	return ""
+}
+
+type PlanDraft struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PlanDraft) Reset() {
+	*x = PlanDraft{}
+	mi := &file_social_v1_plan_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PlanDraft) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PlanDraft) ProtoMessage() {}
+
+func (x *PlanDraft) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_plan_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PlanDraft.ProtoReflect.Descriptor instead.
+func (*PlanDraft) Descriptor() ([]byte, []int) {
+	return file_social_v1_plan_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *PlanDraft) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *PlanDraft) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
 var File_social_v1_plan_proto protoreflect.FileDescriptor
 
 const file_social_v1_plan_proto_rawDesc = "" +
@@ -838,7 +934,13 @@ const file_social_v1_plan_proto_rawDesc = "" +
 	"\x11LeavePlanResponse\"D\n" +
 	"\x11CancelPlanRequest\x12\x17\n" +
 	"\aplan_id\x18\x01 \x01(\tR\x06planId\x12\x16\n" +
-	"\x06reason\x18\x02 \x01(\tR\x06reason*\xa7\x01\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\":\n" +
+	"\x17SuggestPlanDraftRequest\x12\x1f\n" +
+	"\vcategory_id\x18\x01 \x01(\tR\n" +
+	"categoryId\"C\n" +
+	"\tPlanDraft\x12\x14\n" +
+	"\x05title\x18\x01 \x01(\tR\x05title\x12 \n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription*\xa7\x01\n" +
 	"\n" +
 	"PlanStatus\x12\x1b\n" +
 	"\x17PLAN_STATUS_UNSPECIFIED\x10\x00\x12\x15\n" +
@@ -846,7 +948,7 @@ const file_social_v1_plan_proto_rawDesc = "" +
 	"\x15PLAN_STATUS_PUBLISHED\x10\x02\x12\x14\n" +
 	"\x10PLAN_STATUS_FULL\x10\x03\x12\x19\n" +
 	"\x15PLAN_STATUS_CANCELLED\x10\x04\x12\x19\n" +
-	"\x15PLAN_STATUS_COMPLETED\x10\x052\x99\x03\n" +
+	"\x15PLAN_STATUS_COMPLETED\x10\x052\xe7\x03\n" +
 	"\vPlanService\x12;\n" +
 	"\n" +
 	"CreatePlan\x12\x1c.social.v1.CreatePlanRequest\x1a\x0f.social.v1.Plan\x125\n" +
@@ -855,7 +957,8 @@ const file_social_v1_plan_proto_rawDesc = "" +
 	"\bJoinPlan\x12\x1a.social.v1.JoinPlanRequest\x1a\x1b.social.v1.JoinPlanResponse\x12F\n" +
 	"\tLeavePlan\x12\x1b.social.v1.LeavePlanRequest\x1a\x1c.social.v1.LeavePlanResponse\x12;\n" +
 	"\n" +
-	"CancelPlan\x12\x1c.social.v1.CancelPlanRequest\x1a\x0f.social.v1.PlanB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
+	"CancelPlan\x12\x1c.social.v1.CancelPlanRequest\x1a\x0f.social.v1.Plan\x12L\n" +
+	"\x10SuggestPlanDraft\x12\".social.v1.SuggestPlanDraftRequest\x1a\x14.social.v1.PlanDraftB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
 var (
 	file_social_v1_plan_proto_rawDescOnce sync.Once
@@ -870,55 +973,59 @@ func file_social_v1_plan_proto_rawDescGZIP() []byte {
 }
 
 var file_social_v1_plan_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_social_v1_plan_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_social_v1_plan_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_social_v1_plan_proto_goTypes = []any{
-	(PlanStatus)(0),               // 0: social.v1.PlanStatus
-	(*Plan)(nil),                  // 1: social.v1.Plan
-	(*CreatePlanRequest)(nil),     // 2: social.v1.CreatePlanRequest
-	(*GetPlanRequest)(nil),        // 3: social.v1.GetPlanRequest
-	(*SearchPlansRequest)(nil),    // 4: social.v1.SearchPlansRequest
-	(*SearchPlansResponse)(nil),   // 5: social.v1.SearchPlansResponse
-	(*JoinPlanRequest)(nil),       // 6: social.v1.JoinPlanRequest
-	(*JoinPlanResponse)(nil),      // 7: social.v1.JoinPlanResponse
-	(*LeavePlanRequest)(nil),      // 8: social.v1.LeavePlanRequest
-	(*LeavePlanResponse)(nil),     // 9: social.v1.LeavePlanResponse
-	(*CancelPlanRequest)(nil),     // 10: social.v1.CancelPlanRequest
-	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
-	(*Money)(nil),                 // 12: social.v1.Money
-	(*GeoPoint)(nil),              // 13: social.v1.GeoPoint
-	(*Audit)(nil),                 // 14: social.v1.Audit
-	(*PageRequest)(nil),           // 15: social.v1.PageRequest
-	(*PageResponse)(nil),          // 16: social.v1.PageResponse
+	(PlanStatus)(0),                 // 0: social.v1.PlanStatus
+	(*Plan)(nil),                    // 1: social.v1.Plan
+	(*CreatePlanRequest)(nil),       // 2: social.v1.CreatePlanRequest
+	(*GetPlanRequest)(nil),          // 3: social.v1.GetPlanRequest
+	(*SearchPlansRequest)(nil),      // 4: social.v1.SearchPlansRequest
+	(*SearchPlansResponse)(nil),     // 5: social.v1.SearchPlansResponse
+	(*JoinPlanRequest)(nil),         // 6: social.v1.JoinPlanRequest
+	(*JoinPlanResponse)(nil),        // 7: social.v1.JoinPlanResponse
+	(*LeavePlanRequest)(nil),        // 8: social.v1.LeavePlanRequest
+	(*LeavePlanResponse)(nil),       // 9: social.v1.LeavePlanResponse
+	(*CancelPlanRequest)(nil),       // 10: social.v1.CancelPlanRequest
+	(*SuggestPlanDraftRequest)(nil), // 11: social.v1.SuggestPlanDraftRequest
+	(*PlanDraft)(nil),               // 12: social.v1.PlanDraft
+	(*timestamppb.Timestamp)(nil),   // 13: google.protobuf.Timestamp
+	(*Money)(nil),                   // 14: social.v1.Money
+	(*GeoPoint)(nil),                // 15: social.v1.GeoPoint
+	(*Audit)(nil),                   // 16: social.v1.Audit
+	(*PageRequest)(nil),             // 17: social.v1.PageRequest
+	(*PageResponse)(nil),            // 18: social.v1.PageResponse
 }
 var file_social_v1_plan_proto_depIdxs = []int32{
-	11, // 0: social.v1.Plan.starts_at:type_name -> google.protobuf.Timestamp
-	11, // 1: social.v1.Plan.ends_at:type_name -> google.protobuf.Timestamp
-	12, // 2: social.v1.Plan.price:type_name -> social.v1.Money
+	13, // 0: social.v1.Plan.starts_at:type_name -> google.protobuf.Timestamp
+	13, // 1: social.v1.Plan.ends_at:type_name -> google.protobuf.Timestamp
+	14, // 2: social.v1.Plan.price:type_name -> social.v1.Money
 	0,  // 3: social.v1.Plan.status:type_name -> social.v1.PlanStatus
-	13, // 4: social.v1.Plan.location:type_name -> social.v1.GeoPoint
-	14, // 5: social.v1.Plan.audit:type_name -> social.v1.Audit
-	11, // 6: social.v1.CreatePlanRequest.starts_at:type_name -> google.protobuf.Timestamp
-	11, // 7: social.v1.CreatePlanRequest.ends_at:type_name -> google.protobuf.Timestamp
-	12, // 8: social.v1.CreatePlanRequest.price:type_name -> social.v1.Money
-	13, // 9: social.v1.CreatePlanRequest.location:type_name -> social.v1.GeoPoint
-	13, // 10: social.v1.SearchPlansRequest.origin:type_name -> social.v1.GeoPoint
-	15, // 11: social.v1.SearchPlansRequest.page:type_name -> social.v1.PageRequest
+	15, // 4: social.v1.Plan.location:type_name -> social.v1.GeoPoint
+	16, // 5: social.v1.Plan.audit:type_name -> social.v1.Audit
+	13, // 6: social.v1.CreatePlanRequest.starts_at:type_name -> google.protobuf.Timestamp
+	13, // 7: social.v1.CreatePlanRequest.ends_at:type_name -> google.protobuf.Timestamp
+	14, // 8: social.v1.CreatePlanRequest.price:type_name -> social.v1.Money
+	15, // 9: social.v1.CreatePlanRequest.location:type_name -> social.v1.GeoPoint
+	15, // 10: social.v1.SearchPlansRequest.origin:type_name -> social.v1.GeoPoint
+	17, // 11: social.v1.SearchPlansRequest.page:type_name -> social.v1.PageRequest
 	1,  // 12: social.v1.SearchPlansResponse.plans:type_name -> social.v1.Plan
-	16, // 13: social.v1.SearchPlansResponse.page:type_name -> social.v1.PageResponse
+	18, // 13: social.v1.SearchPlansResponse.page:type_name -> social.v1.PageResponse
 	2,  // 14: social.v1.PlanService.CreatePlan:input_type -> social.v1.CreatePlanRequest
 	3,  // 15: social.v1.PlanService.GetPlan:input_type -> social.v1.GetPlanRequest
 	4,  // 16: social.v1.PlanService.SearchPlans:input_type -> social.v1.SearchPlansRequest
 	6,  // 17: social.v1.PlanService.JoinPlan:input_type -> social.v1.JoinPlanRequest
 	8,  // 18: social.v1.PlanService.LeavePlan:input_type -> social.v1.LeavePlanRequest
 	10, // 19: social.v1.PlanService.CancelPlan:input_type -> social.v1.CancelPlanRequest
-	1,  // 20: social.v1.PlanService.CreatePlan:output_type -> social.v1.Plan
-	1,  // 21: social.v1.PlanService.GetPlan:output_type -> social.v1.Plan
-	5,  // 22: social.v1.PlanService.SearchPlans:output_type -> social.v1.SearchPlansResponse
-	7,  // 23: social.v1.PlanService.JoinPlan:output_type -> social.v1.JoinPlanResponse
-	9,  // 24: social.v1.PlanService.LeavePlan:output_type -> social.v1.LeavePlanResponse
-	1,  // 25: social.v1.PlanService.CancelPlan:output_type -> social.v1.Plan
-	20, // [20:26] is the sub-list for method output_type
-	14, // [14:20] is the sub-list for method input_type
+	11, // 20: social.v1.PlanService.SuggestPlanDraft:input_type -> social.v1.SuggestPlanDraftRequest
+	1,  // 21: social.v1.PlanService.CreatePlan:output_type -> social.v1.Plan
+	1,  // 22: social.v1.PlanService.GetPlan:output_type -> social.v1.Plan
+	5,  // 23: social.v1.PlanService.SearchPlans:output_type -> social.v1.SearchPlansResponse
+	7,  // 24: social.v1.PlanService.JoinPlan:output_type -> social.v1.JoinPlanResponse
+	9,  // 25: social.v1.PlanService.LeavePlan:output_type -> social.v1.LeavePlanResponse
+	1,  // 26: social.v1.PlanService.CancelPlan:output_type -> social.v1.Plan
+	12, // 27: social.v1.PlanService.SuggestPlanDraft:output_type -> social.v1.PlanDraft
+	21, // [21:28] is the sub-list for method output_type
+	14, // [14:21] is the sub-list for method input_type
 	14, // [14:14] is the sub-list for extension type_name
 	14, // [14:14] is the sub-list for extension extendee
 	0,  // [0:14] is the sub-list for field type_name
@@ -936,7 +1043,7 @@ func file_social_v1_plan_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_plan_proto_rawDesc), len(file_social_v1_plan_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

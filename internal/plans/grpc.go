@@ -133,6 +133,14 @@ func (h *Handler) CancelPlan(ctx context.Context, req *socialv1.CancelPlanReques
 	return toProto(p), nil
 }
 
+func (h *Handler) SuggestPlanDraft(ctx context.Context, req *socialv1.SuggestPlanDraftRequest) (*socialv1.PlanDraft, error) {
+	title, description, err := h.svc.SuggestPlanDraft(ctx, req.GetCategoryId())
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to suggest plan draft")
+	}
+	return &socialv1.PlanDraft{Title: title, Description: description}, nil
+}
+
 // mapBookingCreationError avoids importing internal/bookings just to switch
 // on its sentinel errors (ErrPlanFull, idempotency.ErrDuplicateRequest) —
 // that would defeat the point of the BookingCreator interface. The message

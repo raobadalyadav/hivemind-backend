@@ -51,3 +51,18 @@ func (h *Handler) GetSmartMatch(ctx context.Context, req *socialv1.GetSmartMatch
 	}
 	return &socialv1.GetSmartMatchResponse{CompatibleUserIds: ids}, nil
 }
+
+func (h *Handler) GetPeopleRecommendations(ctx context.Context, req *socialv1.GetPeopleRecommendationsRequest) (*socialv1.GetPeopleRecommendationsResponse, error) {
+	callerID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	ids, err := h.svc.GetPeopleRecommendations(ctx, callerID)
+	if err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to get people recommendations")
+	}
+	return &socialv1.GetPeopleRecommendationsResponse{UserIds: ids}, nil
+}

@@ -1,15 +1,12 @@
 // Package recommendation implements PRD §11/§20 — every RPC is fully
-// implemented, at the depth the data actually collected supports.
-// GetRecommendedPlans is PRD §20's stated MVP row: "Cold start:
-// Editorial/curated plans by city" — upcoming published plans, no
-// personalization weighting. GetSmartMatch is PRD §20's other MVP row:
-// "People matching: Interest/intent overlap" — ranks a plan's confirmed
-// participants by shared user_profiles.interests, pure SQL, no ML service.
-// The full plan-ranking formula in PRD §20 ("0.30*distance +
-// 0.25*interest_match + ...") stays a TODO(phase4) — those weight terms
-// (distance/time_fit/personalization) need behavioral data this scaffold
-// doesn't collect yet, and apply to ranking plans, not this per-plan people
-// match.
+// implemented. GetRecommendedPlans now applies PRD §20's full ranking
+// formula (0.30*distance + 0.25*interest_match + 0.15*time_fit +
+// 0.10*capacity_fit + 0.10*quality + 0.10*personalization), computed live
+// in one query — no cached score column, same convention as avg_rating
+// elsewhere. GetSmartMatch/GetPeopleRecommendations are PRD §20's "People
+// matching: Interest/intent overlap" row — pure SQL interest-overlap
+// ranking, no ML service, matching the PRD's explicit rule-based-first
+// non-goal for this phase.
 package recommendation
 
 import (
@@ -26,16 +23,98 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
 
-// UpcomingPlanIDs returns editorial/curated upcoming plans in the user's
-// city (falls back to all cities if the user has none set).
+// UpcomingPlanIDs ranks upcoming published plans in the user's city (falls
+// back to all cities if unset) by PRD §20's weighted formula. Weights and
+// the two curve constants (50km distance cutoff, 48h/336h time-fit peak
+// and decay) are inline per the PRD's own six named terms — a Go-side
+// constant table would be over-engineering for six numbers used in exactly
+// one query.
+//
+// interest_match is necessarily binary (category name present in the
+// user's interests, case-insensitive), not a proportional overlap — plans
+// carry one category, not a tag set.
+// ponytail: upgrade to fractional overlap if plan tags are ever added.
 func (r *Repository) UpcomingPlanIDs(ctx context.Context, userID string, limit int) ([]string, error) {
 	rows, err := r.pool.Query(ctx, `
-		SELECT p.id FROM plans p
-		WHERE p.status = 'published' AND p.starts_at > now()
-		  AND (p.city_id = (SELECT city_id FROM users WHERE id = $1) OR (SELECT city_id FROM users WHERE id = $1) IS NULL)
-		ORDER BY p.starts_at
+		WITH me AS (
+			SELECT u.city_id, u.last_location, COALESCE(up.interests, '{}') AS interests
+			FROM users u
+			LEFT JOIN user_profiles up ON up.user_id = u.id
+			WHERE u.id = $1
+		),
+		candidates AS (
+			SELECT p.id, p.host_id, p.category_id, p.starts_at, p.capacity, p.confirmed_count, p.location,
+				c.name AS category_name
+			FROM plans p
+			LEFT JOIN categories c ON c.id = p.category_id
+			WHERE p.status = 'published' AND p.starts_at > now()
+			  AND (p.city_id = (SELECT city_id FROM me) OR (SELECT city_id FROM me) IS NULL)
+		)
+		SELECT cd.id,
+			(0.30 * COALESCE(GREATEST(0, 1 - ST_Distance(cd.location, me.last_location) / 50000.0), 0.5))
+			+
+			(0.25 * CASE WHEN cd.category_name IS NOT NULL AND EXISTS (
+				SELECT 1 FROM unnest(me.interests) i WHERE cd.category_name ILIKE i
+			) THEN 1 ELSE 0 END)
+			+
+			(0.15 * GREATEST(0, 1 - ABS(EXTRACT(EPOCH FROM (cd.starts_at - now()))/3600 - 48)/336))
+			+
+			(0.10 * (1 - LEAST(1, ABS(cd.confirmed_count::float / NULLIF(cd.capacity,0) - 0.6) / 0.6)))
+			+
+			(0.10 * (COALESCE((SELECT AVG(rv.rating) FROM reviews rv JOIN plans p2 ON p2.id = rv.plan_id WHERE p2.host_id = cd.host_id), 3.0) / 5.0))
+			+
+			(0.10 * LEAST(1.0, (SELECT COUNT(*)::float FROM bookings b
+				WHERE b.user_id = $1 AND b.status IN ('confirmed'::booking_status,'attended'::booking_status)
+				  AND b.plan_id IN (SELECT id FROM plans WHERE category_id = cd.category_id)) / 5.0))
+			AS score
+		FROM candidates cd, me
+		ORDER BY score DESC
 		LIMIT $2`,
 		userID, limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ids []string
+	for rows.Next() {
+		var id string
+		var score float64
+		if err := rows.Scan(&id, &score); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
+// PeopleRecommendationUserIDs ranks other users in the caller's city by
+// shared interests (same unnest/INTERSECT technique as SmartMatchUserIDs,
+// scoped city-wide instead of per-plan), excluding both-direction blocks.
+// Users with 3+ reports against them (an "under review" trust signal — see
+// internal/moderation's DeriveBadges) are sorted after everyone else
+// rather than excluded outright, since a report alone isn't a finding.
+func (r *Repository) PeopleRecommendationUserIDs(ctx context.Context, callerID string, limit int) ([]string, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT u.id
+		FROM users u
+		JOIN user_profiles up ON up.user_id = u.id
+		WHERE u.id != $1
+		  AND u.city_id = (SELECT city_id FROM users WHERE id = $1)
+		  AND NOT EXISTS (
+			SELECT 1 FROM blocks
+			WHERE (user_id = $1 AND blocked_user_id = u.id) OR (user_id = u.id AND blocked_user_id = $1)
+		  )
+		ORDER BY
+			(SELECT COUNT(*) FROM reports WHERE subject_type = 'user' AND subject_id = u.id) >= 3,
+			cardinality(ARRAY(
+				SELECT unnest(up.interests)
+				INTERSECT
+				SELECT unnest((SELECT interests FROM user_profiles WHERE user_id = $1))
+			)) DESC
+		LIMIT $2`,
+		callerID, limit,
 	)
 	if err != nil {
 		return nil, err

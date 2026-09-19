@@ -74,7 +74,7 @@ func main() {
 	// interface, even though the worker never calls chat.ReportMessage
 	// itself — see internal/chat/service.go.
 	d := &deps{
-		chatSvc:          chat.NewService(chat.NewRepository(pool), moderation.NewService(moderation.NewRepository(pool))),
+		chatSvc:          chat.NewService(chat.NewRepository(pool), moderation.NewService(moderation.NewRepository(pool)), moderation.NewScreener(), chat.NewTemplateIcebreaker()),
 		notificationsSvc: notifications.NewService(notifications.NewRepository(pool), emailSender, pushSender, logger),
 		// nil gateway/bookingOwner: the worker only calls
 		// RefundBookingIfCaptured, never CreateOrder — those params exist

@@ -46,6 +46,8 @@ func (h *Handler) SendMessage(ctx context.Context, req *socialv1.SendMessageRequ
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		case ErrNotAMember:
 			return nil, status.Error(codes.PermissionDenied, err.Error())
+		case ErrContentRejected:
+			return nil, status.Error(codes.FailedPrecondition, err.Error())
 		default:
 			return nil, status.Error(codes.Internal, "failed to send message")
 		}
@@ -93,6 +95,17 @@ func (h *Handler) ReportMessage(ctx context.Context, req *socialv1.ReportMessage
 		}
 	}
 	return &socialv1.ReportMessageResponse{ModerationCaseId: caseID}, nil
+}
+
+func (h *Handler) GenerateIcebreaker(ctx context.Context, req *socialv1.GenerateIcebreakerRequest) (*socialv1.GenerateIcebreakerResponse, error) {
+	text, err := h.svc.GenerateIcebreaker(ctx, req.GetRoomId())
+	if err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to generate icebreaker")
+	}
+	return &socialv1.GenerateIcebreakerResponse{Text: text}, nil
 }
 
 func toProtoMessage(m *Message) *socialv1.Message {

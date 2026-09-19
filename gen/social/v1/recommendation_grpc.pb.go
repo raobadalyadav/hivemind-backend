@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	RecommendationService_GetRecommendedPlans_FullMethodName = "/social.v1.RecommendationService/GetRecommendedPlans"
-	RecommendationService_GetSmartMatch_FullMethodName       = "/social.v1.RecommendationService/GetSmartMatch"
+	RecommendationService_GetRecommendedPlans_FullMethodName      = "/social.v1.RecommendationService/GetRecommendedPlans"
+	RecommendationService_GetSmartMatch_FullMethodName            = "/social.v1.RecommendationService/GetSmartMatch"
+	RecommendationService_GetPeopleRecommendations_FullMethodName = "/social.v1.RecommendationService/GetPeopleRecommendations"
 )
 
 // RecommendationServiceClient is the client API for RecommendationService service.
@@ -28,11 +29,13 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // RecommendationService — PRD §11 Intelligence and Trust at Scale (Phase 4) +
-// §20 (MVP ranking formula: rules + behavior weights, no ML). This scaffold
-// implements only the interface; ranking logic is a TODO(phase4) stub.
+// §20's full rule-based ranking formula (0.30*distance + 0.25*interest_match
+// + 0.15*time_fit + 0.10*capacity_fit + 0.10*quality + 0.10*personalization),
+// computed live in SQL — no ML service, per the PRD's explicit non-goal.
 type RecommendationServiceClient interface {
 	GetRecommendedPlans(ctx context.Context, in *GetRecommendedPlansRequest, opts ...grpc.CallOption) (*GetRecommendedPlansResponse, error)
 	GetSmartMatch(ctx context.Context, in *GetSmartMatchRequest, opts ...grpc.CallOption) (*GetSmartMatchResponse, error)
+	GetPeopleRecommendations(ctx context.Context, in *GetPeopleRecommendationsRequest, opts ...grpc.CallOption) (*GetPeopleRecommendationsResponse, error)
 }
 
 type recommendationServiceClient struct {
@@ -63,16 +66,28 @@ func (c *recommendationServiceClient) GetSmartMatch(ctx context.Context, in *Get
 	return out, nil
 }
 
+func (c *recommendationServiceClient) GetPeopleRecommendations(ctx context.Context, in *GetPeopleRecommendationsRequest, opts ...grpc.CallOption) (*GetPeopleRecommendationsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPeopleRecommendationsResponse)
+	err := c.cc.Invoke(ctx, RecommendationService_GetPeopleRecommendations_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RecommendationServiceServer is the server API for RecommendationService service.
 // All implementations must embed UnimplementedRecommendationServiceServer
 // for forward compatibility.
 //
 // RecommendationService — PRD §11 Intelligence and Trust at Scale (Phase 4) +
-// §20 (MVP ranking formula: rules + behavior weights, no ML). This scaffold
-// implements only the interface; ranking logic is a TODO(phase4) stub.
+// §20's full rule-based ranking formula (0.30*distance + 0.25*interest_match
+// + 0.15*time_fit + 0.10*capacity_fit + 0.10*quality + 0.10*personalization),
+// computed live in SQL — no ML service, per the PRD's explicit non-goal.
 type RecommendationServiceServer interface {
 	GetRecommendedPlans(context.Context, *GetRecommendedPlansRequest) (*GetRecommendedPlansResponse, error)
 	GetSmartMatch(context.Context, *GetSmartMatchRequest) (*GetSmartMatchResponse, error)
+	GetPeopleRecommendations(context.Context, *GetPeopleRecommendationsRequest) (*GetPeopleRecommendationsResponse, error)
 	mustEmbedUnimplementedRecommendationServiceServer()
 }
 
@@ -88,6 +103,9 @@ func (UnimplementedRecommendationServiceServer) GetRecommendedPlans(context.Cont
 }
 func (UnimplementedRecommendationServiceServer) GetSmartMatch(context.Context, *GetSmartMatchRequest) (*GetSmartMatchResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetSmartMatch not implemented")
+}
+func (UnimplementedRecommendationServiceServer) GetPeopleRecommendations(context.Context, *GetPeopleRecommendationsRequest) (*GetPeopleRecommendationsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPeopleRecommendations not implemented")
 }
 func (UnimplementedRecommendationServiceServer) mustEmbedUnimplementedRecommendationServiceServer() {}
 func (UnimplementedRecommendationServiceServer) testEmbeddedByValue()                               {}
@@ -146,6 +164,24 @@ func _RecommendationService_GetSmartMatch_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RecommendationService_GetPeopleRecommendations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPeopleRecommendationsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecommendationServiceServer).GetPeopleRecommendations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecommendationService_GetPeopleRecommendations_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecommendationServiceServer).GetPeopleRecommendations(ctx, req.(*GetPeopleRecommendationsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RecommendationService_ServiceDesc is the grpc.ServiceDesc for RecommendationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -160,6 +196,10 @@ var RecommendationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetSmartMatch",
 			Handler:    _RecommendationService_GetSmartMatch_Handler,
+		},
+		{
+			MethodName: "GetPeopleRecommendations",
+			Handler:    _RecommendationService_GetPeopleRecommendations_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -24,6 +24,7 @@ import (
 	socialv1 "github.com/hivemind/backend/gen/social/v1"
 	"github.com/hivemind/backend/internal/admin"
 	"github.com/hivemind/backend/internal/auth"
+	"github.com/hivemind/backend/internal/availability"
 	"github.com/hivemind/backend/internal/bookings"
 	"github.com/hivemind/backend/internal/chat"
 	"github.com/hivemind/backend/internal/communities"
@@ -39,6 +40,7 @@ import (
 	"github.com/hivemind/backend/internal/recommendation"
 	"github.com/hivemind/backend/internal/reviews"
 	"github.com/hivemind/backend/internal/search"
+	"github.com/hivemind/backend/internal/smartgroups"
 	"github.com/hivemind/backend/internal/social"
 	"github.com/hivemind/backend/internal/subscriptions"
 	"github.com/hivemind/backend/internal/users"
@@ -91,6 +93,7 @@ func main() {
 	// packages declare (see internal/plans/service.go, internal/chat/service.go).
 	bookingsSvc := bookings.NewService(bookings.NewRepository(pool), guard)
 	moderationSvc := moderation.NewService(moderation.NewRepository(pool))
+	contentScreener := moderation.NewScreener()
 
 	var googleVerifier, appleVerifier *oauth.Verifier
 	if cfg.GoogleClientID != "" {
@@ -150,7 +153,7 @@ func main() {
 	// in their Register call below) so they can also be injected into
 	// promotions/host via the PlanHostChecker/EntitlementChecker interfaces
 	// those packages declare.
-	plansSvc := plans.NewService(plans.NewRepository(pool), bookingsSvc, bookingsSvc)
+	plansSvc := plans.NewService(plans.NewRepository(pool), bookingsSvc, bookingsSvc, plans.NewTemplateDraftGenerator())
 	subscriptionsSvc := subscriptions.NewService(subscriptions.NewRepository(pool))
 
 	// Declared as the interface type for the same nil-interface reason as
@@ -174,8 +177,11 @@ func main() {
 	socialv1.RegisterSubscriptionServiceServer(srv, subscriptions.NewHandler(subscriptionsSvc))
 	socialv1.RegisterCommunityServiceServer(srv, communities.NewHandler(communities.NewService(communities.NewRepository(pool))))
 	socialv1.RegisterConnectionServiceServer(srv, connections.NewHandler(connections.NewService(connections.NewRepository(pool))))
-	socialv1.RegisterChatServiceServer(srv, chat.NewHandler(chat.NewService(chat.NewRepository(pool), moderationSvc)))
-	socialv1.RegisterSocialServiceServer(srv, social.NewHandler(social.NewService(social.NewRepository(pool))))
+	chatSvc := chat.NewService(chat.NewRepository(pool), moderationSvc, contentScreener, chat.NewTemplateIcebreaker())
+	availabilitySvc := availability.NewService(availability.NewRepository(pool), chatSvc)
+	socialv1.RegisterChatServiceServer(srv, chat.NewHandler(chatSvc))
+	socialv1.RegisterAvailabilityServiceServer(srv, availability.NewHandler(availabilitySvc))
+	socialv1.RegisterSocialServiceServer(srv, social.NewHandler(social.NewService(social.NewRepository(pool), moderationSvc, contentScreener)))
 	socialv1.RegisterModerationServiceServer(srv, moderation.NewHandler(moderationSvc))
 	socialv1.RegisterNotificationServiceServer(srv, notifications.NewHandler(notifications.NewService(notifications.NewRepository(pool), emailSender, pushSender, logger)))
 	socialv1.RegisterSearchServiceServer(srv, search.NewHandler(search.NewService(search.NewRepository(pool))))
@@ -184,6 +190,7 @@ func main() {
 	socialv1.RegisterVenueServiceServer(srv, venues.NewHandler(venuesSvc))
 	socialv1.RegisterHostServiceServer(srv, host.NewHandler(hostSvc))
 	socialv1.RegisterPromotionServiceServer(srv, promotions.NewHandler(promotionsSvc))
+	socialv1.RegisterSmartGroupServiceServer(srv, smartgroups.NewHandler(smartgroups.NewService(smartgroups.NewRepository(pool), plansSvc, chatSvc)))
 	socialv1.RegisterReviewServiceServer(srv, reviews.NewHandler(reviewsSvc))
 
 	healthSrv := health.NewServer()

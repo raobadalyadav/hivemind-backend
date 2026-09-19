@@ -28,10 +28,23 @@ type Service struct {
 	repo      *Repository
 	creator   BookingCreator
 	canceller BookingCanceller
+	draftGen  DraftGenerator
 }
 
-func NewService(repo *Repository, creator BookingCreator, canceller BookingCanceller) *Service {
-	return &Service{repo: repo, creator: creator, canceller: canceller}
+func NewService(repo *Repository, creator BookingCreator, canceller BookingCanceller, draftGen DraftGenerator) *Service {
+	return &Service{repo: repo, creator: creator, canceller: canceller, draftGen: draftGen}
+}
+
+// SuggestPlanDraft is purely advisory — the host still calls CreatePlan
+// with whatever title/description they end up choosing; this writes
+// nothing.
+func (s *Service) SuggestPlanDraft(ctx context.Context, categoryID string) (title, description string, err error) {
+	categoryName, err := s.repo.GetCategoryName(ctx, categoryID)
+	if err != nil {
+		return "", "", err
+	}
+	title, description = s.draftGen.Suggest(ctx, categoryName)
+	return title, description, nil
 }
 
 func (s *Service) CreatePlan(ctx context.Context, p *Plan) (*Plan, error) {

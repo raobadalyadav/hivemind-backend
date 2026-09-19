@@ -29,7 +29,7 @@ func (f *fakeBookingCanceller) CancelBookingForPlan(ctx context.Context, planID,
 
 func TestService_JoinPlan_DelegatesToBookingCreator(t *testing.T) {
 	creator := &fakeBookingCreator{returnID: "booking-123"}
-	svc := NewService(nil, creator, &fakeBookingCanceller{})
+	svc := NewService(nil, creator, &fakeBookingCanceller{}, nil)
 
 	id, err := svc.JoinPlan(context.Background(), "plan-1", "user-1", "idem-key")
 	if err != nil {
@@ -46,7 +46,7 @@ func TestService_JoinPlan_DelegatesToBookingCreator(t *testing.T) {
 func TestService_JoinPlan_PropagatesCreatorError(t *testing.T) {
 	wantErr := errors.New("plan is full")
 	creator := &fakeBookingCreator{returnErr: wantErr}
-	svc := NewService(nil, creator, &fakeBookingCanceller{})
+	svc := NewService(nil, creator, &fakeBookingCanceller{}, nil)
 
 	_, err := svc.JoinPlan(context.Background(), "plan-1", "user-1", "")
 	if err != wantErr {
@@ -56,7 +56,7 @@ func TestService_JoinPlan_PropagatesCreatorError(t *testing.T) {
 
 func TestService_LeavePlan_DelegatesToBookingCanceller(t *testing.T) {
 	canceller := &fakeBookingCanceller{}
-	svc := NewService(nil, &fakeBookingCreator{}, canceller)
+	svc := NewService(nil, &fakeBookingCreator{}, canceller, nil)
 
 	if err := svc.LeavePlan(context.Background(), "plan-1", "user-1"); err != nil {
 		t.Fatalf("LeavePlan: %v", err)
@@ -67,7 +67,7 @@ func TestService_LeavePlan_DelegatesToBookingCanceller(t *testing.T) {
 }
 
 func TestService_JoinPlan_RejectsMissingInput(t *testing.T) {
-	svc := NewService(nil, &fakeBookingCreator{}, &fakeBookingCanceller{})
+	svc := NewService(nil, &fakeBookingCreator{}, &fakeBookingCanceller{}, nil)
 	if _, err := svc.JoinPlan(context.Background(), "", "user-1", ""); err != ErrInvalidInput {
 		t.Errorf("expected ErrInvalidInput, got %v", err)
 	}
