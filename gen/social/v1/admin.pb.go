@@ -1142,6 +1142,230 @@ func (*DeactivateCouponResponse) Descriptor() ([]byte, []int) {
 	return file_social_v1_admin_proto_rawDescGZIP(), []int{21}
 }
 
+type City struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	State         string                 `protobuf:"bytes,3,opt,name=state,proto3" json:"state,omitempty"`
+	Country       string                 `protobuf:"bytes,4,opt,name=country,proto3" json:"country,omitempty"`
+	Status        string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"` // pre_launch | soft_launch | active | scaling | mature
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *City) Reset() {
+	*x = City{}
+	mi := &file_social_v1_admin_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *City) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*City) ProtoMessage() {}
+
+func (x *City) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use City.ProtoReflect.Descriptor instead.
+func (*City) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *City) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *City) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *City) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+func (x *City) GetCountry() string {
+	if x != nil {
+		return x.Country
+	}
+	return ""
+}
+
+func (x *City) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+type CreateCityRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	State         string                 `protobuf:"bytes,2,opt,name=state,proto3" json:"state,omitempty"`
+	Country       string                 `protobuf:"bytes,3,opt,name=country,proto3" json:"country,omitempty"` // ISO-2, defaults to 'IN' if empty
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateCityRequest) Reset() {
+	*x = CreateCityRequest{}
+	mi := &file_social_v1_admin_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateCityRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateCityRequest) ProtoMessage() {}
+
+func (x *CreateCityRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateCityRequest.ProtoReflect.Descriptor instead.
+func (*CreateCityRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *CreateCityRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreateCityRequest) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+func (x *CreateCityRequest) GetCountry() string {
+	if x != nil {
+		return x.Country
+	}
+	return ""
+}
+
+type UpdateCityStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CityId        string                 `protobuf:"bytes,1,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"`
+	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateCityStatusRequest) Reset() {
+	*x = UpdateCityStatusRequest{}
+	mi := &file_social_v1_admin_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateCityStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateCityStatusRequest) ProtoMessage() {}
+
+func (x *UpdateCityStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateCityStatusRequest.ProtoReflect.Descriptor instead.
+func (*UpdateCityStatusRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *UpdateCityStatusRequest) GetCityId() string {
+	if x != nil {
+		return x.CityId
+	}
+	return ""
+}
+
+func (x *UpdateCityStatusRequest) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+type UpdateCityStatusResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateCityStatusResponse) Reset() {
+	*x = UpdateCityStatusResponse{}
+	mi := &file_social_v1_admin_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateCityStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateCityStatusResponse) ProtoMessage() {}
+
+func (x *UpdateCityStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_admin_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateCityStatusResponse.ProtoReflect.Descriptor instead.
+func (*UpdateCityStatusResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_admin_proto_rawDescGZIP(), []int{25}
+}
+
 var File_social_v1_admin_proto protoreflect.FileDescriptor
 
 const file_social_v1_admin_proto_rawDesc = "" +
@@ -1213,7 +1437,21 @@ const file_social_v1_admin_proto_rawDesc = "" +
 	"\x04page\x18\x02 \x01(\v2\x17.social.v1.PageResponseR\x04page\")\n" +
 	"\x17DeactivateCouponRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x1a\n" +
-	"\x18DeactivateCouponResponse2\xbd\a\n" +
+	"\x18DeactivateCouponResponse\"r\n" +
+	"\x04City\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
+	"\x05state\x18\x03 \x01(\tR\x05state\x12\x18\n" +
+	"\acountry\x18\x04 \x01(\tR\acountry\x12\x16\n" +
+	"\x06status\x18\x05 \x01(\tR\x06status\"W\n" +
+	"\x11CreateCityRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
+	"\x05state\x18\x02 \x01(\tR\x05state\x12\x18\n" +
+	"\acountry\x18\x03 \x01(\tR\acountry\"J\n" +
+	"\x17UpdateCityStatusRequest\x12\x17\n" +
+	"\acity_id\x18\x01 \x01(\tR\x06cityId\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\"\x1a\n" +
+	"\x18UpdateCityStatusResponse2\xd7\b\n" +
 	"\fAdminService\x12F\n" +
 	"\tListUsers\x12\x1b.social.v1.ListUsersRequest\x1a\x1c.social.v1.ListUsersResponse\x12L\n" +
 	"\vSuspendUser\x12\x1d.social.v1.SuspendUserRequest\x1a\x1e.social.v1.SuspendUserResponse\x12L\n" +
@@ -1225,7 +1463,10 @@ const file_social_v1_admin_proto_rawDesc = "" +
 	"\x10AdminGrantCredit\x12\".social.v1.AdminGrantCreditRequest\x1a#.social.v1.AdminGrantCreditResponse\x12A\n" +
 	"\fCreateCoupon\x12\x1e.social.v1.CreateCouponRequest\x1a\x11.social.v1.Coupon\x12L\n" +
 	"\vListCoupons\x12\x1d.social.v1.ListCouponsRequest\x1a\x1e.social.v1.ListCouponsResponse\x12[\n" +
-	"\x10DeactivateCoupon\x12\".social.v1.DeactivateCouponRequest\x1a#.social.v1.DeactivateCouponResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
+	"\x10DeactivateCoupon\x12\".social.v1.DeactivateCouponRequest\x1a#.social.v1.DeactivateCouponResponse\x12;\n" +
+	"\n" +
+	"CreateCity\x12\x1c.social.v1.CreateCityRequest\x1a\x0f.social.v1.City\x12[\n" +
+	"\x10UpdateCityStatus\x12\".social.v1.UpdateCityStatusRequest\x1a#.social.v1.UpdateCityStatusResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
 var (
 	file_social_v1_admin_proto_rawDescOnce sync.Once
@@ -1239,7 +1480,7 @@ func file_social_v1_admin_proto_rawDescGZIP() []byte {
 	return file_social_v1_admin_proto_rawDescData
 }
 
-var file_social_v1_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_social_v1_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_social_v1_admin_proto_goTypes = []any{
 	(*ListUsersRequest)(nil),              // 0: social.v1.ListUsersRequest
 	(*ListUsersResponse)(nil),             // 1: social.v1.ListUsersResponse
@@ -1263,19 +1504,23 @@ var file_social_v1_admin_proto_goTypes = []any{
 	(*ListCouponsResponse)(nil),           // 19: social.v1.ListCouponsResponse
 	(*DeactivateCouponRequest)(nil),       // 20: social.v1.DeactivateCouponRequest
 	(*DeactivateCouponResponse)(nil),      // 21: social.v1.DeactivateCouponResponse
-	(*PageRequest)(nil),                   // 22: social.v1.PageRequest
-	(*PageResponse)(nil),                  // 23: social.v1.PageResponse
-	(*timestamppb.Timestamp)(nil),         // 24: google.protobuf.Timestamp
+	(*City)(nil),                          // 22: social.v1.City
+	(*CreateCityRequest)(nil),             // 23: social.v1.CreateCityRequest
+	(*UpdateCityStatusRequest)(nil),       // 24: social.v1.UpdateCityStatusRequest
+	(*UpdateCityStatusResponse)(nil),      // 25: social.v1.UpdateCityStatusResponse
+	(*PageRequest)(nil),                   // 26: social.v1.PageRequest
+	(*PageResponse)(nil),                  // 27: social.v1.PageResponse
+	(*timestamppb.Timestamp)(nil),         // 28: google.protobuf.Timestamp
 }
 var file_social_v1_admin_proto_depIdxs = []int32{
-	22, // 0: social.v1.ListUsersRequest.page:type_name -> social.v1.PageRequest
-	23, // 1: social.v1.ListUsersResponse.page:type_name -> social.v1.PageResponse
-	22, // 2: social.v1.ListReportsRequest.page:type_name -> social.v1.PageRequest
-	23, // 3: social.v1.ListReportsResponse.page:type_name -> social.v1.PageResponse
-	24, // 4: social.v1.CreateCouponRequest.expires_at:type_name -> google.protobuf.Timestamp
-	22, // 5: social.v1.ListCouponsRequest.page:type_name -> social.v1.PageRequest
+	26, // 0: social.v1.ListUsersRequest.page:type_name -> social.v1.PageRequest
+	27, // 1: social.v1.ListUsersResponse.page:type_name -> social.v1.PageResponse
+	26, // 2: social.v1.ListReportsRequest.page:type_name -> social.v1.PageRequest
+	27, // 3: social.v1.ListReportsResponse.page:type_name -> social.v1.PageResponse
+	28, // 4: social.v1.CreateCouponRequest.expires_at:type_name -> google.protobuf.Timestamp
+	26, // 5: social.v1.ListCouponsRequest.page:type_name -> social.v1.PageRequest
 	17, // 6: social.v1.ListCouponsResponse.coupons:type_name -> social.v1.Coupon
-	23, // 7: social.v1.ListCouponsResponse.page:type_name -> social.v1.PageResponse
+	27, // 7: social.v1.ListCouponsResponse.page:type_name -> social.v1.PageResponse
 	0,  // 8: social.v1.AdminService.ListUsers:input_type -> social.v1.ListUsersRequest
 	2,  // 9: social.v1.AdminService.SuspendUser:input_type -> social.v1.SuspendUserRequest
 	4,  // 10: social.v1.AdminService.ListReports:input_type -> social.v1.ListReportsRequest
@@ -1287,19 +1532,23 @@ var file_social_v1_admin_proto_depIdxs = []int32{
 	16, // 16: social.v1.AdminService.CreateCoupon:input_type -> social.v1.CreateCouponRequest
 	18, // 17: social.v1.AdminService.ListCoupons:input_type -> social.v1.ListCouponsRequest
 	20, // 18: social.v1.AdminService.DeactivateCoupon:input_type -> social.v1.DeactivateCouponRequest
-	1,  // 19: social.v1.AdminService.ListUsers:output_type -> social.v1.ListUsersResponse
-	3,  // 20: social.v1.AdminService.SuspendUser:output_type -> social.v1.SuspendUserResponse
-	5,  // 21: social.v1.AdminService.ListReports:output_type -> social.v1.ListReportsResponse
-	7,  // 22: social.v1.AdminService.OverrideBookingStatus:output_type -> social.v1.OverrideBookingStatusResponse
-	9,  // 23: social.v1.AdminService.GetDashboardStats:output_type -> social.v1.GetDashboardStatsResponse
-	11, // 24: social.v1.AdminService.ApproveHost:output_type -> social.v1.ApproveHostResponse
-	13, // 25: social.v1.AdminService.MarkPayoutProcessed:output_type -> social.v1.MarkPayoutProcessedResponse
-	15, // 26: social.v1.AdminService.AdminGrantCredit:output_type -> social.v1.AdminGrantCreditResponse
-	17, // 27: social.v1.AdminService.CreateCoupon:output_type -> social.v1.Coupon
-	19, // 28: social.v1.AdminService.ListCoupons:output_type -> social.v1.ListCouponsResponse
-	21, // 29: social.v1.AdminService.DeactivateCoupon:output_type -> social.v1.DeactivateCouponResponse
-	19, // [19:30] is the sub-list for method output_type
-	8,  // [8:19] is the sub-list for method input_type
+	23, // 19: social.v1.AdminService.CreateCity:input_type -> social.v1.CreateCityRequest
+	24, // 20: social.v1.AdminService.UpdateCityStatus:input_type -> social.v1.UpdateCityStatusRequest
+	1,  // 21: social.v1.AdminService.ListUsers:output_type -> social.v1.ListUsersResponse
+	3,  // 22: social.v1.AdminService.SuspendUser:output_type -> social.v1.SuspendUserResponse
+	5,  // 23: social.v1.AdminService.ListReports:output_type -> social.v1.ListReportsResponse
+	7,  // 24: social.v1.AdminService.OverrideBookingStatus:output_type -> social.v1.OverrideBookingStatusResponse
+	9,  // 25: social.v1.AdminService.GetDashboardStats:output_type -> social.v1.GetDashboardStatsResponse
+	11, // 26: social.v1.AdminService.ApproveHost:output_type -> social.v1.ApproveHostResponse
+	13, // 27: social.v1.AdminService.MarkPayoutProcessed:output_type -> social.v1.MarkPayoutProcessedResponse
+	15, // 28: social.v1.AdminService.AdminGrantCredit:output_type -> social.v1.AdminGrantCreditResponse
+	17, // 29: social.v1.AdminService.CreateCoupon:output_type -> social.v1.Coupon
+	19, // 30: social.v1.AdminService.ListCoupons:output_type -> social.v1.ListCouponsResponse
+	21, // 31: social.v1.AdminService.DeactivateCoupon:output_type -> social.v1.DeactivateCouponResponse
+	22, // 32: social.v1.AdminService.CreateCity:output_type -> social.v1.City
+	25, // 33: social.v1.AdminService.UpdateCityStatus:output_type -> social.v1.UpdateCityStatusResponse
+	21, // [21:34] is the sub-list for method output_type
+	8,  // [8:21] is the sub-list for method input_type
 	8,  // [8:8] is the sub-list for extension type_name
 	8,  // [8:8] is the sub-list for extension extendee
 	0,  // [0:8] is the sub-list for field type_name
@@ -1317,7 +1566,7 @@ func file_social_v1_admin_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_admin_proto_rawDesc), len(file_social_v1_admin_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   22,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

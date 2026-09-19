@@ -17,11 +17,11 @@ func NewService(repo *Repository) *Service {
 	return &Service{repo: repo}
 }
 
-func (s *Service) GetRecommendedPlans(ctx context.Context, userID string) ([]string, error) {
+func (s *Service) GetRecommendedPlans(ctx context.Context, userID, travelCityID string) ([]string, error) {
 	if userID == "" {
 		return nil, ErrInvalidInput
 	}
-	return s.repo.UpcomingPlanIDs(ctx, userID, defaultPageSize)
+	return s.repo.UpcomingPlanIDs(ctx, userID, travelCityID, defaultPageSize)
 }
 
 const defaultMatchLimit = 10
@@ -33,9 +33,9 @@ func (s *Service) GetSmartMatch(ctx context.Context, callerID, planID string) ([
 	return s.repo.SmartMatchUserIDs(ctx, callerID, planID, defaultMatchLimit)
 }
 
-func (s *Service) GetPeopleRecommendations(ctx context.Context, callerID string) ([]string, error) {
+func (s *Service) GetPeopleRecommendations(ctx context.Context, callerID, travelCityID string) ([]string, error) {
 	if callerID == "" {
 		return nil, ErrInvalidInput
 	}
-	return s.repo.PeopleRecommendationUserIDs(ctx, callerID, defaultPageSize)
+	return s.repo.PeopleRecommendationUserIDs(ctx, callerID, travelCityID, defaultPageSize)
 }

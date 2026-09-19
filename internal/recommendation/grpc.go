@@ -27,7 +27,7 @@ func (h *Handler) GetRecommendedPlans(ctx context.Context, req *socialv1.GetReco
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "auth required")
 	}
-	ids, err := h.svc.GetRecommendedPlans(ctx, userID)
+	ids, err := h.svc.GetRecommendedPlans(ctx, userID, req.GetTravelCityId())
 	if err != nil {
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -57,7 +57,7 @@ func (h *Handler) GetPeopleRecommendations(ctx context.Context, req *socialv1.Ge
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "auth required")
 	}
-	ids, err := h.svc.GetPeopleRecommendations(ctx, callerID)
+	ids, err := h.svc.GetPeopleRecommendations(ctx, callerID, req.GetTravelCityId())
 	if err != nil {
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())

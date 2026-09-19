@@ -28,6 +28,12 @@ type Dashboard struct {
 	TotalAttendees    int64
 	GrossRevenueMinor int64
 	AvgRating         float64
+	RepeatVisitors    []*RepeatVisitor
+}
+
+type RepeatVisitor struct {
+	UserID     string
+	VisitCount int64
 }
 
 type Repository struct {
@@ -132,4 +138,35 @@ func (r *Repository) GetDashboard(ctx context.Context, venueID string) (*Dashboa
 		return nil, err
 	}
 	return &d, nil
+}
+
+// RepeatVisitors returns attendees with more than one attended booking at
+// plans hosted at this venue — the "CRM-like repeat visitor" feature named
+// in prd_docs.md §12, gated on the venue_pro entitlement by the service layer.
+func (r *Repository) RepeatVisitors(ctx context.Context, venueID string, limit int) ([]*RepeatVisitor, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT b.user_id::text, COUNT(*) AS visits
+		FROM bookings b
+		JOIN plans pl ON pl.id = b.plan_id
+		WHERE pl.venue_id = $1 AND b.status = 'attended'::booking_status
+		GROUP BY b.user_id
+		HAVING COUNT(*) > 1
+		ORDER BY visits DESC
+		LIMIT $2`,
+		venueID, limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []*RepeatVisitor
+	for rows.Next() {
+		var v RepeatVisitor
+		if err := rows.Scan(&v.UserID, &v.VisitCount); err != nil {
+			return nil, err
+		}
+		out = append(out, &v)
+	}
+	return out, rows.Err()
 }

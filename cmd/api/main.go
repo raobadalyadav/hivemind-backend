@@ -28,6 +28,7 @@ import (
 	"github.com/hivemind/backend/internal/bookings"
 	"github.com/hivemind/backend/internal/chat"
 	"github.com/hivemind/backend/internal/communities"
+	"github.com/hivemind/backend/internal/company"
 	"github.com/hivemind/backend/internal/connections"
 	"github.com/hivemind/backend/internal/discovery"
 	"github.com/hivemind/backend/internal/host"
@@ -164,7 +165,7 @@ func main() {
 	}
 	promotionsSvc := promotions.NewService(promotions.NewRepository(pool), plansSvc, promotionGateway, logger)
 	hostSvc := host.NewService(host.NewRepository(pool), subscriptionsSvc)
-	venuesSvc := venues.NewService(venues.NewRepository(pool))
+	venuesSvc := venues.NewService(venues.NewRepository(pool), subscriptionsSvc)
 	reviewsSvc := reviews.NewService(reviews.NewRepository(pool), bookingsSvc)
 
 	socialv1.RegisterAuthServiceServer(srv, auth.NewHandler(auth.NewService(auth.NewRepository(pool), issuer, googleVerifier, appleVerifier, emailSender, analyticsRec, logger)))
@@ -191,6 +192,7 @@ func main() {
 	socialv1.RegisterHostServiceServer(srv, host.NewHandler(hostSvc))
 	socialv1.RegisterPromotionServiceServer(srv, promotions.NewHandler(promotionsSvc))
 	socialv1.RegisterSmartGroupServiceServer(srv, smartgroups.NewHandler(smartgroups.NewService(smartgroups.NewRepository(pool), plansSvc, chatSvc)))
+	socialv1.RegisterCompanyServiceServer(srv, company.NewHandler(company.NewService(company.NewRepository(pool), bookingsSvc)))
 	socialv1.RegisterReviewServiceServer(srv, reviews.NewHandler(reviewsSvc))
 
 	healthSrv := health.NewServer()

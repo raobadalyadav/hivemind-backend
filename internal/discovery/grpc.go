@@ -49,7 +49,7 @@ func (h *Handler) GetHomeFeed(ctx context.Context, req *socialv1.GetHomeFeedRequ
 		return nil, status.Error(codes.Unauthenticated, "auth required")
 	}
 	section := feedSectionNames[req.GetSection()]
-	ids, err := h.svc.GetHomeFeed(ctx, userID, section)
+	ids, err := h.svc.GetHomeFeed(ctx, userID, section, req.GetTravelCityId())
 	if err != nil {
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())

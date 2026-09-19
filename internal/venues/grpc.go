@@ -110,12 +110,16 @@ func (h *Handler) GetVenueDashboard(ctx context.Context, req *socialv1.GetVenueD
 			return nil, status.Error(codes.Internal, "failed to load venue dashboard")
 		}
 	}
-	return &socialv1.VenueDashboard{
+	out := &socialv1.VenueDashboard{
 		TotalBookings:  d.TotalBookings,
 		TotalAttendees: d.TotalAttendees,
 		GrossRevenue:   &socialv1.Money{MinorUnits: d.GrossRevenueMinor, Currency: "INR"},
 		AvgRating:      d.AvgRating,
-	}, nil
+	}
+	for _, v := range d.RepeatVisitors {
+		out.RepeatVisitors = append(out.RepeatVisitors, &socialv1.RepeatVisitor{UserId: v.UserID, VisitCount: v.VisitCount})
+	}
+	return out, nil
 }
 
 func toProto(v *Venue) *socialv1.Venue {

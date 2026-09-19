@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package social.v1;
+
+option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
+
+// CompanyService — flow.md §53 Corporate Mode. Owner/caller identity always
+// comes from the JWT, never a request field. Team bookings reuse the same
+// capacity-enforced booking path as an individual JoinPlan call, one per
+// employee — see internal/company.Service.CreateTeamBooking.
+service CompanyService {
+  rpc CreateCompany(CreateCompanyRequest) returns (Company);
+  rpc AddCompanyMember(AddCompanyMemberRequest) returns (CompanyMember);
+  rpc ListCompanyMembers(ListCompanyMembersRequest) returns (ListCompanyMembersResponse);
+  rpc CreateTeamBooking(CreateTeamBookingRequest) returns (CreateTeamBookingResponse);
+}
+
+message Company {
+  string id = 1;
+  string name = 2;
+  string billing_email = 3;
+}
+
+message CreateCompanyRequest {
+  string name = 1;
+  string billing_email = 2;
+}
+
+message CompanyMember {
+  string company_id = 1;
+  string user_id = 2;
+  string role = 3; // owner | member
+}
+
+message AddCompanyMemberRequest {
+  string company_id = 1;
+  string user_id = 2;
+}
+
+message ListCompanyMembersRequest {
+  string company_id = 1;
+}
+
+message ListCompanyMembersResponse {
+  repeated CompanyMember members = 1;
+}
+
+message CreateTeamBookingRequest {
+  string company_id = 1;
+  string plan_id = 2;
+  repeated string employee_user_ids = 3;
+}
+
+message CreateTeamBookingResponse {
+  // booking_ids: successfully created bookings, in employee_user_ids order.
+  repeated string booking_ids = 1;
+  // failed_employee_user_id/error_message: set when an employee's booking
+  // failed partway through (e.g. plan hit capacity) — bookings created
+  // before the failure are still real and are included in booking_ids
+  // above; this call is not atomic across employees. Both empty on full success.
+  string failed_employee_user_id = 2;
+  string error_message = 3;
+}

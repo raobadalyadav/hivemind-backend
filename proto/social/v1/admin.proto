@@ -25,6 +25,10 @@ service AdminService {
   rpc CreateCoupon(CreateCouponRequest) returns (Coupon);
   rpc ListCoupons(ListCouponsRequest) returns (ListCouponsResponse);
   rpc DeactivateCoupon(DeactivateCouponRequest) returns (DeactivateCouponResponse);
+
+  // Phase 5 city launch workflow (flow.md §55).
+  rpc CreateCity(CreateCityRequest) returns (City);
+  rpc UpdateCityStatus(UpdateCityStatusRequest) returns (UpdateCityStatusResponse);
 }
 
 message ListUsersRequest {
@@ -127,3 +131,24 @@ message DeactivateCouponRequest {
 }
 
 message DeactivateCouponResponse {}
+
+message City {
+  string id = 1;
+  string name = 2;
+  string state = 3;
+  string country = 4;
+  string status = 5; // pre_launch | soft_launch | active | scaling | mature
+}
+
+message CreateCityRequest {
+  string name = 1;
+  string state = 2;
+  string country = 3; // ISO-2, defaults to 'IN' if empty
+}
+
+message UpdateCityStatusRequest {
+  string city_id = 1;
+  string status = 2;
+}
+
+message UpdateCityStatusResponse {}

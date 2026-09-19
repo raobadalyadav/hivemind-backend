@@ -19,6 +19,9 @@ service RecommendationService {
 message GetRecommendedPlansRequest {
   string user_id = 1;
   PageRequest page = 2;
+  // travel_city_id (flow.md §54 Travel Mode): optional preview of a city
+  // other than the caller's home city_id — never persisted, request-scoped only.
+  string travel_city_id = 3;
 }
 
 message GetRecommendedPlansResponse {
@@ -37,6 +40,7 @@ message GetSmartMatchResponse {
 
 message GetPeopleRecommendationsRequest {
   PageRequest page = 1;
+  string travel_city_id = 2; // see GetRecommendedPlansRequest
 }
 
 message GetPeopleRecommendationsResponse {

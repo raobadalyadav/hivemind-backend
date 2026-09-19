@@ -150,6 +150,39 @@ func (h *Handler) DeactivateCoupon(ctx context.Context, req *socialv1.Deactivate
 	return &socialv1.DeactivateCouponResponse{}, nil
 }
 
+func (h *Handler) CreateCity(ctx context.Context, req *socialv1.CreateCityRequest) (*socialv1.City, error) {
+	actorID, _ := grpcmiddleware.UserIDFromContext(ctx)
+	c, err := h.svc.CreateCity(ctx, req.GetName(), req.GetState(), req.GetCountry(), actorID)
+	if err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to create city")
+	}
+	return cityToProto(c), nil
+}
+
+func (h *Handler) UpdateCityStatus(ctx context.Context, req *socialv1.UpdateCityStatusRequest) (*socialv1.UpdateCityStatusResponse, error) {
+	actorID, _ := grpcmiddleware.UserIDFromContext(ctx)
+	if err := h.svc.UpdateCityStatus(ctx, req.GetCityId(), req.GetStatus(), actorID); err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to update city status")
+	}
+	return &socialv1.UpdateCityStatusResponse{}, nil
+}
+
+func cityToProto(c *City) *socialv1.City {
+	return &socialv1.City{
+		Id:      c.ID,
+		Name:    c.Name,
+		State:   c.State,
+		Country: c.Country,
+		Status:  c.Status,
+	}
+}
+
 func couponToProto(c *Coupon) *socialv1.Coupon {
 	return &socialv1.Coupon{
 		Id:            c.ID,

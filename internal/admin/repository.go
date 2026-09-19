@@ -265,6 +265,80 @@ func (r *Repository) DeactivateCoupon(ctx context.Context, id string) error {
 	return err
 }
 
+type City struct {
+	ID      string
+	Name    string
+	State   string
+	Country string
+	Status  string
+}
+
+// CreateCity writes the city and its audit_logs row in one transaction —
+// same shape as ApproveHost/GrantCredit. country defaults to 'IN' when
+// empty, matching the column's own DB default.
+func (r *Repository) CreateCity(ctx context.Context, name, state, country, actorID string) (*City, error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	c := &City{Name: name, State: state, Country: country}
+	if err := tx.QueryRow(ctx, `
+		INSERT INTO cities (name, state, country)
+		VALUES ($1, $2, COALESCE(NULLIF($3,''), 'IN'))
+		RETURNING id, state, country, status::text`,
+		name, state, country,
+	).Scan(&c.ID, &c.State, &c.Country, &c.Status); err != nil {
+		return nil, err
+	}
+
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO audit_logs (actor_id, action, subject_type, subject_id, details)
+		VALUES (NULLIF($1,'')::uuid, 'create_city', 'city', $2::uuid, '{}')`,
+		actorID, c.ID,
+	); err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+// UpdateCityStatus transitions a city through flow.md §55's launch
+// lifecycle (pre_launch → soft_launch → active → scaling → mature) — no
+// ordering enforced here (an operator may need to roll a city back to
+// soft_launch), same as OverrideBookingStatus not restricting transitions.
+func (r *Repository) UpdateCityStatus(ctx context.Context, cityID, newStatus, actorID string) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	if _, err := tx.Exec(ctx,
+		`UPDATE cities SET status = $2::city_status WHERE id = $1`, cityID, newStatus,
+	); err != nil {
+		return err
+	}
+
+	details, err := json.Marshal(map[string]string{"new_status": newStatus})
+	if err != nil {
+		return err
+	}
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO audit_logs (actor_id, action, subject_type, subject_id, details)
+		VALUES (NULLIF($1,'')::uuid, 'update_city_status', 'city', $2::uuid, $3)`,
+		actorID, cityID, details,
+	); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
 type DashboardStats struct {
 	DAU           int64
 	MAU           int64

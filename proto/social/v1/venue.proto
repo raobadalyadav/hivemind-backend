@@ -63,4 +63,12 @@ message VenueDashboard {
   int64 total_attendees = 2;
   Money gross_revenue = 3;
   double avg_rating = 4;
+  // repeat_visitors: venue_pro entitlement only (Phase 5 Venue SaaS) —
+  // empty for non-subscribers, no separate RPC.
+  repeated RepeatVisitor repeat_visitors = 5;
+}
+
+message RepeatVisitor {
+  string user_id = 1;
+  int64 visit_count = 2;
 }

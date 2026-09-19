@@ -28,6 +28,10 @@ message GetHomeFeedRequest {
   string user_id = 1;
   FeedSection section = 2;
   PageRequest page = 3;
+  // travel_city_id (flow.md §54 Travel Mode): optional preview of a city
+  // other than the caller's home city_id. Applies to TODAY/TONIGHT/WEEKEND/
+  // FOR_YOU only — NEAR_YOU stays device-location-based.
+  string travel_city_id = 4;
 }
 
 message GetHomeFeedResponse {

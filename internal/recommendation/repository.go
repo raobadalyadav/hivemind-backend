@@ -34,10 +34,15 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 // user's interests, case-insensitive), not a proportional overlap — plans
 // carry one category, not a tag set.
 // ponytail: upgrade to fractional overlap if plan tags are ever added.
-func (r *Repository) UpcomingPlanIDs(ctx context.Context, userID string, limit int) ([]string, error) {
+// travelCityID (flow.md §54 Travel Mode), when non-empty, previews a city
+// other than the caller's home city_id — a request-scoped override only;
+// users.city_id itself is never written. Distance-fit still scores against
+// the caller's real last_location, since previewing a city means "what
+// ranks well there," not faking GPS presence.
+func (r *Repository) UpcomingPlanIDs(ctx context.Context, userID, travelCityID string, limit int) ([]string, error) {
 	rows, err := r.pool.Query(ctx, `
 		WITH me AS (
-			SELECT u.city_id, u.last_location, COALESCE(up.interests, '{}') AS interests
+			SELECT COALESCE(NULLIF($3,'')::uuid, u.city_id) AS city_id, u.last_location, COALESCE(up.interests, '{}') AS interests
 			FROM users u
 			LEFT JOIN user_profiles up ON up.user_id = u.id
 			WHERE u.id = $1
@@ -70,7 +75,7 @@ func (r *Repository) UpcomingPlanIDs(ctx context.Context, userID string, limit i
 		FROM candidates cd, me
 		ORDER BY score DESC
 		LIMIT $2`,
-		userID, limit,
+		userID, limit, travelCityID,
 	)
 	if err != nil {
 		return nil, err
@@ -95,13 +100,14 @@ func (r *Repository) UpcomingPlanIDs(ctx context.Context, userID string, limit i
 // Users with 3+ reports against them (an "under review" trust signal — see
 // internal/moderation's DeriveBadges) are sorted after everyone else
 // rather than excluded outright, since a report alone isn't a finding.
-func (r *Repository) PeopleRecommendationUserIDs(ctx context.Context, callerID string, limit int) ([]string, error) {
+// travelCityID: see UpcomingPlanIDs — same request-scoped preview override.
+func (r *Repository) PeopleRecommendationUserIDs(ctx context.Context, callerID, travelCityID string, limit int) ([]string, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT u.id
 		FROM users u
 		JOIN user_profiles up ON up.user_id = u.id
 		WHERE u.id != $1
-		  AND u.city_id = (SELECT city_id FROM users WHERE id = $1)
+		  AND u.city_id = COALESCE(NULLIF($3,'')::uuid, (SELECT city_id FROM users WHERE id = $1))
 		  AND NOT EXISTS (
 			SELECT 1 FROM blocks
 			WHERE (user_id = $1 AND blocked_user_id = u.id) OR (user_id = u.id AND blocked_user_id = $1)
@@ -114,7 +120,7 @@ func (r *Repository) PeopleRecommendationUserIDs(ctx context.Context, callerID s
 				SELECT unnest((SELECT interests FROM user_profiles WHERE user_id = $1))
 			)) DESC
 		LIMIT $2`,
-		callerID, limit,
+		callerID, limit, travelCityID,
 	)
 	if err != nil {
 		return nil, err

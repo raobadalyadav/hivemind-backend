@@ -24,11 +24,11 @@ func (s *Service) GetNearbyPlans(ctx context.Context, lat, lng, radiusKM float64
 	return s.repo.NearbyPlanIDs(ctx, lat, lng, radiusKM, defaultPageSize)
 }
 
-func (s *Service) GetHomeFeed(ctx context.Context, userID, section string) ([]string, error) {
+func (s *Service) GetHomeFeed(ctx context.Context, userID, section, travelCityID string) ([]string, error) {
 	if userID == "" {
 		return nil, ErrInvalidInput
 	}
-	return s.repo.HomeFeedPlanIDs(ctx, userID, section, defaultPageSize)
+	return s.repo.HomeFeedPlanIDs(ctx, userID, section, travelCityID, defaultPageSize)
 }
 
 func (s *Service) DetectCity(ctx context.Context, lat, lng float64) (id, name string, err error) {

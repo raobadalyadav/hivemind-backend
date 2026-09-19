@@ -22,9 +22,12 @@ const (
 )
 
 type GetRecommendedPlansRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Page          *PageRequest           `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Page   *PageRequest           `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
+	// travel_city_id (flow.md §54 Travel Mode): optional preview of a city
+	// other than the caller's home city_id — never persisted, request-scoped only.
+	TravelCityId  string `protobuf:"bytes,3,opt,name=travel_city_id,json=travelCityId,proto3" json:"travel_city_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -71,6 +74,13 @@ func (x *GetRecommendedPlansRequest) GetPage() *PageRequest {
 		return x.Page
 	}
 	return nil
+}
+
+func (x *GetRecommendedPlansRequest) GetTravelCityId() string {
+	if x != nil {
+		return x.TravelCityId
+	}
+	return ""
 }
 
 type GetRecommendedPlansResponse struct {
@@ -224,6 +234,7 @@ func (x *GetSmartMatchResponse) GetCompatibleUserIds() []string {
 type GetPeopleRecommendationsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Page          *PageRequest           `protobuf:"bytes,1,opt,name=page,proto3" json:"page,omitempty"`
+	TravelCityId  string                 `protobuf:"bytes,2,opt,name=travel_city_id,json=travelCityId,proto3" json:"travel_city_id,omitempty"` // see GetRecommendedPlansRequest
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -263,6 +274,13 @@ func (x *GetPeopleRecommendationsRequest) GetPage() *PageRequest {
 		return x.Page
 	}
 	return nil
+}
+
+func (x *GetPeopleRecommendationsRequest) GetTravelCityId() string {
+	if x != nil {
+		return x.TravelCityId
+	}
+	return ""
 }
 
 type GetPeopleRecommendationsResponse struct {
@@ -321,10 +339,11 @@ var File_social_v1_recommendation_proto protoreflect.FileDescriptor
 
 const file_social_v1_recommendation_proto_rawDesc = "" +
 	"\n" +
-	"\x1esocial/v1/recommendation.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"a\n" +
+	"\x1esocial/v1/recommendation.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"\x87\x01\n" +
 	"\x1aGetRecommendedPlansRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12*\n" +
-	"\x04page\x18\x02 \x01(\v2\x16.social.v1.PageRequestR\x04page\"e\n" +
+	"\x04page\x18\x02 \x01(\v2\x16.social.v1.PageRequestR\x04page\x12$\n" +
+	"\x0etravel_city_id\x18\x03 \x01(\tR\ftravelCityId\"e\n" +
 	"\x1bGetRecommendedPlansResponse\x12\x19\n" +
 	"\bplan_ids\x18\x01 \x03(\tR\aplanIds\x12+\n" +
 	"\x04page\x18\x02 \x01(\v2\x17.social.v1.PageResponseR\x04page\"H\n" +
@@ -332,9 +351,10 @@ const file_social_v1_recommendation_proto_rawDesc = "" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x17\n" +
 	"\aplan_id\x18\x02 \x01(\tR\x06planId\"G\n" +
 	"\x15GetSmartMatchResponse\x12.\n" +
-	"\x13compatible_user_ids\x18\x01 \x03(\tR\x11compatibleUserIds\"M\n" +
+	"\x13compatible_user_ids\x18\x01 \x03(\tR\x11compatibleUserIds\"s\n" +
 	"\x1fGetPeopleRecommendationsRequest\x12*\n" +
-	"\x04page\x18\x01 \x01(\v2\x16.social.v1.PageRequestR\x04page\"j\n" +
+	"\x04page\x18\x01 \x01(\v2\x16.social.v1.PageRequestR\x04page\x12$\n" +
+	"\x0etravel_city_id\x18\x02 \x01(\tR\ftravelCityId\"j\n" +
 	" GetPeopleRecommendationsResponse\x12\x19\n" +
 	"\buser_ids\x18\x01 \x03(\tR\auserIds\x12+\n" +
 	"\x04page\x18\x02 \x01(\v2\x17.social.v1.PageResponseR\x04page2\xc6\x02\n" +

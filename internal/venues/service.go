@@ -12,12 +12,24 @@ var (
 
 const defaultVenuePageSize = 50
 
-type Service struct {
-	repo *Repository
+// venueEntitlementKey gates the repeat-visitor CRM feature — reuses
+// internal/subscriptions' existing generic entitlement mechanism exactly
+// as internal/host does for business_pro, not a second mechanism.
+const venueEntitlementKey = "venue_pro"
+
+// EntitlementChecker is satisfied by *subscriptions.Service (wired in
+// cmd/api/main.go) — same interface shape as host.EntitlementChecker.
+type EntitlementChecker interface {
+	HasEntitlement(ctx context.Context, userID, key string) (bool, error)
 }
 
-func NewService(repo *Repository) *Service {
-	return &Service{repo: repo}
+type Service struct {
+	repo         *Repository
+	entitlements EntitlementChecker
+}
+
+func NewService(repo *Repository, entitlements EntitlementChecker) *Service {
+	return &Service{repo: repo, entitlements: entitlements}
 }
 
 func (s *Service) CreateVenue(ctx context.Context, v *Venue) (*Venue, error) {
@@ -69,5 +81,14 @@ func (s *Service) GetVenueDashboard(ctx context.Context, venueID, callerID strin
 	if v.OwnerHostID != callerID {
 		return nil, ErrForbidden
 	}
-	return s.repo.GetDashboard(ctx, venueID)
+	d, err := s.repo.GetDashboard(ctx, venueID)
+	if err != nil {
+		return nil, err
+	}
+	if s.entitlements != nil {
+		if ok, _ := s.entitlements.HasEntitlement(ctx, callerID, venueEntitlementKey); ok {
+			d.RepeatVisitors, _ = s.repo.RepeatVisitors(ctx, venueID, 50)
+		}
+	}
+	return d, nil
 }

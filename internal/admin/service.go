@@ -82,3 +82,17 @@ func (s *Service) DeactivateCoupon(ctx context.Context, id string) error {
 	}
 	return s.repo.DeactivateCoupon(ctx, id)
 }
+
+func (s *Service) CreateCity(ctx context.Context, name, state, country, actorID string) (*City, error) {
+	if name == "" {
+		return nil, ErrInvalidInput
+	}
+	return s.repo.CreateCity(ctx, name, state, country, actorID)
+}
+
+func (s *Service) UpdateCityStatus(ctx context.Context, cityID, status, actorID string) error {
+	if cityID == "" || status == "" {
+		return ErrInvalidInput
+	}
+	return s.repo.UpdateCityStatus(ctx, cityID, status, actorID)
+}

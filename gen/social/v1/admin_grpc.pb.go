@@ -30,6 +30,8 @@ const (
 	AdminService_CreateCoupon_FullMethodName          = "/social.v1.AdminService/CreateCoupon"
 	AdminService_ListCoupons_FullMethodName           = "/social.v1.AdminService/ListCoupons"
 	AdminService_DeactivateCoupon_FullMethodName      = "/social.v1.AdminService/DeactivateCoupon"
+	AdminService_CreateCity_FullMethodName            = "/social.v1.AdminService/CreateCity"
+	AdminService_UpdateCityStatus_FullMethodName      = "/social.v1.AdminService/UpdateCityStatus"
 )
 
 // AdminServiceClient is the client API for AdminService service.
@@ -53,6 +55,9 @@ type AdminServiceClient interface {
 	CreateCoupon(ctx context.Context, in *CreateCouponRequest, opts ...grpc.CallOption) (*Coupon, error)
 	ListCoupons(ctx context.Context, in *ListCouponsRequest, opts ...grpc.CallOption) (*ListCouponsResponse, error)
 	DeactivateCoupon(ctx context.Context, in *DeactivateCouponRequest, opts ...grpc.CallOption) (*DeactivateCouponResponse, error)
+	// Phase 5 city launch workflow (flow.md §55).
+	CreateCity(ctx context.Context, in *CreateCityRequest, opts ...grpc.CallOption) (*City, error)
+	UpdateCityStatus(ctx context.Context, in *UpdateCityStatusRequest, opts ...grpc.CallOption) (*UpdateCityStatusResponse, error)
 }
 
 type adminServiceClient struct {
@@ -173,6 +178,26 @@ func (c *adminServiceClient) DeactivateCoupon(ctx context.Context, in *Deactivat
 	return out, nil
 }
 
+func (c *adminServiceClient) CreateCity(ctx context.Context, in *CreateCityRequest, opts ...grpc.CallOption) (*City, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(City)
+	err := c.cc.Invoke(ctx, AdminService_CreateCity_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) UpdateCityStatus(ctx context.Context, in *UpdateCityStatusRequest, opts ...grpc.CallOption) (*UpdateCityStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateCityStatusResponse)
+	err := c.cc.Invoke(ctx, AdminService_UpdateCityStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AdminServiceServer is the server API for AdminService service.
 // All implementations must embed UnimplementedAdminServiceServer
 // for forward compatibility.
@@ -194,6 +219,9 @@ type AdminServiceServer interface {
 	CreateCoupon(context.Context, *CreateCouponRequest) (*Coupon, error)
 	ListCoupons(context.Context, *ListCouponsRequest) (*ListCouponsResponse, error)
 	DeactivateCoupon(context.Context, *DeactivateCouponRequest) (*DeactivateCouponResponse, error)
+	// Phase 5 city launch workflow (flow.md §55).
+	CreateCity(context.Context, *CreateCityRequest) (*City, error)
+	UpdateCityStatus(context.Context, *UpdateCityStatusRequest) (*UpdateCityStatusResponse, error)
 	mustEmbedUnimplementedAdminServiceServer()
 }
 
@@ -236,6 +264,12 @@ func (UnimplementedAdminServiceServer) ListCoupons(context.Context, *ListCoupons
 }
 func (UnimplementedAdminServiceServer) DeactivateCoupon(context.Context, *DeactivateCouponRequest) (*DeactivateCouponResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeactivateCoupon not implemented")
+}
+func (UnimplementedAdminServiceServer) CreateCity(context.Context, *CreateCityRequest) (*City, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateCity not implemented")
+}
+func (UnimplementedAdminServiceServer) UpdateCityStatus(context.Context, *UpdateCityStatusRequest) (*UpdateCityStatusResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateCityStatus not implemented")
 }
 func (UnimplementedAdminServiceServer) mustEmbedUnimplementedAdminServiceServer() {}
 func (UnimplementedAdminServiceServer) testEmbeddedByValue()                      {}
@@ -456,6 +490,42 @@ func _AdminService_DeactivateCoupon_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AdminService_CreateCity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateCityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).CreateCity(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_CreateCity_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).CreateCity(ctx, req.(*CreateCityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_UpdateCityStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateCityStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).UpdateCityStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_UpdateCityStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).UpdateCityStatus(ctx, req.(*UpdateCityStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AdminService_ServiceDesc is the grpc.ServiceDesc for AdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -506,6 +576,14 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeactivateCoupon",
 			Handler:    _AdminService_DeactivateCoupon_Handler,
+		},
+		{
+			MethodName: "CreateCity",
+			Handler:    _AdminService_CreateCity_Handler,
+		},
+		{
+			MethodName: "UpdateCityStatus",
+			Handler:    _AdminService_UpdateCityStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

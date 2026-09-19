@@ -94,7 +94,11 @@ func dateFilter(section string) string {
 	}
 }
 
-func (r *Repository) HomeFeedPlanIDs(ctx context.Context, userID, section string, limit int) ([]string, error) {
+// travelCityID (flow.md §54 Travel Mode): optional preview of a city other
+// than the caller's home city_id. Applies to TODAY/TONIGHT/WEEKEND/FOR_YOU
+// only — NEAR_YOU is device-location-based and stays untouched, matching
+// the same NEAR_YOU carve-out internal/recommendation uses.
+func (r *Repository) HomeFeedPlanIDs(ctx context.Context, userID, section, travelCityID string, limit int) ([]string, error) {
 	if section == "NEAR_YOU" {
 		ids, usedLocation, err := r.nearYouPlanIDs(ctx, userID, limit)
 		if err != nil {
@@ -110,14 +114,15 @@ func (r *Repository) HomeFeedPlanIDs(ctx context.Context, userID, section string
 		SELECT p.id FROM plans p
 		LEFT JOIN cities c ON c.id = p.city_id
 		WHERE p.status = 'published' AND ` + dateFilter(section) + `
-		  AND (p.city_id = (SELECT city_id FROM users WHERE id = $1) OR (SELECT city_id FROM users WHERE id = $1) IS NULL)
+		  AND (p.city_id = COALESCE(NULLIF($3,'')::uuid, (SELECT city_id FROM users WHERE id = $1))
+		       OR COALESCE(NULLIF($3,'')::uuid, (SELECT city_id FROM users WHERE id = $1)) IS NULL)
 		ORDER BY
 		  (EXISTS(SELECT 1 FROM promoted_listings pl WHERE pl.plan_id = p.id
 		     AND pl.status = 'paid'::promoted_listing_status AND now() BETWEEN pl.starts_at AND pl.ends_at)) DESC,
 		  p.starts_at
 		LIMIT $2`
 
-	rows, err := r.pool.Query(ctx, query, userID, limit)
+	rows, err := r.pool.Query(ctx, query, userID, limit, travelCityID)
 	if err != nil {
 		return nil, err
 	}

@@ -56,7 +56,7 @@ func TestService_UpdateVenue_RejectsNonOwner(t *testing.T) {
 	stranger := seedHostUser(t, pool)
 
 	repo := NewRepository(pool)
-	svc := NewService(repo)
+	svc := NewService(repo, nil)
 
 	venue, err := svc.CreateVenue(ctx, &Venue{OwnerHostID: owner, CityID: seedCity(t, pool), Name: "Test Venue", Capacity: 10})
 	if err != nil {
@@ -85,7 +85,7 @@ func TestService_GetVenueDashboard_RejectsNonOwner(t *testing.T) {
 	stranger := seedHostUser(t, pool)
 
 	repo := NewRepository(pool)
-	svc := NewService(repo)
+	svc := NewService(repo, nil)
 
 	venue, err := svc.CreateVenue(ctx, &Venue{OwnerHostID: owner, CityID: seedCity(t, pool), Name: "Dashboard Venue", Capacity: 10})
 	if err != nil {
@@ -97,5 +97,43 @@ func TestService_GetVenueDashboard_RejectsNonOwner(t *testing.T) {
 	}
 	if _, err := svc.GetVenueDashboard(ctx, venue.ID, owner); err != nil {
 		t.Fatalf("owner dashboard read should succeed: %v", err)
+	}
+}
+
+type fakeEntitlementChecker struct{ granted bool }
+
+func (f fakeEntitlementChecker) HasEntitlement(ctx context.Context, userID, key string) (bool, error) {
+	return f.granted, nil
+}
+
+// TestService_GetVenueDashboard_GatesRepeatVisitorsOnEntitlement verifies
+// the venue_pro-gated CRM feature: repeat_visitors is populated only when
+// the caller holds the entitlement, omitted otherwise — without the
+// entitlement check ever blocking the rest of the dashboard.
+func TestService_GetVenueDashboard_GatesRepeatVisitorsOnEntitlement(t *testing.T) {
+	pool := testPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+
+	owner := seedHostUser(t, pool)
+	repo := NewRepository(pool)
+
+	venue, err := repo.Create(ctx, &Venue{OwnerHostID: owner, CityID: seedCity(t, pool), Name: "Entitlement Venue", Capacity: 10})
+	if err != nil {
+		t.Fatalf("Create venue: %v", err)
+	}
+
+	withoutEntitlement := NewService(repo, fakeEntitlementChecker{granted: false})
+	d, err := withoutEntitlement.GetVenueDashboard(ctx, venue.ID, owner)
+	if err != nil {
+		t.Fatalf("GetVenueDashboard (no entitlement): %v", err)
+	}
+	if d.RepeatVisitors != nil {
+		t.Errorf("expected no repeat_visitors without venue_pro, got %v", d.RepeatVisitors)
+	}
+
+	withEntitlement := NewService(repo, fakeEntitlementChecker{granted: true})
+	if _, err := withEntitlement.GetVenueDashboard(ctx, venue.ID, owner); err != nil {
+		t.Fatalf("GetVenueDashboard (with entitlement): %v", err)
 	}
 }

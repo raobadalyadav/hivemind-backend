@@ -80,10 +80,14 @@ func (FeedSection) EnumDescriptor() ([]byte, []int) {
 }
 
 type GetHomeFeedRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Section       FeedSection            `protobuf:"varint,2,opt,name=section,proto3,enum=social.v1.FeedSection" json:"section,omitempty"`
-	Page          *PageRequest           `protobuf:"bytes,3,opt,name=page,proto3" json:"page,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	UserId  string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Section FeedSection            `protobuf:"varint,2,opt,name=section,proto3,enum=social.v1.FeedSection" json:"section,omitempty"`
+	Page    *PageRequest           `protobuf:"bytes,3,opt,name=page,proto3" json:"page,omitempty"`
+	// travel_city_id (flow.md §54 Travel Mode): optional preview of a city
+	// other than the caller's home city_id. Applies to TODAY/TONIGHT/WEEKEND/
+	// FOR_YOU only — NEAR_YOU stays device-location-based.
+	TravelCityId  string `protobuf:"bytes,4,opt,name=travel_city_id,json=travelCityId,proto3" json:"travel_city_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -137,6 +141,13 @@ func (x *GetHomeFeedRequest) GetPage() *PageRequest {
 		return x.Page
 	}
 	return nil
+}
+
+func (x *GetHomeFeedRequest) GetTravelCityId() string {
+	if x != nil {
+		return x.TravelCityId
+	}
+	return ""
 }
 
 type GetHomeFeedResponse struct {
@@ -403,11 +414,12 @@ var File_social_v1_discovery_proto protoreflect.FileDescriptor
 
 const file_social_v1_discovery_proto_rawDesc = "" +
 	"\n" +
-	"\x19social/v1/discovery.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"\x8b\x01\n" +
+	"\x19social/v1/discovery.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"\xb1\x01\n" +
 	"\x12GetHomeFeedRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x120\n" +
 	"\asection\x18\x02 \x01(\x0e2\x16.social.v1.FeedSectionR\asection\x12*\n" +
-	"\x04page\x18\x03 \x01(\v2\x16.social.v1.PageRequestR\x04page\"]\n" +
+	"\x04page\x18\x03 \x01(\v2\x16.social.v1.PageRequestR\x04page\x12$\n" +
+	"\x0etravel_city_id\x18\x04 \x01(\tR\ftravelCityId\"]\n" +
 	"\x13GetHomeFeedResponse\x12\x19\n" +
 	"\bplan_ids\x18\x01 \x03(\tR\aplanIds\x12+\n" +
 	"\x04page\x18\x02 \x01(\v2\x17.social.v1.PageResponseR\x04page\"\x8d\x01\n" +
