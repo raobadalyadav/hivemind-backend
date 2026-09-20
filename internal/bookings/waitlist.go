@@ -369,6 +369,7 @@ type BookingSummary struct {
 	PlanTitle string
 	StartsAt  time.Time
 	EndsAt    time.Time
+	Reviewed  bool
 }
 
 const (
@@ -395,7 +396,8 @@ func (r *Repository) ListMyBookings(ctx context.Context, userID, tab string) ([]
 	}
 	rows, err := r.pool.Query(ctx, `
 		SELECT b.id, b.plan_id, b.user_id, b.status::text, b.price_minor, b.currency, b.created_at, b.updated_at,
-			p.title, p.starts_at, p.ends_at
+			p.title, p.starts_at, p.ends_at,
+			EXISTS (SELECT 1 FROM reviews rv WHERE rv.booking_id = b.id)
 		FROM bookings b JOIN plans p ON p.id = b.plan_id
 		WHERE b.user_id = $1 AND `+where+` ORDER BY `+order+` LIMIT 100`, userID)
 	if err != nil {
@@ -408,7 +410,7 @@ func (r *Repository) ListMyBookings(ctx context.Context, userID, tab string) ([]
 		var s BookingSummary
 		if err := rows.Scan(&s.Booking.ID, &s.Booking.PlanID, &s.Booking.UserID, &s.Booking.Status,
 			&s.Booking.PriceMinor, &s.Booking.Currency, &s.Booking.CreatedAt, &s.Booking.UpdatedAt,
-			&s.PlanTitle, &s.StartsAt, &s.EndsAt); err != nil {
+			&s.PlanTitle, &s.StartsAt, &s.EndsAt, &s.Reviewed); err != nil {
 			return nil, err
 		}
 		out = append(out, &s)

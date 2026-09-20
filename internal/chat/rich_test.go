@@ -2,6 +2,7 @@ package chat
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -258,5 +259,29 @@ func TestListMessages_HidesBlockedSenders(t *testing.T) {
 	}
 	if msgs, _, _ = e.svc.ListMessages(e.ctx, e.roomID, e.member); len(msgs) != 1 || msgs[0].Body != "from member" {
 		t.Fatalf("and hidden the other way round too: %+v", msgs)
+	}
+}
+
+func TestListMessagesPage_WalksBackThroughOlderMessages(t *testing.T) {
+	e := setup(t)
+	total := defaultMessagePageSize + 5
+	for i := 0; i < total; i++ {
+		if _, err := e.svc.SendMessage(e.ctx, &Message{RoomID: e.roomID, SenderID: e.member, Type: "text", Body: fmt.Sprintf("m%d", i)}, "user"); err != nil {
+			t.Fatalf("send %d: %v", i, err)
+		}
+	}
+	first, _, next, err := e.svc.ListMessagesPage(e.ctx, e.roomID, e.member, "")
+	if err != nil || len(first) != defaultMessagePageSize || next == "" {
+		t.Fatalf("first page should be full with a token: len=%d next=%q err=%v", len(first), next, err)
+	}
+	older, pinned, next2, err := e.svc.ListMessagesPage(e.ctx, e.roomID, e.member, next)
+	if err != nil || len(older) != 5 || next2 != "" || pinned != nil {
+		t.Fatalf("second page is the remaining 5, last, no pinned: len=%d next=%q err=%v", len(older), next2, err)
+	}
+	if older[0].ID == first[len(first)-1].ID {
+		t.Fatalf("pages must not overlap")
+	}
+	if _, _, _, err := e.svc.ListMessagesPage(e.ctx, e.roomID, e.member, "garbage"); err != ErrInvalidInput {
+		t.Fatalf("a bad token is invalid input, got %v", err)
 	}
 }

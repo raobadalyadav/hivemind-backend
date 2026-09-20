@@ -341,21 +341,42 @@ func (s *Service) PinMessage(ctx context.Context, roomID, messageID string, unpi
 }
 
 func (s *Service) ListMessages(ctx context.Context, roomID, callerID string) ([]*Message, *Message, error) {
+	msgs, pinned, _, err := s.ListMessagesPage(ctx, roomID, callerID, "")
+	return msgs, pinned, err
+}
+
+// ListMessagesPage returns the newest page, or — given the token from the
+// previous page — the page of messages older than it. next is empty on the last
+// page. The pinned message is only returned with the first page.
+func (s *Service) ListMessagesPage(ctx context.Context, roomID, callerID, pageToken string) (msgs []*Message, pinned *Message, next string, err error) {
 	if roomID == "" || callerID == "" {
-		return nil, nil, ErrInvalidInput
+		return nil, nil, "", ErrInvalidInput
 	}
 	if err := s.requireMember(ctx, roomID, callerID); err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
-	msgs, err := s.repo.ListMessages(ctx, roomID, callerID, defaultMessagePageSize)
+	var before *time.Time
+	if pageToken != "" {
+		t, perr := time.Parse(time.RFC3339Nano, pageToken)
+		if perr != nil {
+			return nil, nil, "", ErrInvalidInput
+		}
+		before = &t
+	}
+	msgs, err = s.repo.ListMessages(ctx, roomID, callerID, defaultMessagePageSize+1, before)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
-	var pinned *Message
-	if id, err := s.repo.PinnedMessageID(ctx, roomID); err == nil && id != "" {
-		pinned, _ = s.repo.GetMessage(ctx, id, callerID)
+	if len(msgs) > defaultMessagePageSize {
+		msgs = msgs[:defaultMessagePageSize]
+		next = msgs[len(msgs)-1].SentAt.UTC().Format(time.RFC3339Nano)
 	}
-	return msgs, pinned, nil
+	if before == nil {
+		if id, err := s.repo.PinnedMessageID(ctx, roomID); err == nil && id != "" {
+			pinned, _ = s.repo.GetMessage(ctx, id, callerID)
+		}
+	}
+	return msgs, pinned, next, nil
 }
 
 // ReportMessage requires the reporter to be a member of the message's room —

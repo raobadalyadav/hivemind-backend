@@ -97,7 +97,7 @@ func (h *Handler) ListMessages(ctx context.Context, req *socialv1.ListMessagesRe
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "auth required")
 	}
-	list, pinned, err := h.svc.ListMessages(ctx, req.GetRoomId(), userID)
+	list, pinned, next, err := h.svc.ListMessagesPage(ctx, req.GetRoomId(), userID, req.GetPage().GetPageToken())
 	if err != nil {
 		return nil, chatErr(err, "failed to list messages")
 	}
@@ -105,7 +105,7 @@ func (h *Handler) ListMessages(ctx context.Context, req *socialv1.ListMessagesRe
 	for _, m := range list {
 		out = append(out, toProtoMessage(m))
 	}
-	resp := &socialv1.ListMessagesResponse{Messages: out}
+	resp := &socialv1.ListMessagesResponse{Messages: out, Page: &socialv1.PageResponse{NextPageToken: next, HasMore: next != ""}}
 	if pinned != nil {
 		resp.PinnedMessage = toProtoMessage(pinned)
 	}

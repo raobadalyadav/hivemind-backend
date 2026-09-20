@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -170,12 +171,14 @@ func (r *Repository) pollsByID(ctx context.Context, ids []string, viewerID, keyF
 
 // ListMessages returns the newest messages first, minus anything sent by a
 // user the caller has a block with (either direction), fully hydrated.
-func (r *Repository) ListMessages(ctx context.Context, roomID, callerID string, limit int) ([]*Message, error) {
+// A non-nil before restricts the page to messages strictly older than it.
+func (r *Repository) ListMessages(ctx context.Context, roomID, callerID string, limit int, before *time.Time) ([]*Message, error) {
 	rows, err := r.pool.Query(ctx, msgSelect+`
 		WHERE m.room_id = $1
 		  AND NOT EXISTS (SELECT 1 FROM blocks b
 			WHERE (b.user_id = $2 AND b.blocked_user_id = m.sender_id) OR (b.user_id = m.sender_id AND b.blocked_user_id = $2))
-		ORDER BY m.sent_at DESC LIMIT $3`, roomID, callerID, limit)
+		  AND ($4::timestamptz IS NULL OR m.sent_at < $4)
+		ORDER BY m.sent_at DESC LIMIT $3`, roomID, callerID, limit, before)
 	if err != nil {
 		return nil, err
 	}

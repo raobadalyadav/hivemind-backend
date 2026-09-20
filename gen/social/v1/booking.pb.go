@@ -984,6 +984,7 @@ type BookingSummary struct {
 	PlanTitle     string                 `protobuf:"bytes,2,opt,name=plan_title,json=planTitle,proto3" json:"plan_title,omitempty"`
 	StartsAt      *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=starts_at,json=startsAt,proto3" json:"starts_at,omitempty"`
 	EndsAt        *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=ends_at,json=endsAt,proto3" json:"ends_at,omitempty"`
+	Reviewed      bool                   `protobuf:"varint,5,opt,name=reviewed,proto3" json:"reviewed,omitempty"` // the caller already rated this booking
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1044,6 +1045,13 @@ func (x *BookingSummary) GetEndsAt() *timestamppb.Timestamp {
 		return x.EndsAt
 	}
 	return nil
+}
+
+func (x *BookingSummary) GetReviewed() bool {
+	if x != nil {
+		return x.Reviewed
+	}
+	return false
 }
 
 type ListMyBookingsRequest struct {
@@ -1458,13 +1466,14 @@ const file_social_v1_booking_proto_rawDesc = "" +
 	"\aplan_id\x18\x01 \x01(\tR\x06planId\"\x17\n" +
 	"\x15ListMyWaitlistRequest\"M\n" +
 	"\x16ListMyWaitlistResponse\x123\n" +
-	"\aentries\x18\x01 \x03(\v2\x19.social.v1.WaitlistStatusR\aentries\"\xcb\x01\n" +
+	"\aentries\x18\x01 \x03(\v2\x19.social.v1.WaitlistStatusR\aentries\"\xe7\x01\n" +
 	"\x0eBookingSummary\x12,\n" +
 	"\abooking\x18\x01 \x01(\v2\x12.social.v1.BookingR\abooking\x12\x1d\n" +
 	"\n" +
 	"plan_title\x18\x02 \x01(\tR\tplanTitle\x127\n" +
 	"\tstarts_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\bstartsAt\x123\n" +
-	"\aends_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x06endsAt\"@\n" +
+	"\aends_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x06endsAt\x12\x1a\n" +
+	"\breviewed\x18\x05 \x01(\bR\breviewed\"@\n" +
 	"\x15ListMyBookingsRequest\x12'\n" +
 	"\x03tab\x18\x01 \x01(\x0e2\x15.social.v1.BookingTabR\x03tab\"O\n" +
 	"\x16ListMyBookingsResponse\x125\n" +

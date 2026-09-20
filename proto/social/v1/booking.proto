@@ -137,6 +137,7 @@ message BookingSummary {
   string plan_title = 2;
   google.protobuf.Timestamp starts_at = 3;
   google.protobuf.Timestamp ends_at = 4;
+  bool reviewed = 5; // the caller already rated this booking
 }
 
 message ListMyBookingsRequest {

@@ -270,6 +270,7 @@ func (h *Handler) ListMyBookings(ctx context.Context, req *socialv1.ListMyBookin
 			PlanTitle: s.PlanTitle,
 			StartsAt:  timestamppb.New(s.StartsAt),
 			EndsAt:    timestamppb.New(s.EndsAt),
+			Reviewed:  s.Reviewed,
 		})
 	}
 	return &socialv1.ListMyBookingsResponse{Bookings: out}, nil
