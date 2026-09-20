@@ -51,7 +51,8 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 }
 
 // visibleSQL is the ONE definition of "caller ($C) may see post p": the
-// author always; otherwise no block in either direction AND the post is
+// author always; otherwise no block in either direction, the author's account
+// is active (a suspended user's posts disappear), AND the post is
 // public, or connections-only with an accepted connection to the author, or
 // community-only with the caller in that community. Every read path
 // (single get, author list, feed, saved) filters through it.
@@ -60,6 +61,7 @@ func visibleSQL(caller string) string {
 		NOT EXISTS (SELECT 1 FROM blocks b
 			WHERE (b.user_id = $C::uuid AND b.blocked_user_id = p.author_id)
 			   OR (b.user_id = p.author_id AND b.blocked_user_id = $C::uuid))
+		AND EXISTS (SELECT 1 FROM users au WHERE au.id = p.author_id AND au.status = 'active')
 		AND (p.visibility = 'public'
 		  OR (p.visibility = 'connections' AND EXISTS (SELECT 1 FROM connections c
 				WHERE c.status = 'accepted'::connection_status
@@ -294,10 +296,11 @@ func (r *Repository) ListSaved(ctx context.Context, userID string, limit int) ([
 }
 
 type Comment struct {
-	ID       string
-	PostID   string
-	AuthorID string
-	Body     string
+	ID        string
+	PostID    string
+	AuthorID  string
+	Body      string
+	CreatedAt time.Time
 }
 
 func (r *Repository) CreateComment(ctx context.Context, c *Comment) (*Comment, error) {
@@ -310,6 +313,32 @@ func (r *Repository) CreateComment(ctx context.Context, c *Comment) (*Comment, e
 		return nil, err
 	}
 	return &out, nil
+}
+
+// ListComments returns a post's comments oldest-first. The caller must already
+// have passed GetVisible for the post; comments by people the viewer blocked
+// (either direction) are left out.
+func (r *Repository) ListComments(ctx context.Context, postID, viewerID string, limit int) ([]*Comment, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT c.id::text, c.post_id::text, c.author_id::text, c.body, c.created_at
+		FROM comments c
+		WHERE c.post_id = $1
+		  AND NOT EXISTS (SELECT 1 FROM blocks b WHERE (b.user_id = $2 AND b.blocked_user_id = c.author_id)
+		                                            OR (b.user_id = c.author_id AND b.blocked_user_id = $2))
+		ORDER BY c.created_at, c.id LIMIT $3`, postID, viewerID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []*Comment
+	for rows.Next() {
+		var c Comment
+		if err := rows.Scan(&c.ID, &c.PostID, &c.AuthorID, &c.Body, &c.CreatedAt); err != nil {
+			return nil, err
+		}
+		out = append(out, &c)
+	}
+	return out, rows.Err()
 }
 
 // Like is idempotent (ON CONFLICT DO NOTHING — a repeated like isn't an

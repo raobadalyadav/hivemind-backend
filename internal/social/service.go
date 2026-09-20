@@ -37,16 +37,25 @@ type Service struct {
 	reporter ReportSubmitter
 	screener ContentScreener
 	media    media.Resolver
+	webBase  string // https origin for shareable links
 }
 
 // WithMedia enables posts with photos/videos (attached by upload id).
+// WithWebBaseURL sets the https origin used in shared links (no trailing slash).
+func (s *Service) WithWebBaseURL(u string) *Service {
+	if u != "" {
+		s.webBase = u
+	}
+	return s
+}
+
 func (s *Service) WithMedia(m media.Resolver) *Service {
 	s.media = m
 	return s
 }
 
 func NewService(repo *Repository, reporter ReportSubmitter, screener ContentScreener) *Service {
-	return &Service{repo: repo, reporter: reporter, screener: screener}
+	return &Service{repo: repo, reporter: reporter, screener: screener, webBase: "https://hivemind.app"}
 }
 
 const maxForYouOffset = 200
@@ -138,6 +147,20 @@ func (s *Service) GetPost(ctx context.Context, id, callerID string) (*Post, erro
 	return s.repo.GetVisible(ctx, id, callerID)
 }
 
+const maxCommentsPerPost = 200
+
+// ListComments: same visibility rule as GetPost (a hidden post is NotFound).
+// ponytail: newest 200 in one page; cursor paging when threads get that long.
+func (s *Service) ListComments(ctx context.Context, postID, callerID string) ([]*Comment, error) {
+	if postID == "" || callerID == "" {
+		return nil, ErrInvalidInput
+	}
+	if _, err := s.repo.GetVisible(ctx, postID, callerID); err != nil {
+		return nil, err
+	}
+	return s.repo.ListComments(ctx, postID, callerID, maxCommentsPerPost)
+}
+
 const defaultPostPageSize = 20
 
 func (s *Service) ListPosts(ctx context.Context, authorID, callerID string) ([]*Post, error) {
@@ -209,7 +232,7 @@ func (s *Service) SharePost(ctx context.Context, postID, userID string) (string,
 	if _, err := s.repo.GetVisible(ctx, postID, userID); err != nil {
 		return "", err
 	}
-	return "hivemind://posts/" + postID, nil
+	return s.webBase + "/posts/" + postID, nil
 }
 
 type cursor struct {

@@ -106,6 +106,22 @@ func (h *Handler) CommentOnPost(ctx context.Context, req *socialv1.CommentOnPost
 	return &socialv1.Comment{Id: c.ID, PostId: c.PostID, AuthorId: c.AuthorID, Body: c.Body}, nil
 }
 
+func (h *Handler) ListComments(ctx context.Context, req *socialv1.ListCommentsRequest) (*socialv1.ListCommentsResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	list, err := h.svc.ListComments(ctx, req.GetPostId(), userID)
+	if err != nil {
+		return nil, socialErr(err, "failed to list comments")
+	}
+	out := make([]*socialv1.Comment, 0, len(list))
+	for _, c := range list {
+		out = append(out, &socialv1.Comment{Id: c.ID, PostId: c.PostID, AuthorId: c.AuthorID, Body: c.Body, Audit: &socialv1.Audit{CreatedAt: timestamppb.New(c.CreatedAt)}})
+	}
+	return &socialv1.ListCommentsResponse{Comments: out, Page: &socialv1.PageResponse{}}, nil
+}
+
 func (h *Handler) LikePost(ctx context.Context, req *socialv1.LikePostRequest) (*socialv1.LikePostResponse, error) {
 	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
 	if !ok {

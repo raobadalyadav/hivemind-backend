@@ -71,6 +71,14 @@ make lan-ip              # the API_HOST a phone on the same Wi-Fi should use
 
 `make` loads `.env` automatically. `cmd/devtoken` refuses to run unless `APP_ENV` is empty or `dev`.
 
+## Demo data
+
+`go run ./cmd/seed -keeper <your-user-uuid>` fills a **local dev** database with realistic data in your city: 24 people (photos, bios, some blue-ticked), 32 plans over the next four weeks with venues and bookings, posts with comments/likes, live stories, communities, friends / pending requests / incoming waves for the keeper, three DMs and two plan chats, and six external events. It also gives the keeper's city a real name and drops unused test cities/categories. Everything it creates uses the e-mail domain `@seed.hivemind.local`, so re-running replaces only its own rows; the keeper's own rows are never modified. Refuses to run unless `APP_ENV` is empty or `dev`. Photos are hot-linked (randomuser.me, picsum.photos), so the phone needs internet.
+
+`DEV_EMAIL=you@example.com mobile/tool/dev_env.sh` then signs the app in as that existing user.
+
+Note: `audit_logs` and the credit ledgers are append-only by design, so users with rows there can't be hard-deleted; clean them up by suspending instead.
+
 ## Media uploads
 
 `POST /v1/media` (multipart `file`, optional `poster`/`width`/`height`/`duration_ms`, `Authorization: <access token>`)

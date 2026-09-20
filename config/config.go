@@ -6,6 +6,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -43,6 +44,7 @@ type Config struct {
 	WebhookPort          string
 	PassSecret           string
 	MediaPublicBaseURL   string // where phones reach GET /media/... (this API's HTTP port)
+	PublicWebBaseURL     string // https origin used in shareable links (posts, plans); the app opens them via app links
 	MediaMaxImageMB      int
 	MediaMaxVideoMB      int
 	EmergencyNumber      string // shown in the Safety Center and SOS response
@@ -75,6 +77,7 @@ func Load() Config {
 		// Domain-separated from JWT_SECRET so a leaked pass can never be
 		// confused with (or used to forge) a session token.
 		MediaPublicBaseURL: getEnv("MEDIA_PUBLIC_BASE_URL", "http://localhost:"+getEnv("WEBHOOK_PORT", "8080")),
+		PublicWebBaseURL:   strings.TrimRight(getEnv("PUBLIC_WEB_BASE_URL", "https://hivemind.app"), "/"),
 		MediaMaxImageMB:    getEnvInt("MEDIA_MAX_IMAGE_MB", 10),
 		MediaMaxVideoMB:    getEnvInt("MEDIA_MAX_VIDEO_MB", 60),
 		EmergencyNumber:    getEnv("EMERGENCY_NUMBER", "112"),

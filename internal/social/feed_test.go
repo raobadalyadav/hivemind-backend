@@ -83,8 +83,22 @@ func TestFeedVisibility_ConnectionsAndCommunityPosts(t *testing.T) {
 	if _, err := svc.SharePost(ctx, priv.ID, stranger); err != ErrPostNotFound {
 		t.Errorf("share hidden post: %v", err)
 	}
-	if link, err := svc.SharePost(ctx, pub.ID, stranger); err != nil || link != "hivemind://posts/"+pub.ID {
+	if link, err := svc.SharePost(ctx, pub.ID, stranger); err != nil || link != "https://hivemind.app/posts/"+pub.ID {
 		t.Errorf("share public post: %q %v", link, err)
+	}
+
+	// comments: listed oldest-first for anyone who can see the post; hidden post = NotFound
+	if _, err := svc.CommentOnPost(ctx, &Comment{PostID: conn.ID, AuthorID: friend, Body: "first"}); err != nil {
+		t.Fatalf("comment: %v", err)
+	}
+	if _, err := svc.CommentOnPost(ctx, &Comment{PostID: conn.ID, AuthorID: author, Body: "second"}); err != nil {
+		t.Fatalf("comment: %v", err)
+	}
+	if got, err := svc.ListComments(ctx, conn.ID, friend); err != nil || len(got) != 2 || got[0].Body != "first" || got[1].Body != "second" || got[0].CreatedAt.IsZero() {
+		t.Errorf("list comments: %+v %v", got, err)
+	}
+	if _, err := svc.ListComments(ctx, conn.ID, stranger); err != ErrPostNotFound {
+		t.Errorf("comments of a hidden post: %v", err)
 	}
 
 	// posting rules

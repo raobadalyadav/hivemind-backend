@@ -12,6 +12,8 @@ service SocialService {
   rpc GetPost(GetPostRequest) returns (Post);
   rpc ListPosts(ListPostsRequest) returns (ListPostsResponse);
   rpc CommentOnPost(CommentOnPostRequest) returns (Comment);
+  // ListComments: a post's comments, oldest first, under the same visibility rule as GetPost.
+  rpc ListComments(ListCommentsRequest) returns (ListCommentsResponse);
   rpc LikePost(LikePostRequest) returns (LikePostResponse);
 
   // Feed (flow.md §38). Every read/write of a post goes through one
@@ -82,6 +84,17 @@ message Comment {
   string post_id = 2;
   string author_id = 3;
   string body = 4;
+  Audit audit = 5; // created_at
+}
+
+message ListCommentsRequest {
+  string post_id = 1;
+  PageRequest page = 2;
+}
+
+message ListCommentsResponse {
+  repeated Comment comments = 1;
+  PageResponse page = 2;
 }
 
 message CreatePostRequest {

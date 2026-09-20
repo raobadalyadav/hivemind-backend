@@ -210,7 +210,7 @@ func main() {
 	socialv1.RegisterMeetServiceServer(srv, meet.NewHandler(meet.NewService(meet.NewRepository(pool)).WithDM(chatSvc)))
 	socialv1.RegisterVerificationServiceServer(srv, verification.NewHandler(verification.NewService(pool).WithMedia(mediaResolver)))
 	socialv1.RegisterStoryServiceServer(srv, stories.NewHandler(stories.NewService(stories.NewRepository(pool), contentScreener).WithMedia(mediaResolver)))
-	socialv1.RegisterSocialServiceServer(srv, social.NewHandler(social.NewService(social.NewRepository(pool), moderationSvc, contentScreener).WithMedia(mediaResolver)))
+	socialv1.RegisterSocialServiceServer(srv, social.NewHandler(social.NewService(social.NewRepository(pool), moderationSvc, contentScreener).WithMedia(mediaResolver).WithWebBaseURL(cfg.PublicWebBaseURL)))
 	socialv1.RegisterModerationServiceServer(srv, moderation.NewHandler(moderationSvc))
 	socialv1.RegisterNotificationServiceServer(srv, notifications.NewHandler(notifications.NewService(notifications.NewRepository(pool), emailSender, pushSender, logger)))
 	socialv1.RegisterSearchServiceServer(srv, search.NewHandler(search.NewService(search.NewRepository(pool))))

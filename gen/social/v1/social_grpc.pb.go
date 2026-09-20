@@ -23,6 +23,7 @@ const (
 	SocialService_GetPost_FullMethodName        = "/social.v1.SocialService/GetPost"
 	SocialService_ListPosts_FullMethodName      = "/social.v1.SocialService/ListPosts"
 	SocialService_CommentOnPost_FullMethodName  = "/social.v1.SocialService/CommentOnPost"
+	SocialService_ListComments_FullMethodName   = "/social.v1.SocialService/ListComments"
 	SocialService_LikePost_FullMethodName       = "/social.v1.SocialService/LikePost"
 	SocialService_GetFeed_FullMethodName        = "/social.v1.SocialService/GetFeed"
 	SocialService_SavePost_FullMethodName       = "/social.v1.SocialService/SavePost"
@@ -42,6 +43,8 @@ type SocialServiceClient interface {
 	GetPost(ctx context.Context, in *GetPostRequest, opts ...grpc.CallOption) (*Post, error)
 	ListPosts(ctx context.Context, in *ListPostsRequest, opts ...grpc.CallOption) (*ListPostsResponse, error)
 	CommentOnPost(ctx context.Context, in *CommentOnPostRequest, opts ...grpc.CallOption) (*Comment, error)
+	// ListComments: a post's comments, oldest first, under the same visibility rule as GetPost.
+	ListComments(ctx context.Context, in *ListCommentsRequest, opts ...grpc.CallOption) (*ListCommentsResponse, error)
 	LikePost(ctx context.Context, in *LikePostRequest, opts ...grpc.CallOption) (*LikePostResponse, error)
 	// Feed (flow.md §38). Every read/write of a post goes through one
 	// visibility rule: author, public, connections (accepted), community
@@ -100,6 +103,16 @@ func (c *socialServiceClient) CommentOnPost(ctx context.Context, in *CommentOnPo
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Comment)
 	err := c.cc.Invoke(ctx, SocialService_CommentOnPost_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *socialServiceClient) ListComments(ctx context.Context, in *ListCommentsRequest, opts ...grpc.CallOption) (*ListCommentsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListCommentsResponse)
+	err := c.cc.Invoke(ctx, SocialService_ListComments_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -186,6 +199,8 @@ type SocialServiceServer interface {
 	GetPost(context.Context, *GetPostRequest) (*Post, error)
 	ListPosts(context.Context, *ListPostsRequest) (*ListPostsResponse, error)
 	CommentOnPost(context.Context, *CommentOnPostRequest) (*Comment, error)
+	// ListComments: a post's comments, oldest first, under the same visibility rule as GetPost.
+	ListComments(context.Context, *ListCommentsRequest) (*ListCommentsResponse, error)
 	LikePost(context.Context, *LikePostRequest) (*LikePostResponse, error)
 	// Feed (flow.md §38). Every read/write of a post goes through one
 	// visibility rule: author, public, connections (accepted), community
@@ -221,6 +236,9 @@ func (UnimplementedSocialServiceServer) ListPosts(context.Context, *ListPostsReq
 }
 func (UnimplementedSocialServiceServer) CommentOnPost(context.Context, *CommentOnPostRequest) (*Comment, error) {
 	return nil, status.Error(codes.Unimplemented, "method CommentOnPost not implemented")
+}
+func (UnimplementedSocialServiceServer) ListComments(context.Context, *ListCommentsRequest) (*ListCommentsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListComments not implemented")
 }
 func (UnimplementedSocialServiceServer) LikePost(context.Context, *LikePostRequest) (*LikePostResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method LikePost not implemented")
@@ -332,6 +350,24 @@ func _SocialService_CommentOnPost_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SocialServiceServer).CommentOnPost(ctx, req.(*CommentOnPostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SocialService_ListComments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCommentsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SocialServiceServer).ListComments(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SocialService_ListComments_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SocialServiceServer).ListComments(ctx, req.(*ListCommentsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -484,6 +520,10 @@ var SocialService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CommentOnPost",
 			Handler:    _SocialService_CommentOnPost_Handler,
+		},
+		{
+			MethodName: "ListComments",
+			Handler:    _SocialService_ListComments_Handler,
 		},
 		{
 			MethodName: "LikePost",

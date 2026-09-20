@@ -535,6 +535,7 @@ type Comment struct {
 	PostId        string                 `protobuf:"bytes,2,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
 	AuthorId      string                 `protobuf:"bytes,3,opt,name=author_id,json=authorId,proto3" json:"author_id,omitempty"`
 	Body          string                 `protobuf:"bytes,4,opt,name=body,proto3" json:"body,omitempty"`
+	Audit         *Audit                 `protobuf:"bytes,5,opt,name=audit,proto3" json:"audit,omitempty"` // created_at
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -597,6 +598,117 @@ func (x *Comment) GetBody() string {
 	return ""
 }
 
+func (x *Comment) GetAudit() *Audit {
+	if x != nil {
+		return x.Audit
+	}
+	return nil
+}
+
+type ListCommentsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PostId        string                 `protobuf:"bytes,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
+	Page          *PageRequest           `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCommentsRequest) Reset() {
+	*x = ListCommentsRequest{}
+	mi := &file_social_v1_social_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCommentsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCommentsRequest) ProtoMessage() {}
+
+func (x *ListCommentsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_social_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCommentsRequest.ProtoReflect.Descriptor instead.
+func (*ListCommentsRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_social_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ListCommentsRequest) GetPostId() string {
+	if x != nil {
+		return x.PostId
+	}
+	return ""
+}
+
+func (x *ListCommentsRequest) GetPage() *PageRequest {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+type ListCommentsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Comments      []*Comment             `protobuf:"bytes,1,rep,name=comments,proto3" json:"comments,omitempty"`
+	Page          *PageResponse          `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCommentsResponse) Reset() {
+	*x = ListCommentsResponse{}
+	mi := &file_social_v1_social_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCommentsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCommentsResponse) ProtoMessage() {}
+
+func (x *ListCommentsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_social_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCommentsResponse.ProtoReflect.Descriptor instead.
+func (*ListCommentsResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_social_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ListCommentsResponse) GetComments() []*Comment {
+	if x != nil {
+		return x.Comments
+	}
+	return nil
+}
+
+func (x *ListCommentsResponse) GetPage() *PageResponse {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
 type CreatePostRequest struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	AuthorId string                 `protobuf:"bytes,1,opt,name=author_id,json=authorId,proto3" json:"author_id,omitempty"`
@@ -613,7 +725,7 @@ type CreatePostRequest struct {
 
 func (x *CreatePostRequest) Reset() {
 	*x = CreatePostRequest{}
-	mi := &file_social_v1_social_proto_msgTypes[7]
+	mi := &file_social_v1_social_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -625,7 +737,7 @@ func (x *CreatePostRequest) String() string {
 func (*CreatePostRequest) ProtoMessage() {}
 
 func (x *CreatePostRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_social_proto_msgTypes[7]
+	mi := &file_social_v1_social_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -638,7 +750,7 @@ func (x *CreatePostRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatePostRequest.ProtoReflect.Descriptor instead.
 func (*CreatePostRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_social_proto_rawDescGZIP(), []int{7}
+	return file_social_v1_social_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *CreatePostRequest) GetAuthorId() string {
@@ -700,7 +812,7 @@ type GetPostRequest struct {
 
 func (x *GetPostRequest) Reset() {
 	*x = GetPostRequest{}
-	mi := &file_social_v1_social_proto_msgTypes[8]
+	mi := &file_social_v1_social_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -712,7 +824,7 @@ func (x *GetPostRequest) String() string {
 func (*GetPostRequest) ProtoMessage() {}
 
 func (x *GetPostRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_social_proto_msgTypes[8]
+	mi := &file_social_v1_social_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -725,7 +837,7 @@ func (x *GetPostRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPostRequest.ProtoReflect.Descriptor instead.
 func (*GetPostRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_social_proto_rawDescGZIP(), []int{8}
+	return file_social_v1_social_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetPostRequest) GetId() string {
@@ -745,7 +857,7 @@ type ListPostsRequest struct {
 
 func (x *ListPostsRequest) Reset() {
 	*x = ListPostsRequest{}
-	mi := &file_social_v1_social_proto_msgTypes[9]
+	mi := &file_social_v1_social_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -757,7 +869,7 @@ func (x *ListPostsRequest) String() string {
 func (*ListPostsRequest) ProtoMessage() {}
 
 func (x *ListPostsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_social_proto_msgTypes[9]
+	mi := &file_social_v1_social_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -770,7 +882,7 @@ func (x *ListPostsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPostsRequest.ProtoReflect.Descriptor instead.
 func (*ListPostsRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_social_proto_rawDescGZIP(), []int{9}
+	return file_social_v1_social_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ListPostsRequest) GetAuthorId() string {
@@ -797,7 +909,7 @@ type ListPostsResponse struct {
 
 func (x *ListPostsResponse) Reset() {
 	*x = ListPostsResponse{}
-	mi := &file_social_v1_social_proto_msgTypes[10]
+	mi := &file_social_v1_social_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -809,7 +921,7 @@ func (x *ListPostsResponse) String() string {
 func (*ListPostsResponse) ProtoMessage() {}
 
 func (x *ListPostsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_social_proto_msgTypes[10]
+	mi := &file_social_v1_social_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -822,7 +934,7 @@ func (x *ListPostsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPostsResponse.ProtoReflect.Descriptor instead.
 func (*ListPostsResponse) Descriptor() ([]byte, []int) {
-	return file_social_v1_social_proto_rawDescGZIP(), []int{10}
+	return file_social_v1_social_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ListPostsResponse) GetPosts() []*Post {
@@ -850,7 +962,7 @@ type CommentOnPostRequest struct {
 
 func (x *CommentOnPostRequest) Reset() {
 	*x = CommentOnPostRequest{}
-	mi := &file_social_v1_social_proto_msgTypes[11]
+	mi := &file_social_v1_social_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -862,7 +974,7 @@ func (x *CommentOnPostRequest) String() string {
 func (*CommentOnPostRequest) ProtoMessage() {}
 
 func (x *CommentOnPostRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_social_proto_msgTypes[11]
+	mi := &file_social_v1_social_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -875,7 +987,7 @@ func (x *CommentOnPostRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommentOnPostRequest.ProtoReflect.Descriptor instead.
 func (*CommentOnPostRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_social_proto_rawDescGZIP(), []int{11}
+	return file_social_v1_social_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *CommentOnPostRequest) GetPostId() string {
@@ -909,7 +1021,7 @@ type LikePostRequest struct {
 
 func (x *LikePostRequest) Reset() {
 	*x = LikePostRequest{}
-	mi := &file_social_v1_social_proto_msgTypes[12]
+	mi := &file_social_v1_social_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -921,7 +1033,7 @@ func (x *LikePostRequest) String() string {
 func (*LikePostRequest) ProtoMessage() {}
 
 func (x *LikePostRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_social_proto_msgTypes[12]
+	mi := &file_social_v1_social_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -934,7 +1046,7 @@ func (x *LikePostRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LikePostRequest.ProtoReflect.Descriptor instead.
 func (*LikePostRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_social_proto_rawDescGZIP(), []int{12}
+	return file_social_v1_social_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *LikePostRequest) GetPostId() string {
@@ -960,7 +1072,7 @@ type LikePostResponse struct {
 
 func (x *LikePostResponse) Reset() {
 	*x = LikePostResponse{}
-	mi := &file_social_v1_social_proto_msgTypes[13]
+	mi := &file_social_v1_social_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -972,7 +1084,7 @@ func (x *LikePostResponse) String() string {
 func (*LikePostResponse) ProtoMessage() {}
 
 func (x *LikePostResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_social_proto_msgTypes[13]
+	mi := &file_social_v1_social_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -985,7 +1097,7 @@ func (x *LikePostResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LikePostResponse.ProtoReflect.Descriptor instead.
 func (*LikePostResponse) Descriptor() ([]byte, []int) {
-	return file_social_v1_social_proto_rawDescGZIP(), []int{13}
+	return file_social_v1_social_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *LikePostResponse) GetLikeCount() int32 {
@@ -1006,7 +1118,7 @@ type GetFeedRequest struct {
 
 func (x *GetFeedRequest) Reset() {
 	*x = GetFeedRequest{}
-	mi := &file_social_v1_social_proto_msgTypes[14]
+	mi := &file_social_v1_social_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1018,7 +1130,7 @@ func (x *GetFeedRequest) String() string {
 func (*GetFeedRequest) ProtoMessage() {}
 
 func (x *GetFeedRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_social_proto_msgTypes[14]
+	mi := &file_social_v1_social_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1031,7 +1143,7 @@ func (x *GetFeedRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFeedRequest.ProtoReflect.Descriptor instead.
 func (*GetFeedRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_social_proto_rawDescGZIP(), []int{14}
+	return file_social_v1_social_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GetFeedRequest) GetScope() FeedScope {
@@ -1065,7 +1177,7 @@ type GetFeedResponse struct {
 
 func (x *GetFeedResponse) Reset() {
 	*x = GetFeedResponse{}
-	mi := &file_social_v1_social_proto_msgTypes[15]
+	mi := &file_social_v1_social_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1077,7 +1189,7 @@ func (x *GetFeedResponse) String() string {
 func (*GetFeedResponse) ProtoMessage() {}
 
 func (x *GetFeedResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_social_proto_msgTypes[15]
+	mi := &file_social_v1_social_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1090,7 +1202,7 @@ func (x *GetFeedResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFeedResponse.ProtoReflect.Descriptor instead.
 func (*GetFeedResponse) Descriptor() ([]byte, []int) {
-	return file_social_v1_social_proto_rawDescGZIP(), []int{15}
+	return file_social_v1_social_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GetFeedResponse) GetPosts() []*Post {
@@ -1116,7 +1228,7 @@ type SavePostRequest struct {
 
 func (x *SavePostRequest) Reset() {
 	*x = SavePostRequest{}
-	mi := &file_social_v1_social_proto_msgTypes[16]
+	mi := &file_social_v1_social_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1128,7 +1240,7 @@ func (x *SavePostRequest) String() string {
 func (*SavePostRequest) ProtoMessage() {}
 
 func (x *SavePostRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_social_proto_msgTypes[16]
+	mi := &file_social_v1_social_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1141,7 +1253,7 @@ func (x *SavePostRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SavePostRequest.ProtoReflect.Descriptor instead.
 func (*SavePostRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_social_proto_rawDescGZIP(), []int{16}
+	return file_social_v1_social_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *SavePostRequest) GetPostId() string {
@@ -1159,7 +1271,7 @@ type SavePostResponse struct {
 
 func (x *SavePostResponse) Reset() {
 	*x = SavePostResponse{}
-	mi := &file_social_v1_social_proto_msgTypes[17]
+	mi := &file_social_v1_social_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1171,7 +1283,7 @@ func (x *SavePostResponse) String() string {
 func (*SavePostResponse) ProtoMessage() {}
 
 func (x *SavePostResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_social_proto_msgTypes[17]
+	mi := &file_social_v1_social_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1184,7 +1296,7 @@ func (x *SavePostResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SavePostResponse.ProtoReflect.Descriptor instead.
 func (*SavePostResponse) Descriptor() ([]byte, []int) {
-	return file_social_v1_social_proto_rawDescGZIP(), []int{17}
+	return file_social_v1_social_proto_rawDescGZIP(), []int{19}
 }
 
 type UnsavePostRequest struct {
@@ -1196,7 +1308,7 @@ type UnsavePostRequest struct {
 
 func (x *UnsavePostRequest) Reset() {
 	*x = UnsavePostRequest{}
-	mi := &file_social_v1_social_proto_msgTypes[18]
+	mi := &file_social_v1_social_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1208,7 +1320,7 @@ func (x *UnsavePostRequest) String() string {
 func (*UnsavePostRequest) ProtoMessage() {}
 
 func (x *UnsavePostRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_social_proto_msgTypes[18]
+	mi := &file_social_v1_social_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1221,7 +1333,7 @@ func (x *UnsavePostRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnsavePostRequest.ProtoReflect.Descriptor instead.
 func (*UnsavePostRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_social_proto_rawDescGZIP(), []int{18}
+	return file_social_v1_social_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *UnsavePostRequest) GetPostId() string {
@@ -1239,7 +1351,7 @@ type UnsavePostResponse struct {
 
 func (x *UnsavePostResponse) Reset() {
 	*x = UnsavePostResponse{}
-	mi := &file_social_v1_social_proto_msgTypes[19]
+	mi := &file_social_v1_social_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1251,7 +1363,7 @@ func (x *UnsavePostResponse) String() string {
 func (*UnsavePostResponse) ProtoMessage() {}
 
 func (x *UnsavePostResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_social_proto_msgTypes[19]
+	mi := &file_social_v1_social_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1264,7 +1376,7 @@ func (x *UnsavePostResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnsavePostResponse.ProtoReflect.Descriptor instead.
 func (*UnsavePostResponse) Descriptor() ([]byte, []int) {
-	return file_social_v1_social_proto_rawDescGZIP(), []int{19}
+	return file_social_v1_social_proto_rawDescGZIP(), []int{21}
 }
 
 type ListSavedPostsRequest struct {
@@ -1275,7 +1387,7 @@ type ListSavedPostsRequest struct {
 
 func (x *ListSavedPostsRequest) Reset() {
 	*x = ListSavedPostsRequest{}
-	mi := &file_social_v1_social_proto_msgTypes[20]
+	mi := &file_social_v1_social_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1287,7 +1399,7 @@ func (x *ListSavedPostsRequest) String() string {
 func (*ListSavedPostsRequest) ProtoMessage() {}
 
 func (x *ListSavedPostsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_social_proto_msgTypes[20]
+	mi := &file_social_v1_social_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1300,7 +1412,7 @@ func (x *ListSavedPostsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSavedPostsRequest.ProtoReflect.Descriptor instead.
 func (*ListSavedPostsRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_social_proto_rawDescGZIP(), []int{20}
+	return file_social_v1_social_proto_rawDescGZIP(), []int{22}
 }
 
 type ListSavedPostsResponse struct {
@@ -1312,7 +1424,7 @@ type ListSavedPostsResponse struct {
 
 func (x *ListSavedPostsResponse) Reset() {
 	*x = ListSavedPostsResponse{}
-	mi := &file_social_v1_social_proto_msgTypes[21]
+	mi := &file_social_v1_social_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1324,7 +1436,7 @@ func (x *ListSavedPostsResponse) String() string {
 func (*ListSavedPostsResponse) ProtoMessage() {}
 
 func (x *ListSavedPostsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_social_proto_msgTypes[21]
+	mi := &file_social_v1_social_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1337,7 +1449,7 @@ func (x *ListSavedPostsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSavedPostsResponse.ProtoReflect.Descriptor instead.
 func (*ListSavedPostsResponse) Descriptor() ([]byte, []int) {
-	return file_social_v1_social_proto_rawDescGZIP(), []int{21}
+	return file_social_v1_social_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ListSavedPostsResponse) GetPosts() []*Post {
@@ -1356,7 +1468,7 @@ type SharePostRequest struct {
 
 func (x *SharePostRequest) Reset() {
 	*x = SharePostRequest{}
-	mi := &file_social_v1_social_proto_msgTypes[22]
+	mi := &file_social_v1_social_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1368,7 +1480,7 @@ func (x *SharePostRequest) String() string {
 func (*SharePostRequest) ProtoMessage() {}
 
 func (x *SharePostRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_social_proto_msgTypes[22]
+	mi := &file_social_v1_social_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1381,7 +1493,7 @@ func (x *SharePostRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SharePostRequest.ProtoReflect.Descriptor instead.
 func (*SharePostRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_social_proto_rawDescGZIP(), []int{22}
+	return file_social_v1_social_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *SharePostRequest) GetPostId() string {
@@ -1400,7 +1512,7 @@ type SharePostResponse struct {
 
 func (x *SharePostResponse) Reset() {
 	*x = SharePostResponse{}
-	mi := &file_social_v1_social_proto_msgTypes[23]
+	mi := &file_social_v1_social_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1412,7 +1524,7 @@ func (x *SharePostResponse) String() string {
 func (*SharePostResponse) ProtoMessage() {}
 
 func (x *SharePostResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_social_proto_msgTypes[23]
+	mi := &file_social_v1_social_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1425,7 +1537,7 @@ func (x *SharePostResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SharePostResponse.ProtoReflect.Descriptor instead.
 func (*SharePostResponse) Descriptor() ([]byte, []int) {
-	return file_social_v1_social_proto_rawDescGZIP(), []int{23}
+	return file_social_v1_social_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *SharePostResponse) GetLink() string {
@@ -1484,12 +1596,19 @@ const file_social_v1_social_proto_rawDesc = "" +
 	"\x05width\x18\x05 \x01(\x05R\x05width\x12\x16\n" +
 	"\x06height\x18\x06 \x01(\x05R\x06height\x12\x1f\n" +
 	"\vduration_ms\x18\a \x01(\x05R\n" +
-	"durationMs\"c\n" +
+	"durationMs\"\x8b\x01\n" +
 	"\aComment\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\apost_id\x18\x02 \x01(\tR\x06postId\x12\x1b\n" +
 	"\tauthor_id\x18\x03 \x01(\tR\bauthorId\x12\x12\n" +
-	"\x04body\x18\x04 \x01(\tR\x04body\"\xef\x01\n" +
+	"\x04body\x18\x04 \x01(\tR\x04body\x12&\n" +
+	"\x05audit\x18\x05 \x01(\v2\x10.social.v1.AuditR\x05audit\"Z\n" +
+	"\x13ListCommentsRequest\x12\x17\n" +
+	"\apost_id\x18\x01 \x01(\tR\x06postId\x12*\n" +
+	"\x04page\x18\x02 \x01(\v2\x16.social.v1.PageRequestR\x04page\"s\n" +
+	"\x14ListCommentsResponse\x12.\n" +
+	"\bcomments\x18\x01 \x03(\v2\x12.social.v1.CommentR\bcomments\x12+\n" +
+	"\x04page\x18\x02 \x01(\v2\x17.social.v1.PageResponseR\x04page\"\xef\x01\n" +
 	"\x11CreatePostRequest\x12\x1b\n" +
 	"\tauthor_id\x18\x01 \x01(\tR\bauthorId\x12\x17\n" +
 	"\aplan_id\x18\x02 \x01(\tR\x06planId\x12\x12\n" +
@@ -1543,13 +1662,14 @@ const file_social_v1_social_proto_rawDesc = "" +
 	"\x11FEED_SCOPE_GLOBAL\x10\x00\x12\x1a\n" +
 	"\x16FEED_SCOPE_CONNECTIONS\x10\x01\x12\x18\n" +
 	"\x14FEED_SCOPE_COMMUNITY\x10\x02\x12\x16\n" +
-	"\x12FEED_SCOPE_FOR_YOU\x10\x032\x9e\x06\n" +
+	"\x12FEED_SCOPE_FOR_YOU\x10\x032\xef\x06\n" +
 	"\rSocialService\x12;\n" +
 	"\n" +
 	"CreatePost\x12\x1c.social.v1.CreatePostRequest\x1a\x0f.social.v1.Post\x125\n" +
 	"\aGetPost\x12\x19.social.v1.GetPostRequest\x1a\x0f.social.v1.Post\x12F\n" +
 	"\tListPosts\x12\x1b.social.v1.ListPostsRequest\x1a\x1c.social.v1.ListPostsResponse\x12D\n" +
-	"\rCommentOnPost\x12\x1f.social.v1.CommentOnPostRequest\x1a\x12.social.v1.Comment\x12C\n" +
+	"\rCommentOnPost\x12\x1f.social.v1.CommentOnPostRequest\x1a\x12.social.v1.Comment\x12O\n" +
+	"\fListComments\x12\x1e.social.v1.ListCommentsRequest\x1a\x1f.social.v1.ListCommentsResponse\x12C\n" +
 	"\bLikePost\x12\x1a.social.v1.LikePostRequest\x1a\x1b.social.v1.LikePostResponse\x12@\n" +
 	"\aGetFeed\x12\x19.social.v1.GetFeedRequest\x1a\x1a.social.v1.GetFeedResponse\x12C\n" +
 	"\bSavePost\x12\x1a.social.v1.SavePostRequest\x1a\x1b.social.v1.SavePostResponse\x12I\n" +
@@ -1572,7 +1692,7 @@ func file_social_v1_social_proto_rawDescGZIP() []byte {
 }
 
 var file_social_v1_social_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_social_v1_social_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_social_v1_social_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_social_v1_social_proto_goTypes = []any{
 	(FeedScope)(0),                 // 0: social.v1.FeedScope
 	(*ListMyMemoriesRequest)(nil),  // 1: social.v1.ListMyMemoriesRequest
@@ -1582,68 +1702,76 @@ var file_social_v1_social_proto_goTypes = []any{
 	(*Post)(nil),                   // 5: social.v1.Post
 	(*PostMedia)(nil),              // 6: social.v1.PostMedia
 	(*Comment)(nil),                // 7: social.v1.Comment
-	(*CreatePostRequest)(nil),      // 8: social.v1.CreatePostRequest
-	(*GetPostRequest)(nil),         // 9: social.v1.GetPostRequest
-	(*ListPostsRequest)(nil),       // 10: social.v1.ListPostsRequest
-	(*ListPostsResponse)(nil),      // 11: social.v1.ListPostsResponse
-	(*CommentOnPostRequest)(nil),   // 12: social.v1.CommentOnPostRequest
-	(*LikePostRequest)(nil),        // 13: social.v1.LikePostRequest
-	(*LikePostResponse)(nil),       // 14: social.v1.LikePostResponse
-	(*GetFeedRequest)(nil),         // 15: social.v1.GetFeedRequest
-	(*GetFeedResponse)(nil),        // 16: social.v1.GetFeedResponse
-	(*SavePostRequest)(nil),        // 17: social.v1.SavePostRequest
-	(*SavePostResponse)(nil),       // 18: social.v1.SavePostResponse
-	(*UnsavePostRequest)(nil),      // 19: social.v1.UnsavePostRequest
-	(*UnsavePostResponse)(nil),     // 20: social.v1.UnsavePostResponse
-	(*ListSavedPostsRequest)(nil),  // 21: social.v1.ListSavedPostsRequest
-	(*ListSavedPostsResponse)(nil), // 22: social.v1.ListSavedPostsResponse
-	(*SharePostRequest)(nil),       // 23: social.v1.SharePostRequest
-	(*SharePostResponse)(nil),      // 24: social.v1.SharePostResponse
-	(*Audit)(nil),                  // 25: social.v1.Audit
-	(*PageRequest)(nil),            // 26: social.v1.PageRequest
-	(*PageResponse)(nil),           // 27: social.v1.PageResponse
+	(*ListCommentsRequest)(nil),    // 8: social.v1.ListCommentsRequest
+	(*ListCommentsResponse)(nil),   // 9: social.v1.ListCommentsResponse
+	(*CreatePostRequest)(nil),      // 10: social.v1.CreatePostRequest
+	(*GetPostRequest)(nil),         // 11: social.v1.GetPostRequest
+	(*ListPostsRequest)(nil),       // 12: social.v1.ListPostsRequest
+	(*ListPostsResponse)(nil),      // 13: social.v1.ListPostsResponse
+	(*CommentOnPostRequest)(nil),   // 14: social.v1.CommentOnPostRequest
+	(*LikePostRequest)(nil),        // 15: social.v1.LikePostRequest
+	(*LikePostResponse)(nil),       // 16: social.v1.LikePostResponse
+	(*GetFeedRequest)(nil),         // 17: social.v1.GetFeedRequest
+	(*GetFeedResponse)(nil),        // 18: social.v1.GetFeedResponse
+	(*SavePostRequest)(nil),        // 19: social.v1.SavePostRequest
+	(*SavePostResponse)(nil),       // 20: social.v1.SavePostResponse
+	(*UnsavePostRequest)(nil),      // 21: social.v1.UnsavePostRequest
+	(*UnsavePostResponse)(nil),     // 22: social.v1.UnsavePostResponse
+	(*ListSavedPostsRequest)(nil),  // 23: social.v1.ListSavedPostsRequest
+	(*ListSavedPostsResponse)(nil), // 24: social.v1.ListSavedPostsResponse
+	(*SharePostRequest)(nil),       // 25: social.v1.SharePostRequest
+	(*SharePostResponse)(nil),      // 26: social.v1.SharePostResponse
+	(*Audit)(nil),                  // 27: social.v1.Audit
+	(*PageRequest)(nil),            // 28: social.v1.PageRequest
+	(*PageResponse)(nil),           // 29: social.v1.PageResponse
 }
 var file_social_v1_social_proto_depIdxs = []int32{
 	2,  // 0: social.v1.MemoryYear.memories:type_name -> social.v1.Memory
 	3,  // 1: social.v1.ListMyMemoriesResponse.years:type_name -> social.v1.MemoryYear
-	25, // 2: social.v1.Post.audit:type_name -> social.v1.Audit
+	27, // 2: social.v1.Post.audit:type_name -> social.v1.Audit
 	6,  // 3: social.v1.Post.media:type_name -> social.v1.PostMedia
-	6,  // 4: social.v1.CreatePostRequest.media:type_name -> social.v1.PostMedia
-	26, // 5: social.v1.ListPostsRequest.page:type_name -> social.v1.PageRequest
-	5,  // 6: social.v1.ListPostsResponse.posts:type_name -> social.v1.Post
-	27, // 7: social.v1.ListPostsResponse.page:type_name -> social.v1.PageResponse
-	0,  // 8: social.v1.GetFeedRequest.scope:type_name -> social.v1.FeedScope
-	26, // 9: social.v1.GetFeedRequest.page:type_name -> social.v1.PageRequest
-	5,  // 10: social.v1.GetFeedResponse.posts:type_name -> social.v1.Post
-	27, // 11: social.v1.GetFeedResponse.page:type_name -> social.v1.PageResponse
-	5,  // 12: social.v1.ListSavedPostsResponse.posts:type_name -> social.v1.Post
-	8,  // 13: social.v1.SocialService.CreatePost:input_type -> social.v1.CreatePostRequest
-	9,  // 14: social.v1.SocialService.GetPost:input_type -> social.v1.GetPostRequest
-	10, // 15: social.v1.SocialService.ListPosts:input_type -> social.v1.ListPostsRequest
-	12, // 16: social.v1.SocialService.CommentOnPost:input_type -> social.v1.CommentOnPostRequest
-	13, // 17: social.v1.SocialService.LikePost:input_type -> social.v1.LikePostRequest
-	15, // 18: social.v1.SocialService.GetFeed:input_type -> social.v1.GetFeedRequest
-	17, // 19: social.v1.SocialService.SavePost:input_type -> social.v1.SavePostRequest
-	19, // 20: social.v1.SocialService.UnsavePost:input_type -> social.v1.UnsavePostRequest
-	21, // 21: social.v1.SocialService.ListSavedPosts:input_type -> social.v1.ListSavedPostsRequest
-	23, // 22: social.v1.SocialService.SharePost:input_type -> social.v1.SharePostRequest
-	1,  // 23: social.v1.SocialService.ListMyMemories:input_type -> social.v1.ListMyMemoriesRequest
-	5,  // 24: social.v1.SocialService.CreatePost:output_type -> social.v1.Post
-	5,  // 25: social.v1.SocialService.GetPost:output_type -> social.v1.Post
-	11, // 26: social.v1.SocialService.ListPosts:output_type -> social.v1.ListPostsResponse
-	7,  // 27: social.v1.SocialService.CommentOnPost:output_type -> social.v1.Comment
-	14, // 28: social.v1.SocialService.LikePost:output_type -> social.v1.LikePostResponse
-	16, // 29: social.v1.SocialService.GetFeed:output_type -> social.v1.GetFeedResponse
-	18, // 30: social.v1.SocialService.SavePost:output_type -> social.v1.SavePostResponse
-	20, // 31: social.v1.SocialService.UnsavePost:output_type -> social.v1.UnsavePostResponse
-	22, // 32: social.v1.SocialService.ListSavedPosts:output_type -> social.v1.ListSavedPostsResponse
-	24, // 33: social.v1.SocialService.SharePost:output_type -> social.v1.SharePostResponse
-	4,  // 34: social.v1.SocialService.ListMyMemories:output_type -> social.v1.ListMyMemoriesResponse
-	24, // [24:35] is the sub-list for method output_type
-	13, // [13:24] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	27, // 4: social.v1.Comment.audit:type_name -> social.v1.Audit
+	28, // 5: social.v1.ListCommentsRequest.page:type_name -> social.v1.PageRequest
+	7,  // 6: social.v1.ListCommentsResponse.comments:type_name -> social.v1.Comment
+	29, // 7: social.v1.ListCommentsResponse.page:type_name -> social.v1.PageResponse
+	6,  // 8: social.v1.CreatePostRequest.media:type_name -> social.v1.PostMedia
+	28, // 9: social.v1.ListPostsRequest.page:type_name -> social.v1.PageRequest
+	5,  // 10: social.v1.ListPostsResponse.posts:type_name -> social.v1.Post
+	29, // 11: social.v1.ListPostsResponse.page:type_name -> social.v1.PageResponse
+	0,  // 12: social.v1.GetFeedRequest.scope:type_name -> social.v1.FeedScope
+	28, // 13: social.v1.GetFeedRequest.page:type_name -> social.v1.PageRequest
+	5,  // 14: social.v1.GetFeedResponse.posts:type_name -> social.v1.Post
+	29, // 15: social.v1.GetFeedResponse.page:type_name -> social.v1.PageResponse
+	5,  // 16: social.v1.ListSavedPostsResponse.posts:type_name -> social.v1.Post
+	10, // 17: social.v1.SocialService.CreatePost:input_type -> social.v1.CreatePostRequest
+	11, // 18: social.v1.SocialService.GetPost:input_type -> social.v1.GetPostRequest
+	12, // 19: social.v1.SocialService.ListPosts:input_type -> social.v1.ListPostsRequest
+	14, // 20: social.v1.SocialService.CommentOnPost:input_type -> social.v1.CommentOnPostRequest
+	8,  // 21: social.v1.SocialService.ListComments:input_type -> social.v1.ListCommentsRequest
+	15, // 22: social.v1.SocialService.LikePost:input_type -> social.v1.LikePostRequest
+	17, // 23: social.v1.SocialService.GetFeed:input_type -> social.v1.GetFeedRequest
+	19, // 24: social.v1.SocialService.SavePost:input_type -> social.v1.SavePostRequest
+	21, // 25: social.v1.SocialService.UnsavePost:input_type -> social.v1.UnsavePostRequest
+	23, // 26: social.v1.SocialService.ListSavedPosts:input_type -> social.v1.ListSavedPostsRequest
+	25, // 27: social.v1.SocialService.SharePost:input_type -> social.v1.SharePostRequest
+	1,  // 28: social.v1.SocialService.ListMyMemories:input_type -> social.v1.ListMyMemoriesRequest
+	5,  // 29: social.v1.SocialService.CreatePost:output_type -> social.v1.Post
+	5,  // 30: social.v1.SocialService.GetPost:output_type -> social.v1.Post
+	13, // 31: social.v1.SocialService.ListPosts:output_type -> social.v1.ListPostsResponse
+	7,  // 32: social.v1.SocialService.CommentOnPost:output_type -> social.v1.Comment
+	9,  // 33: social.v1.SocialService.ListComments:output_type -> social.v1.ListCommentsResponse
+	16, // 34: social.v1.SocialService.LikePost:output_type -> social.v1.LikePostResponse
+	18, // 35: social.v1.SocialService.GetFeed:output_type -> social.v1.GetFeedResponse
+	20, // 36: social.v1.SocialService.SavePost:output_type -> social.v1.SavePostResponse
+	22, // 37: social.v1.SocialService.UnsavePost:output_type -> social.v1.UnsavePostResponse
+	24, // 38: social.v1.SocialService.ListSavedPosts:output_type -> social.v1.ListSavedPostsResponse
+	26, // 39: social.v1.SocialService.SharePost:output_type -> social.v1.SharePostResponse
+	4,  // 40: social.v1.SocialService.ListMyMemories:output_type -> social.v1.ListMyMemoriesResponse
+	29, // [29:41] is the sub-list for method output_type
+	17, // [17:29] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_social_proto_init() }
@@ -1658,7 +1786,7 @@ func file_social_v1_social_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_social_proto_rawDesc), len(file_social_v1_social_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   24,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
