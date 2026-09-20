@@ -125,9 +125,19 @@ func (s *Service) GetMyCreditBalance(ctx context.Context, userID string) (int64,
 	return s.repo.GetCreditBalance(ctx, userID)
 }
 
-func (s *Service) GetPayment(ctx context.Context, id string) (*Payment, error) {
-	if id == "" {
+// GetPayment returns a payment to its owner (or staff). Anyone else gets "not found", so ids can't be probed.
+func (s *Service) GetPayment(ctx context.Context, id, callerID string, staff bool) (*Payment, error) {
+	if id == "" || callerID == "" {
 		return nil, ErrInvalidInput
+	}
+	if !staff {
+		owner, err := s.repo.PaymentOwner(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		if owner != callerID {
+			return nil, ErrPaymentNotFound
+		}
 	}
 	return s.repo.GetPayment(ctx, id)
 }

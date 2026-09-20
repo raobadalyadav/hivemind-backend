@@ -4,6 +4,7 @@ package users
 
 import (
 	"context"
+	"errors"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -49,13 +50,75 @@ func (r *Repository) UpdateCity(ctx context.Context, userID, cityID string) (*Us
 	return &u, nil
 }
 
-// SoftDelete marks the account deleted without erasing the row — bookings,
-// reviews, and moderation history reference users.id and must stay intact.
-func (r *Repository) SoftDelete(ctx context.Context, userID string) error {
-	_, err := r.pool.Exec(ctx,
-		`UPDATE users SET status = 'deleted', updated_at = now() WHERE id = $1`, userID,
-	)
-	return err
+// ErrActiveCommitments: the account can't be erased while other people depend on it.
+var ErrActiveCommitments = errors.New("users: cancel your upcoming bookings, hosted plans and communities before deleting your account")
+
+// eraseStatements remove what the person made or holds; each runs with $1 = the user id.
+// Kept: bookings, payments, ledger, reviews, moderation and audit history (money and safety records
+// other people and the law depend on), and messages already sent (they show as "Deleted user").
+var eraseStatements = []string{
+	`DELETE FROM refresh_tokens WHERE user_id = $1`,
+	`DELETE FROM recovery_codes WHERE user_id = $1`,
+	`DELETE FROM devices WHERE user_id = $1`,
+	`DELETE FROM oauth_identities WHERE user_id = $1`,
+	`DELETE FROM notifications WHERE user_id = $1 OR actor_id = $1`,
+	`DELETE FROM notification_preferences WHERE user_id = $1`,
+	`DELETE FROM post_saves WHERE user_id = $1`,
+	`DELETE FROM plan_saves WHERE user_id = $1`,
+	`DELETE FROM likes WHERE user_id = $1`,
+	`DELETE FROM story_likes WHERE user_id = $1`,
+	`DELETE FROM story_views WHERE viewer_id = $1`,
+	`DELETE FROM profile_views WHERE viewer_id = $1 OR viewed_id = $1`,
+	`DELETE FROM comments WHERE author_id = $1`,
+	`DELETE FROM posts WHERE author_id = $1`,
+	`DELETE FROM stories WHERE author_id = $1`,
+	`DELETE FROM profile_photos WHERE user_id = $1`,
+	`DELETE FROM profile_boosts WHERE user_id = $1`,
+	`DELETE FROM emergency_contacts WHERE user_id = $1`,
+	`DELETE FROM user_preferences WHERE user_id = $1`,
+	`DELETE FROM availability_windows WHERE user_id = $1`,
+	`DELETE FROM waitlist_entries WHERE user_id = $1`,
+	`DELETE FROM plan_join_requests WHERE user_id = $1`,
+	`DELETE FROM plan_invites WHERE user_id = $1`,
+	`DELETE FROM community_join_requests WHERE user_id = $1`,
+	`DELETE FROM community_members WHERE user_id = $1`,
+	`DELETE FROM chat_members WHERE user_id = $1`,
+	`DELETE FROM connections WHERE requester_id = $1 OR recipient_id = $1`,
+	`DELETE FROM verification_requests WHERE user_id = $1`,
+	`UPDATE user_profiles SET display_name = 'Deleted user', bio = '', occupation = '', education = '',
+	     interests = '{}', languages = '{}', hobbies = '{}', gender = NULL, selfie_verified_at = NULL,
+	     show_in_participant_previews = false, hide_profile_views = true, updated_at = now() WHERE user_id = $1`,
+	`UPDATE users SET status = 'deleted', email = 'deleted+' || id::text || '@deleted.invalid',
+	     recovery_email = NULL, recovery_email_verified_at = NULL, date_of_birth = NULL, city_id = NULL,
+	     last_location = NULL, last_location_at = NULL, updated_at = now() WHERE id = $1`,
+}
+
+// EraseAccount deletes the person's data and frees their e-mail / sign-in identity, keeping only the
+// records that must outlive them (see eraseStatements). Everything happens in one transaction.
+func (r *Repository) EraseAccount(ctx context.Context, userID string) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	var busy bool
+	if err := tx.QueryRow(ctx, `
+		SELECT EXISTS (SELECT 1 FROM bookings b JOIN plans p ON p.id = b.plan_id
+		               WHERE b.user_id = $1 AND b.status = 'confirmed' AND GREATEST(p.ends_at, p.starts_at) > now())
+		    OR EXISTS (SELECT 1 FROM plans WHERE host_id = $1 AND status = 'published' AND GREATEST(ends_at, starts_at) > now())
+		    OR EXISTS (SELECT 1 FROM communities WHERE owner_id = $1)`, userID).Scan(&busy); err != nil {
+		return err
+	}
+	if busy {
+		return ErrActiveCommitments
+	}
+	for _, q := range eraseStatements {
+		if _, err := tx.Exec(ctx, q, userID); err != nil {
+			return err
+		}
+	}
+	return tx.Commit(ctx)
 }
 
 func (r *Repository) UpsertDevice(ctx context.Context, userID, deviceID, pushToken, platform string) error {

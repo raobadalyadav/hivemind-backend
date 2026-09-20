@@ -3,9 +3,13 @@ package moderation
 import (
 	"context"
 	"errors"
+	"strings"
 )
 
-var ErrInvalidInput = errors.New("moderation: invalid input")
+var (
+	ErrInvalidInput = errors.New("moderation: invalid input")
+	ErrCaseNotFound = errors.New("moderation: case not found")
+)
 
 type Service struct {
 	repo *Repository
@@ -15,9 +19,18 @@ func NewService(repo *Repository) *Service {
 	return &Service{repo: repo}
 }
 
+// ReportableTypes is everything a person can report from the app.
+var ReportableTypes = map[string]bool{"user": true, "plan": true, "message": true, "post": true, "comment": true, "story": true, "community": true}
+
+const maxReportReason = 1000
+
 func (s *Service) SubmitReport(ctx context.Context, c *Case) (*Case, error) {
-	if c.ReporterID == "" || c.SubjectID == "" || c.Reason == "" {
+	c.Reason = strings.TrimSpace(c.Reason)
+	if c.ReporterID == "" || c.SubjectID == "" || c.Reason == "" || len(c.Reason) > maxReportReason || !ReportableTypes[c.SubjectType] {
 		return nil, ErrInvalidInput
+	}
+	if c.SubjectType == "user" && c.SubjectID == c.ReporterID {
+		return nil, ErrInvalidInput // reporting yourself is never meaningful
 	}
 	return s.repo.Create(ctx, c)
 }
@@ -44,11 +57,19 @@ func (s *Service) AutoFlagForSubject(ctx context.Context, subjectType, subjectID
 	return s.repo.CreateAutoFlagged(ctx, subjectType, subjectID, actorID, severity, reason)
 }
 
-func (s *Service) GetCase(ctx context.Context, id string) (*Case, error) {
-	if id == "" {
+// GetCase returns a case to whoever filed it (or staff); for anyone else it doesn't exist.
+func (s *Service) GetCase(ctx context.Context, id, callerID string, staff bool) (*Case, error) {
+	if id == "" || callerID == "" {
 		return nil, ErrInvalidInput
 	}
-	return s.repo.Get(ctx, id)
+	c, err := s.repo.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if !staff && c.ReporterID != callerID {
+		return nil, ErrCaseNotFound
+	}
+	return c, nil
 }
 
 func (s *Service) ResolveCase(ctx context.Context, caseID, resolution string) (*Case, error) {

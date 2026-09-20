@@ -184,3 +184,38 @@ func TestRepository_CreateOrderWithCredits_CapsAtBalance(t *testing.T) {
 		t.Errorf("expected balance 0 after spending it all, got %d", balance)
 	}
 }
+
+func TestGetPayment_OnlyTheOwnerOrStaff(t *testing.T) {
+	pool := testPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	repo := NewRepository(pool)
+	svc := &Service{repo: repo}
+	suffix := time.Now().Format("150405.000000000")
+	var owner, other, plan, booking string
+	pool.QueryRow(ctx, `INSERT INTO users (email) VALUES ($1) RETURNING id`, "pay-own-"+suffix+"@example.com").Scan(&owner)
+	pool.QueryRow(ctx, `INSERT INTO users (email) VALUES ($1) RETURNING id`, "pay-oth-"+suffix+"@example.com").Scan(&other)
+	pool.QueryRow(ctx, `INSERT INTO plans (title, host_id, starts_at, ends_at, capacity, status) VALUES ('P', $1, now()+interval '1 day', now()+interval '2 days', 5, 'published') RETURNING id`, other).Scan(&plan)
+	pool.QueryRow(ctx, `INSERT INTO bookings (plan_id, user_id, status, price_minor, currency) VALUES ($1,$2,'confirmed',50000,'INR') RETURNING id`, plan, owner).Scan(&booking)
+	order, err := repo.CreateOrder(ctx, &Order{BookingID: booking, AmountMinor: 50000, Currency: "INR"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pay, err := repo.MarkCaptured(ctx, order.ID, "cf_own_"+suffix, 50000, "INR")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if p, err := svc.GetPayment(ctx, pay.ID, owner, false); err != nil || p.ID != pay.ID {
+		t.Fatalf("the payer sees their payment: %v", err)
+	}
+	if _, err := svc.GetPayment(ctx, pay.ID, other, false); err != ErrPaymentNotFound {
+		t.Fatalf("someone else's payment must look like it doesn't exist, got %v", err)
+	}
+	if _, err := svc.GetPayment(ctx, pay.ID, other, true); err != nil {
+		t.Fatalf("staff can read any payment: %v", err)
+	}
+	if _, err := svc.GetPayment(ctx, "not-a-uuid", owner, false); err != ErrPaymentNotFound {
+		t.Fatalf("a malformed id is simply not found, got %v", err)
+	}
+}

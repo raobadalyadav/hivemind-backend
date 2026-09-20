@@ -45,6 +45,7 @@ var adminMethods = map[string]bool{
 	"/social.v1.AdminService/GetDashboardStats":        true,
 	"/social.v1.NotificationService/SendNotification":  true,
 	"/social.v1.ModerationService/ResolveCase":         true,
+	"/social.v1.PaymentService/RefundPayment":          true, // moves money: only staff (the worker refunds cancelled bookings internally, not via this RPC)
 	"/social.v1.AdminService/ApproveHost":              true,
 	"/social.v1.AdminService/MarkPayoutProcessed":      true,
 	"/social.v1.AdminService/AdminGrantCredit":         true,
@@ -60,6 +61,9 @@ var adminMethods = map[string]bool{
 	"/social.v1.AdminService/CreateExternalEvent":      true,
 	"/social.v1.AdminService/DeactivateExternalEvent":  true,
 }
+
+// IsAdminRole reports whether a role may act as staff (handlers use it for admin-or-owner checks).
+func IsAdminRole(role string) bool { return isAdminRole(role) }
 
 func isAdminRole(role string) bool {
 	return role == "admin" || role == "super_admin"

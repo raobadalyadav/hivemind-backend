@@ -43,7 +43,12 @@ func (h *Handler) SubmitReport(ctx context.Context, req *socialv1.SubmitReportRe
 }
 
 func (h *Handler) GetCase(ctx context.Context, req *socialv1.GetCaseRequest) (*socialv1.ModerationCase, error) {
-	c, err := h.svc.GetCase(ctx, req.GetId())
+	callerID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	role, _ := grpcmiddleware.RoleFromContext(ctx)
+	c, err := h.svc.GetCase(ctx, req.GetId(), callerID, grpcmiddleware.IsAdminRole(role))
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "case not found")
 	}

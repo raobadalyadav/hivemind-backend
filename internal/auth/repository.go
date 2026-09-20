@@ -167,11 +167,29 @@ func (r *Repository) ConsumeRefreshToken(ctx context.Context, tokenHash string) 
 	).Scan(&row.UserID, &row.DeviceID, &row.ExpiresAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
+			r.revokeFamilyIfReplayed(ctx, tokenHash)
 			return nil, ErrRefreshTokenInvalid
 		}
 		return nil, err
 	}
 	return &row, nil
+}
+
+// replayGrace: a client that lost the response to a refresh may legitimately retry the old token for a
+// moment; presenting one that was used longer ago than this means it was copied, so every session of that
+// user is revoked and they must sign in again.
+const replayGrace = 60 * time.Second
+
+func (r *Repository) revokeFamilyIfReplayed(ctx context.Context, tokenHash string) {
+	var userID string
+	err := r.pool.QueryRow(ctx, `
+		SELECT user_id::text FROM refresh_tokens
+		WHERE token_hash = $1 AND revoked_at IS NOT NULL AND revoked_at < now() - make_interval(secs => $2)
+		  AND expires_at > now()`, tokenHash, replayGrace.Seconds()).Scan(&userID)
+	if err != nil {
+		return
+	}
+	_, _ = r.pool.Exec(ctx, `UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`, userID)
 }
 
 // RevokeDeviceTokens revokes every live refresh token for the user's device

@@ -55,7 +55,12 @@ func (h *Handler) CreateOrder(ctx context.Context, req *socialv1.CreateOrderRequ
 }
 
 func (h *Handler) GetPayment(ctx context.Context, req *socialv1.GetPaymentRequest) (*socialv1.Payment, error) {
-	p, err := h.svc.GetPayment(ctx, req.GetId())
+	callerID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	role, _ := grpcmiddleware.RoleFromContext(ctx)
+	p, err := h.svc.GetPayment(ctx, req.GetId(), callerID, grpcmiddleware.IsAdminRole(role))
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "payment not found")
 	}

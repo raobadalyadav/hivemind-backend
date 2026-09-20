@@ -308,7 +308,7 @@ func (r *Repository) List(ctx context.Context, cityID, categoryID, query, viewer
 		  AND (NOT $6 OR EXISTS (SELECT 1 FROM community_members mm WHERE mm.community_id = c.id AND mm.user_id = NULLIF($5,'')::uuid))
 		  AND (c.city_id = NULLIF($1,'')::uuid OR $1 = '')
 		  AND (c.category_id = NULLIF($2,'')::uuid OR $2 = '')
-		  AND ($3 = '' OR c.name ILIKE '%' || $3 || '%')
+		  AND ($3 = '' OR c.name ILIKE '%' || replace(replace(replace($3, '\', '\\'), '%', '\%'), '_', '\_') || '%')
 		ORDER BY (SELECT count(*) FROM community_members m WHERE m.community_id = c.id) DESC, c.name
 		LIMIT $4`, cityID, categoryID, query, limit, viewerID, onlyMine)
 	if err != nil {

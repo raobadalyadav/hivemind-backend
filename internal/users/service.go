@@ -33,7 +33,7 @@ func (s *Service) DeleteAccount(ctx context.Context, id string) error {
 	if id == "" {
 		return ErrInvalidInput
 	}
-	return s.repo.SoftDelete(ctx, id)
+	return s.repo.EraseAccount(ctx, id)
 }
 
 func (s *Service) RegisterDevice(ctx context.Context, userID, deviceID, pushToken, platform string) error {

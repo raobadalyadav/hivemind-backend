@@ -33,9 +33,9 @@ func cashfreeWebhookHandler(paymentsSvc *payments.Service, promotionsSvc *promot
 			return
 		}
 
-		body, err := io.ReadAll(r.Body)
+		body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 1<<20)) // webhook payloads are a few KB
 		if err != nil {
-			http.Error(w, "failed to read body", http.StatusBadRequest)
+			http.Error(w, "failed to read body", http.StatusRequestEntityTooLarge)
 			return
 		}
 

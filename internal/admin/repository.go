@@ -28,7 +28,7 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 func (r *Repository) ListUsers(ctx context.Context, query string, limit int) ([]string, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT id FROM users
-		WHERE $1 = '' OR email ILIKE '%' || $1 || '%'
+		WHERE $1 = '' OR email ILIKE '%' || replace(replace(replace($1, '\', '\\'), '%', '\%'), '_', '\_') || '%'
 		ORDER BY created_at DESC LIMIT $2`, query, limit,
 	)
 	if err != nil {

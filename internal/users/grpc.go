@@ -22,7 +22,21 @@ func NewHandler(svc *Service) *Handler {
 }
 
 func (h *Handler) GetUser(ctx context.Context, req *socialv1.GetUserRequest) (*socialv1.User, error) {
-	u, err := h.svc.GetUser(ctx, req.GetUserId())
+	caller, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	// The user record carries the email: it is yours (or staff's) to read, nobody else's.
+	// Other people's public data lives on their profile (ProfileService.GetProfile).
+	role, _ := grpcmiddleware.RoleFromContext(ctx)
+	id := req.GetUserId()
+	if id == "" {
+		id = caller
+	}
+	if id != caller && !grpcmiddleware.IsAdminRole(role) {
+		return nil, status.Error(codes.NotFound, "user not found")
+	}
+	u, err := h.svc.GetUser(ctx, id)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "user not found")
 	}
@@ -50,6 +64,9 @@ func (h *Handler) DeleteAccount(ctx context.Context, req *socialv1.DeleteAccount
 		return nil, status.Error(codes.Unauthenticated, "auth required")
 	}
 	if err := h.svc.DeleteAccount(ctx, userID); err != nil {
+		if err == ErrActiveCommitments {
+			return nil, status.Error(codes.FailedPrecondition, err.Error())
+		}
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}

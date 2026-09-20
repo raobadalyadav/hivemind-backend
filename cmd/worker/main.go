@@ -37,6 +37,10 @@ const outboxPollInterval = 2 * time.Second
 func main() {
 	logger := observability.NewLogger()
 	cfg := config.Load()
+	if err := cfg.Validate(); err != nil {
+		logger.Error("refusing to start", "env", cfg.AppEnv, "error", err)
+		os.Exit(1)
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()

@@ -6,6 +6,9 @@ package main
 
 import (
 	"context"
+	"errors"
+	"github.com/jackc/pgx/v5"
+	"google.golang.org/grpc/credentials"
 	"net"
 	"net/http"
 	"os"
@@ -68,6 +71,10 @@ import (
 func main() {
 	logger := observability.NewLogger()
 	cfg := config.Load()
+	if err := cfg.Validate(); err != nil {
+		logger.Error("refusing to start", "env", cfg.AppEnv, "error", err)
+		os.Exit(1)
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -101,12 +108,42 @@ func main() {
 		mediaResolver = mediaSvc
 	}
 
-	interceptors := grpc.ChainUnaryInterceptor(
+	// Order: recover → log → per-IP limit on the token-less calls → authenticate → refuse suspended/deleted
+	// accounts → per-user limit.
+	var publicLimiter, userLimiter *grpcmiddleware.RateLimiter
+	if cfg.AuthRateLimitPerMinute > 0 {
+		publicLimiter = grpcmiddleware.NewRateLimiter(ctx, cfg.AuthRateLimitPerMinute)
+	}
+	if cfg.RateLimitPerMinute > 0 {
+		userLimiter = grpcmiddleware.NewRateLimiter(ctx, cfg.RateLimitPerMinute)
+	}
+	activeCheck := func(ctx context.Context, userID string) (bool, error) {
+		var active bool
+		err := pool.QueryRow(ctx, `SELECT status = 'active' FROM users WHERE id = $1`, userID).Scan(&active)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+		return active, err
+	}
+	serverOpts := []grpc.ServerOption{grpc.ChainUnaryInterceptor(
 		grpcmiddleware.RecoveryUnaryInterceptor(logger),
 		grpcmiddleware.LoggingUnaryInterceptor(logger),
+		grpcmiddleware.PublicRateLimitInterceptor(publicLimiter, cfg.TrustProxyHeaders),
 		grpcmiddleware.AuthUnaryInterceptor(issuer),
-	)
-	srv := grpc.NewServer(interceptors)
+		grpcmiddleware.ActiveUserInterceptor(activeCheck, 30*time.Second),
+		grpcmiddleware.UserRateLimitInterceptor(userLimiter),
+	)}
+	if cfg.TLSCertFile != "" {
+		creds, err := credentials.NewServerTLSFromFile(cfg.TLSCertFile, cfg.TLSKeyFile)
+		if err != nil {
+			logger.Error("load TLS certificate", "error", err)
+			os.Exit(1)
+		}
+		serverOpts = append(serverOpts, grpc.Creds(creds))
+	} else if cfg.Production() {
+		logger.Warn("serving gRPC without TLS — a load balancer in front must terminate it")
+	}
+	srv := grpc.NewServer(serverOpts...)
 
 	// Construction order matters: bookingsSvc and moderationSvc are built
 	// first so they can be injected into plans/chat via the
@@ -228,10 +265,11 @@ func main() {
 	healthpb.RegisterHealthServer(srv, healthSrv)
 	healthSrv.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
 
-	// Reflection makes local debugging with grpcurl/grpcui possible without
-	// shipping .proto files alongside the binary. Harmless to leave on in
-	// this scaffold; revisit before a production deploy if that's a concern.
-	reflection.Register(srv)
+	// Reflection makes local debugging with grpcurl/grpcui possible without shipping .proto files;
+	// it also hands an attacker the whole API surface, so it is off in production.
+	if !cfg.Production() {
+		reflection.Register(srv)
+	}
 
 	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
 	if err != nil {
@@ -253,7 +291,15 @@ func main() {
 		media.NewHandler(mediaSvc, issuer, logger).Register(webhookMux)
 	}
 	webhookMux.HandleFunc("/webhooks/cashfree", cashfreeWebhookHandler(paymentsSvc, promotionsSvc, cashfreeClient, logger))
-	webhookSrv := &http.Server{Addr: ":" + cfg.WebhookPort, Handler: webhookMux}
+	webhookSrv := &http.Server{
+		Addr:              ":" + cfg.WebhookPort,
+		Handler:           webhookMux,
+		ReadHeaderTimeout: 10 * time.Second, // slowloris
+		ReadTimeout:       2 * time.Minute,  // uploads are up to 60 MB
+		WriteTimeout:      2 * time.Minute,
+		IdleTimeout:       2 * time.Minute,
+		MaxHeaderBytes:    64 << 10,
+	}
 	go func() {
 		logger.Info("webhook server starting", "port", cfg.WebhookPort)
 		if err := webhookSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

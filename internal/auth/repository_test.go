@@ -150,3 +150,42 @@ func TestRepository_RecoveryEmailAndCodeRoundTrip(t *testing.T) {
 		t.Errorf("expected user id %q, got %q", userID, u.ID)
 	}
 }
+
+func TestRefreshToken_ReplayOfAnOldTokenRevokesEverySession(t *testing.T) {
+	pool := testPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	repo := NewRepository(pool)
+	var user string
+	if err := pool.QueryRow(ctx, `INSERT INTO users (email) VALUES ($1) RETURNING id`, uniqueEmail(t, "replay")).Scan(&user); err != nil {
+		t.Fatal(err)
+	}
+	add := func(hash string) {
+		if _, err := pool.Exec(ctx, `INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1,$2, now()+interval '30 days')`, user, hash); err != nil {
+			t.Fatal(err)
+		}
+	}
+	live := func() int {
+		var n int
+		pool.QueryRow(ctx, `SELECT count(*) FROM refresh_tokens WHERE user_id=$1 AND revoked_at IS NULL`, user).Scan(&n)
+		return n
+	}
+	h := uniqueSub(t, "old")
+	add(h)
+	add(uniqueSub(t, "other-device"))
+	if _, err := repo.ConsumeRefreshToken(ctx, h); err != nil {
+		t.Fatalf("first use rotates: %v", err)
+	}
+	// an immediate retry (lost response) is just refused, nothing else happens
+	if _, err := repo.ConsumeRefreshToken(ctx, h); err != ErrRefreshTokenInvalid || live() != 1 {
+		t.Fatalf("a quick retry is refused without revoking the family (live=%d, err=%v)", live(), err)
+	}
+	// the same token shown a minute later was stolen: everything goes
+	pool.Exec(ctx, `UPDATE refresh_tokens SET revoked_at = now() - interval '5 minutes' WHERE token_hash=$1`, h)
+	if _, err := repo.ConsumeRefreshToken(ctx, h); err != ErrRefreshTokenInvalid {
+		t.Fatalf("replay refused: %v", err)
+	}
+	if live() != 0 {
+		t.Fatalf("a replayed token must revoke all the user's sessions, %d live", live())
+	}
+}

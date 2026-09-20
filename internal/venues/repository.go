@@ -179,7 +179,7 @@ func (r *Repository) Search(ctx context.Context, callerID, cityID, query string,
 			ST_Y(location::geometry), ST_X(location::geometry)
 		FROM venues
 		WHERE city_id = COALESCE(NULLIF($2,'')::uuid, (SELECT city_id FROM users WHERE id = $1))
-		  AND ($3 = '' OR name ILIKE '%' || $3 || '%' OR address ILIKE '%' || $3 || '%')
+		  AND ($3 = '' OR name ILIKE '%' || replace(replace(replace($3, '\', '\\'), '%', '\%'), '_', '\_') || '%' OR address ILIKE '%' || replace(replace(replace($3, '\', '\\'), '%', '\%'), '_', '\_') || '%')
 		ORDER BY name LIMIT $4`, callerID, cityID, query, limit)
 	if err != nil {
 		return nil, err

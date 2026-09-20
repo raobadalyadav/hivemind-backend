@@ -201,6 +201,23 @@ func (r *Repository) GetPayment(ctx context.Context, id string) (*Payment, error
 	return &p, nil
 }
 
+// PaymentOwner returns the user a payment belongs to (payment → order → booking).
+func (r *Repository) PaymentOwner(ctx context.Context, paymentID string) (string, error) {
+	var owner string
+	err := r.pool.QueryRow(ctx, `
+		SELECT b.user_id::text FROM payments p
+		JOIN orders o ON o.id = p.order_id
+		JOIN bookings b ON b.id = o.booking_id
+		WHERE p.id = $1`, paymentID).Scan(&owner)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) || isBadUUID(err) {
+			return "", ErrPaymentNotFound
+		}
+		return "", err
+	}
+	return owner, nil
+}
+
 // FindCapturedPaymentForBooking is used by cmd/worker's BOOKING_CANCELLED
 // handler to decide whether there's anything to refund.
 func (r *Repository) FindCapturedPaymentForBooking(ctx context.Context, bookingID string) (*Payment, error) {
@@ -381,4 +398,10 @@ func (r *Repository) CreateRefund(ctx context.Context, paymentID string, amountM
 		return nil, err
 	}
 	return &refund, nil
+}
+
+// isBadUUID: a malformed id is "not found", not an internal error.
+func isBadUUID(err error) bool {
+	var pg *pgconn.PgError
+	return errors.As(err, &pg) && pg.Code == "22P02"
 }
