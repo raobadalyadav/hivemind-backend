@@ -12,6 +12,8 @@ service NotificationService {
   rpc SendNotification(SendNotificationRequest) returns (SendNotificationResponse);
   rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse);
   rpc UpdatePreferences(UpdatePreferencesRequest) returns (UpdatePreferencesResponse);
+  // GetPreferences: the caller's current settings (defaults: push and e-mail on).
+  rpc GetPreferences(GetPreferencesRequest) returns (NotificationPreferences);
 }
 
 message Notification {
@@ -55,3 +57,11 @@ message UpdatePreferencesRequest {
 }
 
 message UpdatePreferencesResponse {}
+
+message GetPreferencesRequest {}
+message NotificationPreferences {
+  bool push_enabled = 1;
+  bool email_enabled = 2;
+  string quiet_hours_start = 3; // HH:MM or empty
+  string quiet_hours_end = 4;
+}

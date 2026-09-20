@@ -12,6 +12,7 @@ var (
 	ErrEntitlementRequired = errors.New("communities: this paid community requires an active subscription")
 	ErrAlreadyDecided      = errors.New("communities: join request was already decided differently")
 	ErrOwnerCannotLeave    = errors.New("communities: the owner cannot leave their community")
+	ErrJoinDeclined        = errors.New("communities: your earlier request to join was declined by the owners")
 )
 
 // EntitlementChecker is satisfied by *subscriptions.Service. A paid
@@ -120,6 +121,9 @@ func (s *Service) JoinCommunity(ctx context.Context, communityID, userID string)
 		}
 		if st == "approved" { // e.g. invited, or approved earlier
 			return s.repo.Join(ctx, communityID, userID)
+		}
+		if st == "rejected" {
+			return nil, ErrJoinDeclined
 		}
 		return &Membership{CommunityID: communityID, UserID: userID, Role: "", Status: st}, nil
 	case "private":

@@ -398,7 +398,7 @@ func (h *Handler) GetPlanParticipants(ctx context.Context, req *socialv1.GetPlan
 	}
 	return &socialv1.GetPlanParticipantsResponse{
 		Participants: cards, TotalAttending: ps.TotalAttending, HiddenCount: ps.HiddenCount,
-		ConnectionsAttending: ps.ConnectionsAttending,
+		ConnectionsAttending: ps.ConnectionsAttending, HiddenByMe: ps.HiddenByMe,
 	}, nil
 }
 

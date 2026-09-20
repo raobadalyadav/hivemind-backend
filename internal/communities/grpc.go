@@ -51,7 +51,7 @@ func (h *Handler) GetCommunity(ctx context.Context, req *socialv1.GetCommunityRe
 	callerID, _ := grpcmiddleware.UserIDFromContext(ctx)
 	c, err := h.svc.GetCommunity(ctx, req.GetId(), callerID)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, "community not found")
+		return nil, communityErr(err, "failed to load community")
 	}
 	return toProto(c), nil
 }
@@ -92,6 +92,7 @@ func toProto(c *Community) *socialv1.Community {
 		MemberCount:         c.MemberCount,
 		PlanCount:           c.PlanCount,
 		IsMember:            c.IsMember,
+		JoinPending:         c.JoinPending,
 	}
 }
 
@@ -133,7 +134,7 @@ func communityErr(err error, fallback string) error {
 		return status.Error(codes.PermissionDenied, err.Error())
 	case ErrCommunityNotFound, ErrRequestNotFound:
 		return status.Error(codes.NotFound, err.Error())
-	case ErrAlreadyDecided, ErrOwnerCannotLeave:
+	case ErrAlreadyDecided, ErrOwnerCannotLeave, ErrJoinDeclined:
 		return status.Error(codes.FailedPrecondition, err.Error())
 	default:
 		return status.Error(codes.Internal, fallback)

@@ -449,6 +449,110 @@ func (*UpdatePreferencesResponse) Descriptor() ([]byte, []int) {
 	return file_social_v1_notification_proto_rawDescGZIP(), []int{6}
 }
 
+type GetPreferencesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPreferencesRequest) Reset() {
+	*x = GetPreferencesRequest{}
+	mi := &file_social_v1_notification_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPreferencesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPreferencesRequest) ProtoMessage() {}
+
+func (x *GetPreferencesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_notification_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPreferencesRequest.ProtoReflect.Descriptor instead.
+func (*GetPreferencesRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_notification_proto_rawDescGZIP(), []int{7}
+}
+
+type NotificationPreferences struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	PushEnabled     bool                   `protobuf:"varint,1,opt,name=push_enabled,json=pushEnabled,proto3" json:"push_enabled,omitempty"`
+	EmailEnabled    bool                   `protobuf:"varint,2,opt,name=email_enabled,json=emailEnabled,proto3" json:"email_enabled,omitempty"`
+	QuietHoursStart string                 `protobuf:"bytes,3,opt,name=quiet_hours_start,json=quietHoursStart,proto3" json:"quiet_hours_start,omitempty"` // HH:MM or empty
+	QuietHoursEnd   string                 `protobuf:"bytes,4,opt,name=quiet_hours_end,json=quietHoursEnd,proto3" json:"quiet_hours_end,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *NotificationPreferences) Reset() {
+	*x = NotificationPreferences{}
+	mi := &file_social_v1_notification_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NotificationPreferences) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NotificationPreferences) ProtoMessage() {}
+
+func (x *NotificationPreferences) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_notification_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NotificationPreferences.ProtoReflect.Descriptor instead.
+func (*NotificationPreferences) Descriptor() ([]byte, []int) {
+	return file_social_v1_notification_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *NotificationPreferences) GetPushEnabled() bool {
+	if x != nil {
+		return x.PushEnabled
+	}
+	return false
+}
+
+func (x *NotificationPreferences) GetEmailEnabled() bool {
+	if x != nil {
+		return x.EmailEnabled
+	}
+	return false
+}
+
+func (x *NotificationPreferences) GetQuietHoursStart() string {
+	if x != nil {
+		return x.QuietHoursStart
+	}
+	return ""
+}
+
+func (x *NotificationPreferences) GetQuietHoursEnd() string {
+	if x != nil {
+		return x.QuietHoursEnd
+	}
+	return ""
+}
+
 var File_social_v1_notification_proto protoreflect.FileDescriptor
 
 const file_social_v1_notification_proto_rawDesc = "" +
@@ -482,11 +586,18 @@ const file_social_v1_notification_proto_rawDesc = "" +
 	"\remail_enabled\x18\x03 \x01(\bR\femailEnabled\x12*\n" +
 	"\x11quiet_hours_start\x18\x04 \x01(\tR\x0fquietHoursStart\x12&\n" +
 	"\x0fquiet_hours_end\x18\x05 \x01(\tR\rquietHoursEnd\"\x1b\n" +
-	"\x19UpdatePreferencesResponse2\xb2\x02\n" +
+	"\x19UpdatePreferencesResponse\"\x17\n" +
+	"\x15GetPreferencesRequest\"\xb5\x01\n" +
+	"\x17NotificationPreferences\x12!\n" +
+	"\fpush_enabled\x18\x01 \x01(\bR\vpushEnabled\x12#\n" +
+	"\remail_enabled\x18\x02 \x01(\bR\femailEnabled\x12*\n" +
+	"\x11quiet_hours_start\x18\x03 \x01(\tR\x0fquietHoursStart\x12&\n" +
+	"\x0fquiet_hours_end\x18\x04 \x01(\tR\rquietHoursEnd2\x8a\x03\n" +
 	"\x13NotificationService\x12[\n" +
 	"\x10SendNotification\x12\".social.v1.SendNotificationRequest\x1a#.social.v1.SendNotificationResponse\x12^\n" +
 	"\x11ListNotifications\x12#.social.v1.ListNotificationsRequest\x1a$.social.v1.ListNotificationsResponse\x12^\n" +
-	"\x11UpdatePreferences\x12#.social.v1.UpdatePreferencesRequest\x1a$.social.v1.UpdatePreferencesResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
+	"\x11UpdatePreferences\x12#.social.v1.UpdatePreferencesRequest\x1a$.social.v1.UpdatePreferencesResponse\x12V\n" +
+	"\x0eGetPreferences\x12 .social.v1.GetPreferencesRequest\x1a\".social.v1.NotificationPreferencesB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
 var (
 	file_social_v1_notification_proto_rawDescOnce sync.Once
@@ -500,7 +611,7 @@ func file_social_v1_notification_proto_rawDescGZIP() []byte {
 	return file_social_v1_notification_proto_rawDescData
 }
 
-var file_social_v1_notification_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_social_v1_notification_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_social_v1_notification_proto_goTypes = []any{
 	(*Notification)(nil),              // 0: social.v1.Notification
 	(*SendNotificationRequest)(nil),   // 1: social.v1.SendNotificationRequest
@@ -509,24 +620,28 @@ var file_social_v1_notification_proto_goTypes = []any{
 	(*ListNotificationsResponse)(nil), // 4: social.v1.ListNotificationsResponse
 	(*UpdatePreferencesRequest)(nil),  // 5: social.v1.UpdatePreferencesRequest
 	(*UpdatePreferencesResponse)(nil), // 6: social.v1.UpdatePreferencesResponse
-	(*PageRequest)(nil),               // 7: social.v1.PageRequest
-	(*PageResponse)(nil),              // 8: social.v1.PageResponse
+	(*GetPreferencesRequest)(nil),     // 7: social.v1.GetPreferencesRequest
+	(*NotificationPreferences)(nil),   // 8: social.v1.NotificationPreferences
+	(*PageRequest)(nil),               // 9: social.v1.PageRequest
+	(*PageResponse)(nil),              // 10: social.v1.PageResponse
 }
 var file_social_v1_notification_proto_depIdxs = []int32{
-	7, // 0: social.v1.ListNotificationsRequest.page:type_name -> social.v1.PageRequest
-	0, // 1: social.v1.ListNotificationsResponse.notifications:type_name -> social.v1.Notification
-	8, // 2: social.v1.ListNotificationsResponse.page:type_name -> social.v1.PageResponse
-	1, // 3: social.v1.NotificationService.SendNotification:input_type -> social.v1.SendNotificationRequest
-	3, // 4: social.v1.NotificationService.ListNotifications:input_type -> social.v1.ListNotificationsRequest
-	5, // 5: social.v1.NotificationService.UpdatePreferences:input_type -> social.v1.UpdatePreferencesRequest
-	2, // 6: social.v1.NotificationService.SendNotification:output_type -> social.v1.SendNotificationResponse
-	4, // 7: social.v1.NotificationService.ListNotifications:output_type -> social.v1.ListNotificationsResponse
-	6, // 8: social.v1.NotificationService.UpdatePreferences:output_type -> social.v1.UpdatePreferencesResponse
-	6, // [6:9] is the sub-list for method output_type
-	3, // [3:6] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	9,  // 0: social.v1.ListNotificationsRequest.page:type_name -> social.v1.PageRequest
+	0,  // 1: social.v1.ListNotificationsResponse.notifications:type_name -> social.v1.Notification
+	10, // 2: social.v1.ListNotificationsResponse.page:type_name -> social.v1.PageResponse
+	1,  // 3: social.v1.NotificationService.SendNotification:input_type -> social.v1.SendNotificationRequest
+	3,  // 4: social.v1.NotificationService.ListNotifications:input_type -> social.v1.ListNotificationsRequest
+	5,  // 5: social.v1.NotificationService.UpdatePreferences:input_type -> social.v1.UpdatePreferencesRequest
+	7,  // 6: social.v1.NotificationService.GetPreferences:input_type -> social.v1.GetPreferencesRequest
+	2,  // 7: social.v1.NotificationService.SendNotification:output_type -> social.v1.SendNotificationResponse
+	4,  // 8: social.v1.NotificationService.ListNotifications:output_type -> social.v1.ListNotificationsResponse
+	6,  // 9: social.v1.NotificationService.UpdatePreferences:output_type -> social.v1.UpdatePreferencesResponse
+	8,  // 10: social.v1.NotificationService.GetPreferences:output_type -> social.v1.NotificationPreferences
+	7,  // [7:11] is the sub-list for method output_type
+	3,  // [3:7] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_notification_proto_init() }
@@ -541,7 +656,7 @@ func file_social_v1_notification_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_notification_proto_rawDesc), len(file_social_v1_notification_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

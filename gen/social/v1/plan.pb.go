@@ -519,6 +519,7 @@ type GetPlanParticipantsResponse struct {
 	// distinguished so a block can't be inferred).
 	HiddenCount          int32 `protobuf:"varint,3,opt,name=hidden_count,json=hiddenCount,proto3" json:"hidden_count,omitempty"`
 	ConnectionsAttending int32 `protobuf:"varint,4,opt,name=connections_attending,json=connectionsAttending,proto3" json:"connections_attending,omitempty"` // accepted connections of the caller attending
+	HiddenByMe           bool  `protobuf:"varint,5,opt,name=hidden_by_me,json=hiddenByMe,proto3" json:"hidden_by_me,omitempty"`                             // the caller chose to hide themselves on this plan
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -579,6 +580,13 @@ func (x *GetPlanParticipantsResponse) GetConnectionsAttending() int32 {
 		return x.ConnectionsAttending
 	}
 	return 0
+}
+
+func (x *GetPlanParticipantsResponse) GetHiddenByMe() bool {
+	if x != nil {
+		return x.HiddenByMe
+	}
+	return false
 }
 
 type SetParticipantVisibilityRequest struct {
@@ -2326,12 +2334,14 @@ const file_social_v1_plan_proto_rawDesc = "" +
 	"\tphoto_url\x18\x05 \x01(\tR\bphotoUrl\x122\n" +
 	"\x15shared_interest_count\x18\x06 \x01(\x05R\x13sharedInterestCount\x126\n" +
 	"\x17mutual_connection_count\x18\a \x01(\x05R\x15mutualConnectionCount\x124\n" +
-	"\x16shared_community_count\x18\b \x01(\x05R\x14sharedCommunityCount\"\xde\x01\n" +
+	"\x16shared_community_count\x18\b \x01(\x05R\x14sharedCommunityCount\"\x80\x02\n" +
 	"\x1bGetPlanParticipantsResponse\x12>\n" +
 	"\fparticipants\x18\x01 \x03(\v2\x1a.social.v1.ParticipantCardR\fparticipants\x12'\n" +
 	"\x0ftotal_attending\x18\x02 \x01(\x05R\x0etotalAttending\x12!\n" +
 	"\fhidden_count\x18\x03 \x01(\x05R\vhiddenCount\x123\n" +
-	"\x15connections_attending\x18\x04 \x01(\x05R\x14connectionsAttending\"T\n" +
+	"\x15connections_attending\x18\x04 \x01(\x05R\x14connectionsAttending\x12 \n" +
+	"\fhidden_by_me\x18\x05 \x01(\bR\n" +
+	"hiddenByMe\"T\n" +
 	"\x1fSetParticipantVisibilityRequest\x12\x17\n" +
 	"\aplan_id\x18\x01 \x01(\tR\x06planId\x12\x18\n" +
 	"\avisible\x18\x02 \x01(\bR\avisible\"\"\n" +

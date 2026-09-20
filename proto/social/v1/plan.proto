@@ -80,6 +80,7 @@ message GetPlanParticipantsResponse {
   // distinguished so a block can't be inferred).
   int32 hidden_count = 3;
   int32 connections_attending = 4; // accepted connections of the caller attending
+  bool hidden_by_me = 5;           // the caller chose to hide themselves on this plan
 }
 
 message SetParticipantVisibilityRequest {

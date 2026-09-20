@@ -46,7 +46,11 @@ func (h *Handler) GetProfile(ctx context.Context, req *socialv1.GetProfileReques
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "profile not found")
 	}
-	return toProto(p), nil
+	out := toProto(p)
+	if caller, _ := grpcmiddleware.UserIDFromContext(ctx); caller != p.UserID {
+		out.ShowInParticipantPreviews = false // someone else's privacy setting isn't yours to read
+	}
+	return out, nil
 }
 
 func (h *Handler) UpdateProfile(ctx context.Context, req *socialv1.UpdateProfileRequest) (*socialv1.Profile, error) {
@@ -91,18 +95,19 @@ func (h *Handler) SetPrivacy(ctx context.Context, req *socialv1.SetPrivacyReques
 
 func toProto(p *Profile) *socialv1.Profile {
 	return &socialv1.Profile{
-		UserId:             p.UserID,
-		DisplayName:        p.DisplayName,
-		Bio:                p.Bio,
-		Interests:          p.Interests,
-		Languages:          p.Languages,
-		Occupation:         p.Occupation,
-		VerificationStatus: p.VerificationStatus,
-		Gender:             p.Gender,
-		Education:          p.Education,
-		Hobbies:            p.Hobbies,
-		Photos:             photosToProto(p.Photos),
-		SelfieVerified:     p.SelfieVerified,
+		UserId:                    p.UserID,
+		DisplayName:               p.DisplayName,
+		Bio:                       p.Bio,
+		Interests:                 p.Interests,
+		Languages:                 p.Languages,
+		Occupation:                p.Occupation,
+		VerificationStatus:        p.VerificationStatus,
+		Gender:                    p.Gender,
+		Education:                 p.Education,
+		Hobbies:                   p.Hobbies,
+		Photos:                    photosToProto(p.Photos),
+		SelfieVerified:            p.SelfieVerified,
+		ShowInParticipantPreviews: p.ShowInPreviews,
 	}
 }
 

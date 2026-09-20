@@ -148,3 +148,11 @@ func (s *Service) UpdatePreferences(ctx context.Context, userID string, pushEnab
 	}
 	return s.repo.UpsertPreferences(ctx, userID, pushEnabled, emailEnabled, quietStart, quietEnd)
 }
+
+// GetPreferences: current settings for the Settings screen.
+func (s *Service) GetPreferences(ctx context.Context, userID string) (push, email bool, quietStart, quietEnd string, err error) {
+	if userID == "" {
+		return false, false, "", "", ErrInvalidInput
+	}
+	return s.repo.Preferences(ctx, userID)
+}

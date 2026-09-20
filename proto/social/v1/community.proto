@@ -45,6 +45,7 @@ message Community {
   int32 member_count = 12; // live count
   int32 plan_count = 13;   // live count of published plans
   bool is_member = 14;     // the caller belongs to it (when the caller is known)
+  bool join_pending = 15;  // the caller asked to join (approval community) and is waiting for an answer
 }
 
 message Membership {

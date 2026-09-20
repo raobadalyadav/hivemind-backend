@@ -33,6 +33,7 @@ type Community struct {
 	MemberCount         int32
 	PlanCount           int32
 	IsMember            bool // set by MarkMembership for a known viewer
+	JoinPending         bool // the viewer has an unanswered request (approval communities)
 }
 
 type Repository struct {
@@ -370,5 +371,25 @@ func (r *Repository) MarkMembership(ctx context.Context, list []*Community, view
 	for _, c := range list {
 		c.IsMember = mine[c.ID]
 	}
-	return rows.Err()
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	// unanswered requests of the viewer (their own, not invitations)
+	prows, err := r.pool.Query(ctx, `SELECT community_id::text FROM community_join_requests WHERE user_id = $1 AND status = 'pending' AND invited_by IS NULL AND community_id = ANY($2::uuid[])`, viewerID, ids)
+	if err != nil {
+		return err
+	}
+	defer prows.Close()
+	pending := map[string]bool{}
+	for prows.Next() {
+		var id string
+		if err := prows.Scan(&id); err != nil {
+			return err
+		}
+		pending[id] = true
+	}
+	for _, c := range list {
+		c.JoinPending = pending[c.ID] && !c.IsMember
+	}
+	return prows.Err()
 }

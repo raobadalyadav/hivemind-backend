@@ -43,6 +43,7 @@ message Profile {
   repeated string hobbies = 11;
   repeated ProfilePhoto photos = 12;
   bool selfie_verified = 13; // blue tick (live-selfie verification approved)
+  bool show_in_participant_previews = 14; // privacy setting; only filled when you read your own profile
 }
 
 message ProfilePhoto {

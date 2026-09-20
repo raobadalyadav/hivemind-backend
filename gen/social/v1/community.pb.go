@@ -92,6 +92,7 @@ type Community struct {
 	MemberCount         int32                  `protobuf:"varint,12,opt,name=member_count,json=memberCount,proto3" json:"member_count,omitempty"` // live count
 	PlanCount           int32                  `protobuf:"varint,13,opt,name=plan_count,json=planCount,proto3" json:"plan_count,omitempty"`       // live count of published plans
 	IsMember            bool                   `protobuf:"varint,14,opt,name=is_member,json=isMember,proto3" json:"is_member,omitempty"`          // the caller belongs to it (when the caller is known)
+	JoinPending         bool                   `protobuf:"varint,15,opt,name=join_pending,json=joinPending,proto3" json:"join_pending,omitempty"` // the caller asked to join (approval community) and is waiting for an answer
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -220,6 +221,13 @@ func (x *Community) GetPlanCount() int32 {
 func (x *Community) GetIsMember() bool {
 	if x != nil {
 		return x.IsMember
+	}
+	return false
+}
+
+func (x *Community) GetJoinPending() bool {
+	if x != nil {
+		return x.JoinPending
 	}
 	return false
 }
@@ -1100,7 +1108,7 @@ var File_social_v1_community_proto protoreflect.FileDescriptor
 
 const file_social_v1_community_proto_rawDesc = "" +
 	"\n" +
-	"\x19social/v1/community.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\x1a\x14social/v1/plan.proto\"\xe1\x03\n" +
+	"\x19social/v1/community.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\x1a\x14social/v1/plan.proto\"\x84\x04\n" +
 	"\tCommunity\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -1118,7 +1126,8 @@ const file_social_v1_community_proto_rawDesc = "" +
 	"\fmember_count\x18\f \x01(\x05R\vmemberCount\x12\x1d\n" +
 	"\n" +
 	"plan_count\x18\r \x01(\x05R\tplanCount\x12\x1b\n" +
-	"\tis_member\x18\x0e \x01(\bR\bisMember\"t\n" +
+	"\tis_member\x18\x0e \x01(\bR\bisMember\x12!\n" +
+	"\fjoin_pending\x18\x0f \x01(\bR\vjoinPending\"t\n" +
 	"\n" +
 	"Membership\x12!\n" +
 	"\fcommunity_id\x18\x01 \x01(\tR\vcommunityId\x12\x17\n" +

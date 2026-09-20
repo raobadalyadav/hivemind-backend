@@ -179,3 +179,46 @@ func TestListCommunities_OnlyMineAndIsMember(t *testing.T) {
 		t.Errorf("only_mine needs a caller: %v", err)
 	}
 }
+
+func TestJoinApprovalCommunity_PendingSurvivesReopenAndDeclinedIsExplained(t *testing.T) {
+	pool := testPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	owner, me := seedUser(t, pool, "apowner"), seedUser(t, pool, "apme")
+	svc := NewService(NewRepository(pool))
+	var comm string
+	if err := pool.QueryRow(ctx, `INSERT INTO communities (name, owner_id, membership_type) VALUES ($1,$2,'approval') RETURNING id`, "Approval Club "+time.Now().Format("150405.000000000"), owner).Scan(&comm); err != nil {
+		t.Fatalf("community: %v", err)
+	}
+	m, err := svc.JoinCommunity(ctx, comm, me)
+	if err != nil || m.Status != "pending" {
+		t.Fatalf("first join files a request: %+v %v", m, err)
+	}
+	c, err := svc.GetCommunity(ctx, comm, me)
+	if err != nil || c.IsMember || !c.JoinPending {
+		t.Fatalf("reopening shows 'request sent': member=%v pending=%v err=%v", c != nil && c.IsMember, c != nil && c.JoinPending, err)
+	}
+	list, _ := svc.ListCommunities(ctx, "", "", "Approval Club", me, false)
+	found := false
+	for _, x := range list {
+		if x.ID == comm {
+			found = true
+			if !x.JoinPending {
+				t.Error("the list carries join_pending too")
+			}
+		}
+	}
+	if !found {
+		t.Fatal("approval community is listed")
+	}
+	// the owners decline
+	if _, err := pool.Exec(ctx, `UPDATE community_join_requests SET status = 'rejected' WHERE community_id = $1 AND user_id = $2`, comm, me); err != nil {
+		t.Fatalf("reject: %v", err)
+	}
+	if _, err := svc.JoinCommunity(ctx, comm, me); err != ErrJoinDeclined {
+		t.Errorf("a declined request is explained, not silently ignored: %v", err)
+	}
+	if c, _ := svc.GetCommunity(ctx, comm, me); c.JoinPending {
+		t.Error("declined is no longer pending")
+	}
+}

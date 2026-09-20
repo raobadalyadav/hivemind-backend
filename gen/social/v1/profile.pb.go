@@ -22,22 +22,23 @@ const (
 )
 
 type Profile struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	UserId             string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	DisplayName        string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
-	Bio                string                 `protobuf:"bytes,3,opt,name=bio,proto3" json:"bio,omitempty"`
-	Interests          []string               `protobuf:"bytes,4,rep,name=interests,proto3" json:"interests,omitempty"`
-	Languages          []string               `protobuf:"bytes,5,rep,name=languages,proto3" json:"languages,omitempty"`
-	Occupation         string                 `protobuf:"bytes,6,opt,name=occupation,proto3" json:"occupation,omitempty"`
-	VerificationStatus string                 `protobuf:"bytes,7,opt,name=verification_status,json=verificationStatus,proto3" json:"verification_status,omitempty"` // unverified | email | phone | id
-	Audit              *Audit                 `protobuf:"bytes,8,opt,name=audit,proto3" json:"audit,omitempty"`
-	Gender             string                 `protobuf:"bytes,9,opt,name=gender,proto3" json:"gender,omitempty"` // male | female | non_binary | prefer_not_to_say | ""
-	Education          string                 `protobuf:"bytes,10,opt,name=education,proto3" json:"education,omitempty"`
-	Hobbies            []string               `protobuf:"bytes,11,rep,name=hobbies,proto3" json:"hobbies,omitempty"`
-	Photos             []*ProfilePhoto        `protobuf:"bytes,12,rep,name=photos,proto3" json:"photos,omitempty"`
-	SelfieVerified     bool                   `protobuf:"varint,13,opt,name=selfie_verified,json=selfieVerified,proto3" json:"selfie_verified,omitempty"` // blue tick (live-selfie verification approved)
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	state                     protoimpl.MessageState `protogen:"open.v1"`
+	UserId                    string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	DisplayName               string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	Bio                       string                 `protobuf:"bytes,3,opt,name=bio,proto3" json:"bio,omitempty"`
+	Interests                 []string               `protobuf:"bytes,4,rep,name=interests,proto3" json:"interests,omitempty"`
+	Languages                 []string               `protobuf:"bytes,5,rep,name=languages,proto3" json:"languages,omitempty"`
+	Occupation                string                 `protobuf:"bytes,6,opt,name=occupation,proto3" json:"occupation,omitempty"`
+	VerificationStatus        string                 `protobuf:"bytes,7,opt,name=verification_status,json=verificationStatus,proto3" json:"verification_status,omitempty"` // unverified | email | phone | id
+	Audit                     *Audit                 `protobuf:"bytes,8,opt,name=audit,proto3" json:"audit,omitempty"`
+	Gender                    string                 `protobuf:"bytes,9,opt,name=gender,proto3" json:"gender,omitempty"` // male | female | non_binary | prefer_not_to_say | ""
+	Education                 string                 `protobuf:"bytes,10,opt,name=education,proto3" json:"education,omitempty"`
+	Hobbies                   []string               `protobuf:"bytes,11,rep,name=hobbies,proto3" json:"hobbies,omitempty"`
+	Photos                    []*ProfilePhoto        `protobuf:"bytes,12,rep,name=photos,proto3" json:"photos,omitempty"`
+	SelfieVerified            bool                   `protobuf:"varint,13,opt,name=selfie_verified,json=selfieVerified,proto3" json:"selfie_verified,omitempty"`                                      // blue tick (live-selfie verification approved)
+	ShowInParticipantPreviews bool                   `protobuf:"varint,14,opt,name=show_in_participant_previews,json=showInParticipantPreviews,proto3" json:"show_in_participant_previews,omitempty"` // privacy setting; only filled when you read your own profile
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
 }
 
 func (x *Profile) Reset() {
@@ -157,6 +158,13 @@ func (x *Profile) GetPhotos() []*ProfilePhoto {
 func (x *Profile) GetSelfieVerified() bool {
 	if x != nil {
 		return x.SelfieVerified
+	}
+	return false
+}
+
+func (x *Profile) GetShowInParticipantPreviews() bool {
+	if x != nil {
+		return x.ShowInParticipantPreviews
 	}
 	return false
 }
@@ -1183,7 +1191,7 @@ var File_social_v1_profile_proto protoreflect.FileDescriptor
 
 const file_social_v1_profile_proto_rawDesc = "" +
 	"\n" +
-	"\x17social/v1/profile.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"\xb6\x03\n" +
+	"\x17social/v1/profile.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"\xf7\x03\n" +
 	"\aProfile\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
 	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12\x10\n" +
@@ -1200,7 +1208,8 @@ const file_social_v1_profile_proto_rawDesc = "" +
 	" \x01(\tR\teducation\x12\x18\n" +
 	"\ahobbies\x18\v \x03(\tR\ahobbies\x12/\n" +
 	"\x06photos\x18\f \x03(\v2\x17.social.v1.ProfilePhotoR\x06photos\x12'\n" +
-	"\x0fselfie_verified\x18\r \x01(\bR\x0eselfieVerified\"\x97\x01\n" +
+	"\x0fselfie_verified\x18\r \x01(\bR\x0eselfieVerified\x12?\n" +
+	"\x1cshow_in_participant_previews\x18\x0e \x01(\bR\x19showInParticipantPreviews\"\x97\x01\n" +
 	"\fProfilePhoto\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\x12\x1a\n" +

@@ -25,6 +25,7 @@ type Participants struct {
 	TotalAttending       int32
 	HiddenCount          int32
 	ConnectionsAttending int32
+	HiddenByMe           bool // the caller hid themselves on this plan
 }
 
 // shownPredicate is the single definition of "this attendee may appear on a
@@ -119,7 +120,12 @@ func (s *Service) GetPlanParticipants(ctx context.Context, planID, callerID, cal
 	if _, err := s.GetPlanAsUser(ctx, planID, callerID, callerRole); err != nil {
 		return nil, err
 	}
-	return s.repo.ParticipantCards(ctx, planID, callerID)
+	out, err := s.repo.ParticipantCards(ctx, planID, callerID)
+	if err != nil {
+		return nil, err
+	}
+	err = s.repo.pool.QueryRow(ctx, `SELECT COALESCE(bool_or(visibility <> 'visible'), false) FROM plan_participants WHERE plan_id = $1 AND user_id = $2 AND status = 'confirmed'`, planID, callerID).Scan(&out.HiddenByMe)
+	return out, err
 }
 
 func (s *Service) SetParticipantVisibility(ctx context.Context, planID, callerID string, visible bool) error {

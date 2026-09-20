@@ -22,6 +22,7 @@ const (
 	NotificationService_SendNotification_FullMethodName  = "/social.v1.NotificationService/SendNotification"
 	NotificationService_ListNotifications_FullMethodName = "/social.v1.NotificationService/ListNotifications"
 	NotificationService_UpdatePreferences_FullMethodName = "/social.v1.NotificationService/UpdatePreferences"
+	NotificationService_GetPreferences_FullMethodName    = "/social.v1.NotificationService/GetPreferences"
 )
 
 // NotificationServiceClient is the client API for NotificationService service.
@@ -34,6 +35,8 @@ type NotificationServiceClient interface {
 	SendNotification(ctx context.Context, in *SendNotificationRequest, opts ...grpc.CallOption) (*SendNotificationResponse, error)
 	ListNotifications(ctx context.Context, in *ListNotificationsRequest, opts ...grpc.CallOption) (*ListNotificationsResponse, error)
 	UpdatePreferences(ctx context.Context, in *UpdatePreferencesRequest, opts ...grpc.CallOption) (*UpdatePreferencesResponse, error)
+	// GetPreferences: the caller's current settings (defaults: push and e-mail on).
+	GetPreferences(ctx context.Context, in *GetPreferencesRequest, opts ...grpc.CallOption) (*NotificationPreferences, error)
 }
 
 type notificationServiceClient struct {
@@ -74,6 +77,16 @@ func (c *notificationServiceClient) UpdatePreferences(ctx context.Context, in *U
 	return out, nil
 }
 
+func (c *notificationServiceClient) GetPreferences(ctx context.Context, in *GetPreferencesRequest, opts ...grpc.CallOption) (*NotificationPreferences, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(NotificationPreferences)
+	err := c.cc.Invoke(ctx, NotificationService_GetPreferences_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // NotificationServiceServer is the server API for NotificationService service.
 // All implementations must embed UnimplementedNotificationServiceServer
 // for forward compatibility.
@@ -84,6 +97,8 @@ type NotificationServiceServer interface {
 	SendNotification(context.Context, *SendNotificationRequest) (*SendNotificationResponse, error)
 	ListNotifications(context.Context, *ListNotificationsRequest) (*ListNotificationsResponse, error)
 	UpdatePreferences(context.Context, *UpdatePreferencesRequest) (*UpdatePreferencesResponse, error)
+	// GetPreferences: the caller's current settings (defaults: push and e-mail on).
+	GetPreferences(context.Context, *GetPreferencesRequest) (*NotificationPreferences, error)
 	mustEmbedUnimplementedNotificationServiceServer()
 }
 
@@ -102,6 +117,9 @@ func (UnimplementedNotificationServiceServer) ListNotifications(context.Context,
 }
 func (UnimplementedNotificationServiceServer) UpdatePreferences(context.Context, *UpdatePreferencesRequest) (*UpdatePreferencesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdatePreferences not implemented")
+}
+func (UnimplementedNotificationServiceServer) GetPreferences(context.Context, *GetPreferencesRequest) (*NotificationPreferences, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPreferences not implemented")
 }
 func (UnimplementedNotificationServiceServer) mustEmbedUnimplementedNotificationServiceServer() {}
 func (UnimplementedNotificationServiceServer) testEmbeddedByValue()                             {}
@@ -178,6 +196,24 @@ func _NotificationService_UpdatePreferences_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _NotificationService_GetPreferences_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPreferencesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NotificationServiceServer).GetPreferences(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NotificationService_GetPreferences_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NotificationServiceServer).GetPreferences(ctx, req.(*GetPreferencesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // NotificationService_ServiceDesc is the grpc.ServiceDesc for NotificationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -196,6 +232,10 @@ var NotificationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdatePreferences",
 			Handler:    _NotificationService_UpdatePreferences_Handler,
+		},
+		{
+			MethodName: "GetPreferences",
+			Handler:    _NotificationService_GetPreferences_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

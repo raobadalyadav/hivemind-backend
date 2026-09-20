@@ -131,3 +131,15 @@ func (r *Repository) UpsertPreferences(ctx context.Context, userID string, pushE
 	)
 	return err
 }
+
+// Preferences returns the caller's settings; defaults (push + e-mail on, no quiet hours) when never set.
+func (r *Repository) Preferences(ctx context.Context, userID string) (push, email bool, quietStart, quietEnd string, err error) {
+	push, email = true, true
+	scanErr := r.pool.QueryRow(ctx,
+		`SELECT push_enabled, email_enabled, COALESCE(to_char(quiet_hours_start, 'HH24:MI'), ''), COALESCE(to_char(quiet_hours_end, 'HH24:MI'), '') FROM notification_preferences WHERE user_id = $1`, userID,
+	).Scan(&push, &email, &quietStart, &quietEnd)
+	if scanErr != nil && scanErr != pgx.ErrNoRows {
+		return false, false, "", "", scanErr
+	}
+	return push, email, quietStart, quietEnd, nil
+}

@@ -88,3 +88,31 @@ func TestGetPlanParticipants_PrivatePlanHiddenFromStranger(t *testing.T) {
 		t.Fatalf("attendees of a hidden plan must not be listable, got %v", err)
 	}
 }
+
+func TestGetPlanParticipants_ReportsWhetherTheCallerHidThemselves(t *testing.T) {
+	pool := typesPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	svc, _ := newTypesServices(t, pool, fakeEnt{})
+	host, me := typesUser(t, pool, "hbhost"), typesUser(t, pool, "hbme")
+	p, err := svc.CreatePlan(ctx, &Plan{Title: "hidden by me", HostID: host, Capacity: 5, Visibility: "public", JoinMode: "open", StartsAt: time.Now().Add(48 * time.Hour)}, "")
+	if err != nil {
+		t.Fatalf("CreatePlan: %v", err)
+	}
+	if _, err := pool.Exec(ctx, `INSERT INTO plan_participants (plan_id, user_id, status) VALUES ($1,$2,'confirmed')`, p.ID, me); err != nil {
+		t.Fatalf("participant: %v", err)
+	}
+	got, err := svc.GetPlanParticipants(ctx, p.ID, me, "")
+	if err != nil || got.HiddenByMe {
+		t.Fatalf("visible by default: %+v %v", got, err)
+	}
+	if err := svc.SetParticipantVisibility(ctx, p.ID, me, false); err != nil {
+		t.Fatalf("hide: %v", err)
+	}
+	if got, _ := svc.GetPlanParticipants(ctx, p.ID, me, ""); !got.HiddenByMe {
+		t.Error("after hiding, the app can show 'Show me' again")
+	}
+	if stranger, _ := svc.GetPlanParticipants(ctx, p.ID, host, ""); stranger.HiddenByMe {
+		t.Error("hidden_by_me is about the caller only")
+	}
+}

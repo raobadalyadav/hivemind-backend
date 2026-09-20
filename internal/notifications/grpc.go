@@ -85,3 +85,15 @@ func (h *Handler) UpdatePreferences(ctx context.Context, req *socialv1.UpdatePre
 	}
 	return &socialv1.UpdatePreferencesResponse{}, nil
 }
+
+func (h *Handler) GetPreferences(ctx context.Context, _ *socialv1.GetPreferencesRequest) (*socialv1.NotificationPreferences, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	push, email, qs, qe, err := h.svc.GetPreferences(ctx, userID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to load preferences")
+	}
+	return &socialv1.NotificationPreferences{PushEnabled: push, EmailEnabled: email, QuietHoursStart: qs, QuietHoursEnd: qe}, nil
+}

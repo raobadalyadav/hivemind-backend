@@ -21,6 +21,7 @@ type Profile struct {
 	Hobbies            []string
 	Photos             []Photo
 	SelfieVerified     bool
+	ShowInPreviews     bool // privacy: appear in "who's going" cards
 }
 
 // Update is a partial update: nil pointer / nil slice = leave unchanged.
@@ -47,11 +48,11 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 }
 
 const profileCols = `display_name, bio, interests, languages, occupation, verification_status,
-	COALESCE(gender,''), education, hobbies, selfie_verified_at IS NOT NULL`
+	COALESCE(gender,''), education, hobbies, selfie_verified_at IS NOT NULL, show_in_participant_previews`
 
 func scanProfile(row interface{ Scan(...any) error }, p *Profile) error {
 	return row.Scan(&p.DisplayName, &p.Bio, &p.Interests, &p.Languages, &p.Occupation,
-		&p.VerificationStatus, &p.Gender, &p.Education, &p.Hobbies, &p.SelfieVerified)
+		&p.VerificationStatus, &p.Gender, &p.Education, &p.Hobbies, &p.SelfieVerified, &p.ShowInPreviews)
 }
 
 // Create fills in the (empty) profile row created during signup — see

@@ -117,3 +117,22 @@ func TestSendDueReminders_OneKindOnceOnly(t *testing.T) {
 		t.Fatalf("a booking made after the threshold must get no reminder, got %v", got)
 	}
 }
+
+func TestPreferences_DefaultsThenSavedValues(t *testing.T) {
+	pool := reminderTestPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	user, _ := seedReminderBooking(t, pool, time.Hour, time.Hour)
+	repo := NewRepository(pool)
+	push, email, qs, qe, err := repo.Preferences(ctx, user)
+	if err != nil || !push || !email || qs != "" || qe != "" {
+		t.Fatalf("never set = both on, no quiet hours: %v %v %q %q %v", push, email, qs, qe, err)
+	}
+	if err := repo.UpsertPreferences(ctx, user, false, true, "22:00", "07:30"); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+	push, email, qs, qe, err = repo.Preferences(ctx, user)
+	if err != nil || push || !email || qs != "22:00" || qe != "07:30" {
+		t.Errorf("saved values come back: push=%v email=%v %q-%q err=%v", push, email, qs, qe, err)
+	}
+}
