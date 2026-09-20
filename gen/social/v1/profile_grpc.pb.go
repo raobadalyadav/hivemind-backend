@@ -31,6 +31,8 @@ const (
 	ProfileService_SetPersonality_FullMethodName       = "/social.v1.ProfileService/SetPersonality"
 	ProfileService_GetMyPreferences_FullMethodName     = "/social.v1.ProfileService/GetMyPreferences"
 	ProfileService_GetMyStats_FullMethodName           = "/social.v1.ProfileService/GetMyStats"
+	ProfileService_GetUserStats_FullMethodName         = "/social.v1.ProfileService/GetUserStats"
+	ProfileService_RecordProfileView_FullMethodName    = "/social.v1.ProfileService/RecordProfileView"
 )
 
 // ProfileServiceClient is the client API for ProfileService service.
@@ -55,6 +57,12 @@ type ProfileServiceClient interface {
 	GetMyPreferences(ctx context.Context, in *GetMyPreferencesRequest, opts ...grpc.CallOption) (*UserPreferences, error)
 	// GetMyStats: real counts for the Me tab.
 	GetMyStats(ctx context.Context, in *GetMyStatsRequest, opts ...grpc.CallOption) (*MyStats, error)
+	// GetUserStats: what a profile page shows about someone else (counts follow what
+	// the caller may see). NotFound when either side blocked the other or the account is gone.
+	GetUserStats(ctx context.Context, in *GetUserStatsRequest, opts ...grpc.CallOption) (*UserStats, error)
+	// RecordProfileView is called once when the caller opens someone's profile: it
+	// throttles to one per viewer/target/day and tells the person (unless either hides views).
+	RecordProfileView(ctx context.Context, in *RecordProfileViewRequest, opts ...grpc.CallOption) (*RecordProfileViewResponse, error)
 }
 
 type profileServiceClient struct {
@@ -185,6 +193,26 @@ func (c *profileServiceClient) GetMyStats(ctx context.Context, in *GetMyStatsReq
 	return out, nil
 }
 
+func (c *profileServiceClient) GetUserStats(ctx context.Context, in *GetUserStatsRequest, opts ...grpc.CallOption) (*UserStats, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserStats)
+	err := c.cc.Invoke(ctx, ProfileService_GetUserStats_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) RecordProfileView(ctx context.Context, in *RecordProfileViewRequest, opts ...grpc.CallOption) (*RecordProfileViewResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RecordProfileViewResponse)
+	err := c.cc.Invoke(ctx, ProfileService_RecordProfileView_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProfileServiceServer is the server API for ProfileService service.
 // All implementations must embed UnimplementedProfileServiceServer
 // for forward compatibility.
@@ -207,6 +235,12 @@ type ProfileServiceServer interface {
 	GetMyPreferences(context.Context, *GetMyPreferencesRequest) (*UserPreferences, error)
 	// GetMyStats: real counts for the Me tab.
 	GetMyStats(context.Context, *GetMyStatsRequest) (*MyStats, error)
+	// GetUserStats: what a profile page shows about someone else (counts follow what
+	// the caller may see). NotFound when either side blocked the other or the account is gone.
+	GetUserStats(context.Context, *GetUserStatsRequest) (*UserStats, error)
+	// RecordProfileView is called once when the caller opens someone's profile: it
+	// throttles to one per viewer/target/day and tells the person (unless either hides views).
+	RecordProfileView(context.Context, *RecordProfileViewRequest) (*RecordProfileViewResponse, error)
 	mustEmbedUnimplementedProfileServiceServer()
 }
 
@@ -252,6 +286,12 @@ func (UnimplementedProfileServiceServer) GetMyPreferences(context.Context, *GetM
 }
 func (UnimplementedProfileServiceServer) GetMyStats(context.Context, *GetMyStatsRequest) (*MyStats, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetMyStats not implemented")
+}
+func (UnimplementedProfileServiceServer) GetUserStats(context.Context, *GetUserStatsRequest) (*UserStats, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUserStats not implemented")
+}
+func (UnimplementedProfileServiceServer) RecordProfileView(context.Context, *RecordProfileViewRequest) (*RecordProfileViewResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RecordProfileView not implemented")
 }
 func (UnimplementedProfileServiceServer) mustEmbedUnimplementedProfileServiceServer() {}
 func (UnimplementedProfileServiceServer) testEmbeddedByValue()                        {}
@@ -490,6 +530,42 @@ func _ProfileService_GetMyStats_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProfileService_GetUserStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserStatsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).GetUserStats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_GetUserStats_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).GetUserStats(ctx, req.(*GetUserStatsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_RecordProfileView_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RecordProfileViewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).RecordProfileView(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_RecordProfileView_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).RecordProfileView(ctx, req.(*RecordProfileViewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProfileService_ServiceDesc is the grpc.ServiceDesc for ProfileService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -544,6 +620,14 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetMyStats",
 			Handler:    _ProfileService_GetMyStats_Handler,
+		},
+		{
+			MethodName: "GetUserStats",
+			Handler:    _ProfileService_GetUserStats_Handler,
+		},
+		{
+			MethodName: "RecordProfileView",
+			Handler:    _ProfileService_RecordProfileView_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

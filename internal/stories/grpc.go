@@ -41,7 +41,7 @@ var audienceToDB = map[socialv1.StoryAudience]string{
 	socialv1.StoryAudience_STORY_AUDIENCE_COMMUNITY:   "community",
 }
 
-func toProto(s *Story) *socialv1.Story {
+func toProto(s *Story, caller string) *socialv1.Story {
 	aud := socialv1.StoryAudience_STORY_AUDIENCE_CONNECTIONS
 	if s.Audience == "community" {
 		aud = socialv1.StoryAudience_STORY_AUDIENCE_COMMUNITY
@@ -56,7 +56,8 @@ func toProto(s *Story) *socialv1.Story {
 		CreatedAt: timestamppb.New(s.CreatedAt), ExpiresAt: timestamppb.New(s.ExpiresAt),
 		Media: &socialv1.MediaAsset{Id: s.MediaID, Url: s.MediaURL, ThumbUrl: s.ThumbURL, Kind: s.MediaType,
 			Width: s.Width, Height: s.Height, DurationMs: s.DurationMS},
-		EditsJson: edits,
+		EditsJson: edits, LikeCount: s.LikeCount, LikedByMe: s.LikedByMe,
+		ViewerCount: viewerCountFor(s, caller),
 	}
 }
 
@@ -72,7 +73,7 @@ func (h *Handler) CreateStory(ctx context.Context, req *socialv1.CreateStoryRequ
 	if err != nil {
 		return nil, storyErr(err, "failed to create story")
 	}
-	return toProto(st), nil
+	return toProto(st, userID), nil
 }
 
 func (h *Handler) ListStories(ctx context.Context, _ *socialv1.ListStoriesRequest) (*socialv1.ListStoriesResponse, error) {
@@ -88,7 +89,7 @@ func (h *Handler) ListStories(ctx context.Context, _ *socialv1.ListStoriesReques
 	for _, g := range groups {
 		pg := &socialv1.StoryGroup{AuthorId: g.AuthorID, AuthorName: g.AuthorName}
 		for _, s := range g.Stories {
-			pg.Stories = append(pg.Stories, toProto(s))
+			pg.Stories = append(pg.Stories, toProto(s, userID))
 		}
 		out.Groups = append(out.Groups, pg)
 	}
@@ -106,7 +107,7 @@ func (h *Handler) ListMyStories(ctx context.Context, req *socialv1.ListMyStories
 	}
 	out := &socialv1.ListMyStoriesResponse{}
 	for _, s := range list {
-		out.Stories = append(out.Stories, toProto(s))
+		out.Stories = append(out.Stories, toProto(s, userID))
 	}
 	return out, nil
 }
@@ -120,4 +121,59 @@ func (h *Handler) DeleteStory(ctx context.Context, req *socialv1.DeleteStoryRequ
 		return nil, storyErr(err, "failed to delete story")
 	}
 	return &socialv1.DeleteStoryResponse{}, nil
+}
+
+// viewerCountFor: only the author learns how many people viewed a story.
+func viewerCountFor(s *Story, caller string) int32 {
+	if s.AuthorID == caller {
+		return s.ViewerCount
+	}
+	return 0
+}
+
+func (h *Handler) MarkStoryViewed(ctx context.Context, req *socialv1.MarkStoryViewedRequest) (*socialv1.MarkStoryViewedResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	if err := h.svc.MarkViewed(ctx, req.GetStoryId(), userID); err != nil {
+		return nil, storyErr(err, "failed to record view")
+	}
+	return &socialv1.MarkStoryViewedResponse{}, nil
+}
+
+func (h *Handler) setLike(ctx context.Context, storyID string, like bool) (*socialv1.StoryLikeResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	n, err := h.svc.SetLike(ctx, storyID, userID, like)
+	if err != nil {
+		return nil, storyErr(err, "failed to update like")
+	}
+	return &socialv1.StoryLikeResponse{LikeCount: n, Liked: like}, nil
+}
+
+func (h *Handler) LikeStory(ctx context.Context, req *socialv1.StoryLikeRequest) (*socialv1.StoryLikeResponse, error) {
+	return h.setLike(ctx, req.GetStoryId(), true)
+}
+
+func (h *Handler) UnlikeStory(ctx context.Context, req *socialv1.StoryLikeRequest) (*socialv1.StoryLikeResponse, error) {
+	return h.setLike(ctx, req.GetStoryId(), false)
+}
+
+func (h *Handler) ListStoryViewers(ctx context.Context, req *socialv1.ListStoryViewersRequest) (*socialv1.ListStoryViewersResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	list, err := h.svc.ListViewers(ctx, req.GetStoryId(), userID)
+	if err != nil {
+		return nil, storyErr(err, "failed to list viewers")
+	}
+	out := make([]*socialv1.StoryViewer, 0, len(list))
+	for _, v := range list {
+		out = append(out, &socialv1.StoryViewer{UserId: v.UserID, DisplayName: v.DisplayName, PhotoUrl: v.PhotoURL, ViewedAt: timestamppb.New(v.ViewedAt), Liked: v.Liked})
+	}
+	return &socialv1.ListStoryViewersResponse{Viewers: out}, nil
 }

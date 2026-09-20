@@ -87,7 +87,7 @@ func (h *Handler) GetPlan(ctx context.Context, req *socialv1.GetPlanRequest) (*s
 }
 
 func (h *Handler) SearchPlans(ctx context.Context, req *socialv1.SearchPlansRequest) (*socialv1.SearchPlansResponse, error) {
-	f := SearchFilter{CityID: req.GetCityId(), CategoryID: req.GetCategoryId(), RadiusKM: req.GetRadiusKm()}
+	f := SearchFilter{CityID: req.GetCityId(), CategoryID: req.GetCategoryId(), RadiusKM: req.GetRadiusKm(), HostID: req.GetHostId()}
 	if req.GetOrigin() != nil {
 		lat, lng := req.GetOrigin().GetLatitude(), req.GetOrigin().GetLongitude()
 		f.Latitude, f.Longitude = &lat, &lng

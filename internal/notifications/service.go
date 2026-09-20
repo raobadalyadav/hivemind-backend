@@ -4,11 +4,15 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"slices"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 var ErrInvalidInput = errors.New("notifications: invalid input")
 
-const defaultPageSize = 20
+const defaultPageSize = 30
 
 // EmailSender/PushSender are satisfied by *email.Client/*push.Client (wired
 // in cmd/api and cmd/worker's main.go) — declared here, not imported
@@ -135,11 +139,66 @@ func (s *Service) markDelivery(ctx context.Context, notificationID, status, errM
 	}
 }
 
-func (s *Service) ListNotifications(ctx context.Context, userID string) ([]*Notification, error) {
+// ListNotifications returns one page (newest first) and the cursor for the next
+// one ("" when this is the last). pageToken is the previous page's cursor.
+func (s *Service) ListNotifications(ctx context.Context, userID, pageToken string) ([]*Notification, string, error) {
 	if userID == "" {
-		return nil, ErrInvalidInput
+		return nil, "", ErrInvalidInput
 	}
-	return s.repo.ListForUser(ctx, userID, defaultPageSize)
+	var before time.Time
+	if pageToken != "" {
+		t, err := time.Parse(time.RFC3339Nano, pageToken)
+		if err != nil {
+			return nil, "", ErrInvalidInput
+		}
+		before = t
+	}
+	list, err := s.repo.ListForUser(ctx, userID, defaultPageSize+1, before)
+	if err != nil {
+		return nil, "", err
+	}
+	next := ""
+	if len(list) > defaultPageSize {
+		list = list[:defaultPageSize]
+		next = list[len(list)-1].CreatedAt.UTC().Format(time.RFC3339Nano)
+	}
+	return list, next, nil
+}
+
+func (s *Service) MarkRead(ctx context.Context, userID string, ids []string, all bool) (int, error) {
+	if userID == "" {
+		return 0, ErrInvalidInput
+	}
+	for _, id := range ids {
+		if _, err := uuid.Parse(id); err != nil {
+			return 0, ErrInvalidInput
+		}
+	}
+	return s.repo.MarkRead(ctx, userID, ids, all)
+}
+
+func (s *Service) UnreadCount(ctx context.Context, userID string) (int, error) {
+	if userID == "" {
+		return 0, ErrInvalidInput
+	}
+	return s.repo.UnreadCount(ctx, userID)
+}
+
+// SetMuted replaces the muted categories; unknown ones are rejected.
+func (s *Service) SetMuted(ctx context.Context, userID string, muted []string) error {
+	if userID == "" {
+		return ErrInvalidInput
+	}
+	for _, m := range muted {
+		if !slices.Contains(Categories, m) {
+			return ErrInvalidInput
+		}
+	}
+	return s.repo.SetMutedCategories(ctx, userID, muted)
+}
+
+func (s *Service) MutedCategories(ctx context.Context, userID string) ([]string, error) {
+	return s.repo.MutedCategories(ctx, userID)
 }
 
 func (s *Service) UpdatePreferences(ctx context.Context, userID string, pushEnabled, emailEnabled bool, quietStart, quietEnd string) error {

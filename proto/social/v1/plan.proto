@@ -180,6 +180,7 @@ message SearchPlansRequest {
   GeoPoint origin = 3;
   double radius_km = 4;
   PageRequest page = 5;
+  string host_id = 6; // only plans hosted by this user (still public + published only)
 }
 
 message SearchPlansResponse {

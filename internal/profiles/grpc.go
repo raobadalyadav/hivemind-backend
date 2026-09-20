@@ -3,6 +3,9 @@ package profiles
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -14,7 +17,8 @@ import (
 // implemented (see PRD §13.2).
 type Handler struct {
 	socialv1.UnimplementedProfileServiceServer
-	svc *Service
+	svc   *Service
+	posts PostCounter
 }
 
 func NewHandler(svc *Service) *Handler {
@@ -42,13 +46,21 @@ func (h *Handler) CreateProfile(ctx context.Context, req *socialv1.CreateProfile
 }
 
 func (h *Handler) GetProfile(ctx context.Context, req *socialv1.GetProfileRequest) (*socialv1.Profile, error) {
+	caller, _ := grpcmiddleware.UserIDFromContext(ctx)
+	if caller != "" && caller != req.GetUserId() {
+		// A blocked (either way) or deactivated person's profile doesn't load.
+		if ok, err := h.svc.repo.CanView(ctx, caller, req.GetUserId()); err == nil && !ok {
+			return nil, status.Error(codes.NotFound, "profile not found")
+		}
+	}
 	p, err := h.svc.GetProfile(ctx, req.GetUserId())
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "profile not found")
 	}
 	out := toProto(p)
-	if caller, _ := grpcmiddleware.UserIDFromContext(ctx); caller != p.UserID {
-		out.ShowInParticipantPreviews = false // someone else's privacy setting isn't yours to read
+	if caller != p.UserID {
+		out.ShowInParticipantPreviews = false // someone else's privacy settings aren't yours to read
+		out.HideProfileViews = false
 	}
 	return out, nil
 }
@@ -83,7 +95,7 @@ func (h *Handler) SetPrivacy(ctx context.Context, req *socialv1.SetPrivacyReques
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "auth required")
 	}
-	p, err := h.svc.SetPrivacy(ctx, userID, req.GetShowInParticipantPreviews())
+	p, err := h.svc.SetPrivacy(ctx, userID, req.ShowInParticipantPreviews, req.HideProfileViews)
 	if err != nil {
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -108,6 +120,8 @@ func toProto(p *Profile) *socialv1.Profile {
 		Photos:                    photosToProto(p.Photos),
 		SelfieVerified:            p.SelfieVerified,
 		ShowInParticipantPreviews: p.ShowInPreviews,
+		HideProfileViews:          p.HideProfileViews,
+		Audit:                     &socialv1.Audit{CreatedAt: timestamppb.New(p.CreatedAt)},
 	}
 }
 
@@ -234,4 +248,58 @@ func (h *Handler) GetMyStats(ctx context.Context, _ *socialv1.GetMyStatsRequest)
 		return nil, status.Error(codes.Internal, "failed to load stats")
 	}
 	return &socialv1.MyStats{PlansAttended: st.PlansAttended, PlansUpcoming: st.PlansUpcoming, Connections: st.Connections, Communities: st.Communities}, nil
+}
+
+// PostCounter counts the posts of an author that a viewer may open (implemented by social.Repository).
+type PostCounter interface {
+	CountVisibleByAuthor(ctx context.Context, authorID, viewerID string) (int32, error)
+}
+
+// WithPostCounter enables the posts count in GetUserStats.
+func (h *Handler) WithPostCounter(c PostCounter) *Handler {
+	h.posts = c
+	return h
+}
+
+func (h *Handler) GetUserStats(ctx context.Context, req *socialv1.GetUserStatsRequest) (*socialv1.UserStats, error) {
+	caller, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	st, err := h.svc.GetUserStats(ctx, caller, req.GetUserId())
+	if err != nil {
+		if err == ErrBlockedOrGone || err == pgx.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "profile not found")
+		}
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to load stats")
+	}
+	out := &socialv1.UserStats{
+		Connections: st.Connections, PlansAttended: st.PlansAttended, MutualConnections: st.MutualConnections,
+		SharedCommunities: st.SharedCommunities, SharedCommunityNames: st.SharedCommunityNames,
+		MemberSince: timestamppb.New(st.MemberSince), HostRatingAvg: st.HostRatingAvg, HostRatingCount: st.HostRatingCount,
+		PlansHosted: st.PlansHosted,
+	}
+	if h.posts != nil {
+		if n, err := h.posts.CountVisibleByAuthor(ctx, req.GetUserId(), caller); err == nil {
+			out.Posts = n
+		}
+	}
+	return out, nil
+}
+
+func (h *Handler) RecordProfileView(ctx context.Context, req *socialv1.RecordProfileViewRequest) (*socialv1.RecordProfileViewResponse, error) {
+	caller, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	if err := h.svc.RecordProfileView(ctx, caller, req.GetUserId()); err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to record view")
+	}
+	return &socialv1.RecordProfileViewResponse{}, nil
 }

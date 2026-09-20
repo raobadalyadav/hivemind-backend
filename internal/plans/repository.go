@@ -213,6 +213,7 @@ type SearchFilter struct {
 	Latitude   *float64
 	Longitude  *float64
 	RadiusKM   float64
+	HostID     string
 }
 
 // Search reads plans_discoverable (published, public, one upcoming
@@ -225,9 +226,10 @@ func (r *Repository) Search(ctx context.Context, f SearchFilter, limit int) ([]*
 		  AND (category_id = NULLIF($2,'')::uuid OR $2 = '')
 		  AND ($3::float8 IS NULL OR ST_DWithin(location,
 		       ST_SetSRID(ST_MakePoint($4, $3), 4326)::geography, $5 * 1000))
+		  AND (host_id = NULLIF($7,'')::uuid OR $7 = '')
 		ORDER BY starts_at
 		LIMIT $6`,
-		f.CityID, f.CategoryID, f.Latitude, f.Longitude, f.RadiusKM, limit,
+		f.CityID, f.CategoryID, f.Latitude, f.Longitude, f.RadiusKM, limit, f.HostID,
 	)
 	if err != nil {
 		return nil, err

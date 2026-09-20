@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/hivemind/backend/internal/notifications"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -153,7 +154,21 @@ func (r *Repository) Create(ctx context.Context, b *Booking) (*Booking, error) {
 	if err := tx.Commit(ctx); err != nil {
 		return nil, err
 	}
+	r.notifyHost(ctx, out.PlanID, out.UserID)
 	return &out, nil
+}
+
+// notifyHost tells a plan's host that someone booked a seat (best-effort).
+func (r *Repository) notifyHost(ctx context.Context, planID, attendeeID string) {
+	var host, title string
+	if err := r.pool.QueryRow(ctx, `SELECT host_id::text, title FROM plans WHERE id = $1`, planID).Scan(&host, &title); err != nil {
+		return
+	}
+	_, _ = notifications.Emit(ctx, r.pool, notifications.Event{
+		UserID: host, ActorID: attendeeID, Type: notifications.TypePlanAttendee, TargetID: planID,
+		Title: "{actor} joined your plan", Body: title, DeepLink: "hivemind://plans/" + planID,
+		DedupeKey: "attendee:" + planID + ":" + attendeeID,
+	})
 }
 
 func (r *Repository) Get(ctx context.Context, id string) (*Booking, error) {

@@ -3,6 +3,7 @@ package connections
 import (
 	"context"
 	"errors"
+	"github.com/hivemind/backend/internal/notifications"
 
 	"github.com/hivemind/backend/pkg/idempotency"
 )
@@ -52,5 +53,21 @@ func (s *Service) RespondConnection(ctx context.Context, connectionID, callerID 
 	if c.RecipientID != callerID {
 		return nil, ErrForbidden
 	}
-	return s.repo.Respond(ctx, connectionID, accept)
+	out, err := s.repo.Respond(ctx, connectionID, accept)
+	if err == nil && accept && out.Status == "accepted" && c.Status == "pending" { // first acceptance only
+		_, _ = notifications.Emit(ctx, s.repo.pool, notifications.Event{
+			UserID: out.RequesterID, ActorID: callerID, Type: notifications.TypeConnectionAccepted, TargetID: out.ID,
+			Title: "{actor} accepted your connection request", DeepLink: "hivemind://people/" + callerID,
+			DedupeKey: "connacc:" + out.ID,
+		})
+	}
+	return out, err
+}
+
+// GetStatus: the caller's relationship with one person.
+func (s *Service) GetStatus(ctx context.Context, me, other string) (state, id string, err error) {
+	if me == "" || other == "" {
+		return "", "", ErrInvalidInput
+	}
+	return s.repo.Status(ctx, me, other)
 }

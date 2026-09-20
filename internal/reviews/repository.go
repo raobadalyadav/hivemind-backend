@@ -5,7 +5,10 @@
 package reviews
 
 import (
+	"strconv"
+
 	"context"
+	"github.com/hivemind/backend/internal/notifications"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -45,6 +48,14 @@ func (r *Repository) Create(ctx context.Context, bookingID, planID, userID strin
 		// ON CONFLICT DO NOTHING with no row inserted returns pgx.ErrNoRows
 		// from the RETURNING scan — look up the existing review instead.
 		return r.getByBookingID(ctx, bookingID)
+	}
+	var host, title string
+	if r.pool.QueryRow(ctx, `SELECT host_id::text, title FROM plans WHERE id = $1`, planID).Scan(&host, &title) == nil {
+		_, _ = notifications.Emit(ctx, r.pool, notifications.Event{
+			UserID: host, ActorID: userID, Type: notifications.TypeReviewReceived, TargetID: planID,
+			Title: "{actor} rated your plan " + strconv.Itoa(int(rating)) + "★", Body: title,
+			DeepLink: "hivemind://plans/" + planID, DedupeKey: "review:" + rv.ID,
+		})
 	}
 	return &rv, nil
 }

@@ -11,6 +11,8 @@ service ConnectionService {
   rpc RequestConnection(RequestConnectionRequest) returns (Connection);
   rpc RespondConnection(RespondConnectionRequest) returns (Connection);
   rpc ListConnections(ListConnectionsRequest) returns (ListConnectionsResponse);
+  // GetConnectionStatus: the caller's relationship with one person (no page limit, unlike ListConnections).
+  rpc GetConnectionStatus(GetConnectionStatusRequest) returns (GetConnectionStatusResponse);
 
   // Meet Again (flow.md §26). Both require the caller to have attended the plan.
   rpc ListPeopleMet(ListPeopleMetRequest) returns (ListPeopleMetResponse);
@@ -93,4 +95,11 @@ message ListConnectionsRequest {
 message ListConnectionsResponse {
   repeated Connection connections = 1;
   PageResponse page = 2;
+}
+
+message GetConnectionStatusRequest { string user_id = 1; }
+message GetConnectionStatusResponse {
+  // none | connected | pending_outgoing (I asked) | pending_incoming (they asked me)
+  string state = 1;
+  string connection_id = 2; // set unless none — lets the app accept a pending_incoming request
 }

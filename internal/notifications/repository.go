@@ -7,6 +7,7 @@ package notifications
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -20,6 +21,14 @@ type Notification struct {
 	Body     string
 	DeepLink string
 	Read     bool
+
+	// Social events (see emit.go); empty on older rows.
+	Type          string
+	ActorID       string
+	ActorName     string
+	ActorPhotoURL string
+	TargetID      string
+	CreatedAt     time.Time
 }
 
 type Repository struct {
@@ -44,11 +53,23 @@ func (r *Repository) Create(ctx context.Context, n *Notification) (*Notification
 	return &out, nil
 }
 
-func (r *Repository) ListForUser(ctx context.Context, userID string, limit int) ([]*Notification, error) {
+// ListForUser returns the newest notifications first. before (zero = newest)
+// is the created_at of the last row of the previous page.
+func (r *Repository) ListForUser(ctx context.Context, userID string, limit int, before time.Time) ([]*Notification, error) {
+	var cursor *time.Time
+	if !before.IsZero() {
+		cursor = &before
+	}
 	rows, err := r.pool.Query(ctx, `
-		SELECT id, user_id, channel, title, body, COALESCE(deep_link,''), read
-		FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2`,
-		userID, limit,
+		SELECT n.id, n.user_id, n.channel, n.title, n.body, COALESCE(n.deep_link,''), n.read,
+		       COALESCE(n.type,''), COALESCE(n.actor_id::text,''), COALESCE(up.display_name,''),
+		       COALESCE((SELECT COALESCE(NULLIF(pp.thumb_url,''), pp.url) FROM profile_photos pp
+		                 WHERE pp.user_id = n.actor_id ORDER BY pp.position, pp.created_at LIMIT 1),''),
+		       COALESCE(n.target_id,''), n.created_at
+		FROM notifications n LEFT JOIN user_profiles up ON up.user_id = n.actor_id
+		WHERE n.user_id = $1 AND ($3::timestamptz IS NULL OR n.created_at < $3)
+		ORDER BY n.created_at DESC LIMIT $2`,
+		userID, limit, cursor,
 	)
 	if err != nil {
 		return nil, err
@@ -58,12 +79,54 @@ func (r *Repository) ListForUser(ctx context.Context, userID string, limit int) 
 	var out []*Notification
 	for rows.Next() {
 		var n Notification
-		if err := rows.Scan(&n.ID, &n.UserID, &n.Channel, &n.Title, &n.Body, &n.DeepLink, &n.Read); err != nil {
+		if err := rows.Scan(&n.ID, &n.UserID, &n.Channel, &n.Title, &n.Body, &n.DeepLink, &n.Read,
+			&n.Type, &n.ActorID, &n.ActorName, &n.ActorPhotoURL, &n.TargetID, &n.CreatedAt); err != nil {
 			return nil, err
 		}
 		out = append(out, &n)
 	}
 	return out, rows.Err()
+}
+
+// MarkRead marks the caller's own notifications read (ids, or every unread one
+// when all) and returns the unread count afterwards.
+func (r *Repository) MarkRead(ctx context.Context, userID string, ids []string, all bool) (int, error) {
+	if all {
+		if _, err := r.pool.Exec(ctx, `UPDATE notifications SET read = true WHERE user_id = $1 AND NOT read`, userID); err != nil {
+			return 0, err
+		}
+	} else if len(ids) > 0 {
+		if _, err := r.pool.Exec(ctx, `UPDATE notifications SET read = true WHERE user_id = $1 AND id = ANY($2::uuid[]) AND NOT read`, userID, ids); err != nil {
+			return 0, err
+		}
+	}
+	return r.UnreadCount(ctx, userID)
+}
+
+func (r *Repository) UnreadCount(ctx context.Context, userID string) (int, error) {
+	var n int
+	err := r.pool.QueryRow(ctx, `SELECT count(*) FROM notifications WHERE user_id = $1 AND NOT read`, userID).Scan(&n)
+	return n, err
+}
+
+// MutedCategories are the categories the user turned off.
+func (r *Repository) MutedCategories(ctx context.Context, userID string) ([]string, error) {
+	var muted []string
+	err := r.pool.QueryRow(ctx, `SELECT muted_categories FROM notification_preferences WHERE user_id = $1`, userID).Scan(&muted)
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	}
+	return muted, err
+}
+
+func (r *Repository) SetMutedCategories(ctx context.Context, userID string, muted []string) error {
+	if muted == nil {
+		muted = []string{}
+	}
+	_, err := r.pool.Exec(ctx, `
+		INSERT INTO notification_preferences (user_id, muted_categories) VALUES ($1, $2)
+		ON CONFLICT (user_id) DO UPDATE SET muted_categories = EXCLUDED.muted_categories`, userID, muted)
+	return err
 }
 
 func (r *Repository) GetUserEmail(ctx context.Context, userID string) (string, error) {

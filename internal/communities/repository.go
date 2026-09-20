@@ -6,6 +6,7 @@ package communities
 import (
 	"context"
 	"errors"
+	"github.com/hivemind/backend/internal/notifications"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -165,14 +166,16 @@ func (r *Repository) Join(ctx context.Context, communityID, userID string) (*Mem
 
 // RequestToJoin records a pending request for an approval community (a
 // repeat request keeps its existing status, including 'rejected').
-func (r *Repository) RequestToJoin(ctx context.Context, communityID, userID string) (string, error) {
-	if _, err := r.pool.Exec(ctx, `
+func (r *Repository) RequestToJoin(ctx context.Context, communityID, userID string) (status string, created bool, err error) {
+	tag, err := r.pool.Exec(ctx, `
 		INSERT INTO community_join_requests (community_id, user_id) VALUES ($1, $2)
 		ON CONFLICT (community_id, user_id) DO NOTHING`, communityID, userID,
-	); err != nil {
-		return "", err
+	)
+	if err != nil {
+		return "", false, err
 	}
-	return r.requestStatus(ctx, communityID, userID)
+	status, err = r.requestStatus(ctx, communityID, userID)
+	return status, tag.RowsAffected() == 1, err
 }
 
 type JoinRequest struct {
@@ -249,14 +252,19 @@ func (r *Repository) DecideRequest(ctx context.Context, id, decidedBy string, ap
 		); err != nil {
 			return nil, false, err
 		}
-		if err := eventbus.EnqueueNotifyUser(ctx, tx, eventbus.NotifyUserPayload{
-			UserID: out.UserID, Title: "Welcome!", Body: "Your request to join the community was approved.",
-			DeepLink: "hivemind://communities/" + out.CommunityID, Channel: "push",
-		}); err != nil {
-			return nil, false, err
-		}
 	}
-	return &out, true, tx.Commit(ctx)
+	if err := tx.Commit(ctx); err != nil {
+		return nil, false, err
+	}
+	typ, title := notifications.TypeCommunityDeclined, "{actor} declined your request to join a community"
+	if approve {
+		typ, title = notifications.TypeCommunityApproved, "Your request to join the community was approved"
+	}
+	_, _ = notifications.Emit(ctx, r.pool, notifications.Event{
+		UserID: out.UserID, ActorID: decidedBy, Type: typ, TargetID: out.CommunityID, Title: title,
+		DeepLink: "hivemind://communities/" + out.CommunityID, DedupeKey: "commdecide:" + out.ID,
+	})
+	return &out, true, nil
 }
 
 // Invite records an approved, invited_by-stamped request — what a private

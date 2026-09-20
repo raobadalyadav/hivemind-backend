@@ -144,3 +144,15 @@ func (h *Handler) CreateMeetAgainGroup(ctx context.Context, req *socialv1.Create
 	}
 	return &socialv1.CreateMeetAgainGroupResponse{RoomId: roomID}, nil
 }
+
+func (h *Handler) GetConnectionStatus(ctx context.Context, req *socialv1.GetConnectionStatusRequest) (*socialv1.GetConnectionStatusResponse, error) {
+	me, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	state, id, err := h.svc.GetStatus(ctx, me, req.GetUserId())
+	if err != nil {
+		return nil, connErr(err, "failed to load connection status")
+	}
+	return &socialv1.GetConnectionStatusResponse{State: state, ConnectionId: id}, nil
+}

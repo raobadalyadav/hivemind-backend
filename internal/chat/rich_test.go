@@ -285,3 +285,46 @@ func TestListMessagesPage_WalksBackThroughOlderMessages(t *testing.T) {
 		t.Fatalf("a bad token is invalid input, got %v", err)
 	}
 }
+
+func TestDM_NotifiesRecipientOnceUntilRead(t *testing.T) {
+	e := setup(t)
+	pool := e.pool
+	a, b := e.host, e.member
+	pool.Exec(e.ctx, `INSERT INTO connections (requester_id, recipient_id, status) VALUES ($1,$2,'accepted')`, a, b)
+	room, err := e.svc.OpenDirectChat(e.ctx, a, b)
+	if err != nil {
+		t.Fatalf("open dm: %v", err)
+	}
+	count := func() int {
+		var n int
+		pool.QueryRow(e.ctx, `SELECT count(*) FROM notifications WHERE user_id=$1 AND type='chat_message' AND target_id=$2`, b, room).Scan(&n)
+		return n
+	}
+	for i := 0; i < 3; i++ {
+		if _, err := e.svc.SendMessage(e.ctx, &Message{RoomID: room, SenderID: a, Type: "text", Body: "hey"}, "user"); err != nil {
+			t.Fatalf("send: %v", err)
+		}
+	}
+	if count() != 1 {
+		t.Fatalf("three messages collapse into one notification, got %d", count())
+	}
+	if err := e.svc.MarkRead(e.ctx, room, b); err != nil {
+		t.Fatal(err)
+	}
+	var unread int
+	pool.QueryRow(e.ctx, `SELECT count(*) FROM notifications WHERE user_id=$1 AND type='chat_message' AND NOT read`, b).Scan(&unread)
+	if unread != 0 {
+		t.Fatal("opening the chat clears its notification")
+	}
+	e.svc.SendMessage(e.ctx, &Message{RoomID: room, SenderID: a, Type: "text", Body: "again"}, "user")
+	if count() != 2 {
+		t.Fatalf("after reading, the next message notifies again: %d", count())
+	}
+	// a plan (group) chat message never notifies via this path
+	e.svc.SendMessage(e.ctx, &Message{RoomID: e.roomID, SenderID: e.host, Type: "text", Body: "group"}, "user")
+	var g int
+	pool.QueryRow(e.ctx, `SELECT count(*) FROM notifications WHERE type='chat_message' AND target_id=$1`, e.roomID).Scan(&g)
+	if g != 0 {
+		t.Fatal("group chats don't produce message notifications")
+	}
+}

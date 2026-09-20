@@ -266,6 +266,7 @@ func (s *Service) SendMessage(ctx context.Context, m *Message, senderRole string
 		return nil, err
 	}
 	s.flag(ctx, sent.ID, m.SenderID, severity, reason)
+	s.repo.notifyDM(ctx, sent)
 	return sent, nil
 }
 

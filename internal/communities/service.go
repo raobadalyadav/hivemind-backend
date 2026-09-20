@@ -3,6 +3,7 @@ package communities
 import (
 	"context"
 	"errors"
+	"github.com/hivemind/backend/internal/notifications"
 	"strings"
 )
 
@@ -115,9 +116,16 @@ func (s *Service) JoinCommunity(ctx context.Context, communityID, userID string)
 
 	switch c.MembershipType {
 	case "approval":
-		st, err := s.repo.RequestToJoin(ctx, communityID, userID)
+		st, created, err := s.repo.RequestToJoin(ctx, communityID, userID)
 		if err != nil {
 			return nil, err
+		}
+		if created && st == "pending" {
+			_, _ = notifications.Emit(ctx, s.repo.pool, notifications.Event{
+				UserID: c.OwnerID, ActorID: userID, Type: notifications.TypeCommunityRequest, TargetID: communityID,
+				Title: "{actor} asked to join " + c.Name, DeepLink: "hivemind://communities/" + communityID,
+				DedupeKey: "commreq:" + communityID + ":" + userID,
+			})
 		}
 		if st == "approved" { // e.g. invited, or approved earlier
 			return s.repo.Join(ctx, communityID, userID)
@@ -146,7 +154,15 @@ func (s *Service) JoinCommunity(ctx context.Context, communityID, userID string)
 			return nil, ErrEntitlementRequired
 		}
 	}
-	return s.repo.Join(ctx, communityID, userID)
+	m, err := s.repo.Join(ctx, communityID, userID)
+	if err == nil {
+		_, _ = notifications.Emit(ctx, s.repo.pool, notifications.Event{
+			UserID: c.OwnerID, ActorID: userID, Type: notifications.TypeCommunityMember, TargetID: communityID,
+			Title: "{actor} joined " + c.Name, DeepLink: "hivemind://communities/" + communityID,
+			DedupeKey: "commjoin:" + communityID + ":" + userID,
+		})
+	}
+	return m, err
 }
 
 func (s *Service) LeaveCommunity(ctx context.Context, communityID, userID string) error {

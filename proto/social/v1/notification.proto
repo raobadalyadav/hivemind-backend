@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package social.v1;
 
+import "google/protobuf/timestamp.proto";
 import "social/v1/common.proto";
 
 option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
@@ -14,6 +15,9 @@ service NotificationService {
   rpc UpdatePreferences(UpdatePreferencesRequest) returns (UpdatePreferencesResponse);
   // GetPreferences: the caller's current settings (defaults: push and e-mail on).
   rpc GetPreferences(GetPreferencesRequest) returns (NotificationPreferences);
+  // MarkNotificationsRead marks the given ids (or every unread one when all=true) read.
+  rpc MarkNotificationsRead(MarkNotificationsReadRequest) returns (MarkNotificationsReadResponse);
+  rpc GetUnreadCount(GetUnreadCountRequest) returns (GetUnreadCountResponse);
 }
 
 message Notification {
@@ -24,6 +28,15 @@ message Notification {
   string body = 5;
   string deep_link = 6;
   bool read = 7;
+  // type is the event kind (post_like, post_comment, story_view, story_like,
+  // profile_view, connection_request, chat_message, …); empty for older rows.
+  // The app renders localized text from type + actor_name and falls back to title/body.
+  string type = 8;
+  string actor_id = 9;
+  string actor_name = 10;
+  string actor_photo_url = 11;
+  string target_id = 12; // post / story / plan / room id the event is about
+  google.protobuf.Timestamp created_at = 13;
 }
 
 message SendNotificationRequest {
@@ -48,12 +61,25 @@ message ListNotificationsResponse {
   PageResponse page = 2;
 }
 
+message CategoryList { repeated string items = 1; }
+
+message MarkNotificationsReadRequest {
+  repeated string ids = 1;
+  bool all = 2;
+}
+message MarkNotificationsReadResponse { int32 unread = 1; }
+message GetUnreadCountRequest {}
+message GetUnreadCountResponse { int32 unread = 1; }
+
 message UpdatePreferencesRequest {
   string user_id = 1;
   bool push_enabled = 2;
   bool email_enabled = 3;
   string quiet_hours_start = 4;
   string quiet_hours_end = 5;
+  // muted; when present (even empty) replaces the muted categories, when absent leaves them untouched.
+  // Categories: social, stories, profile_views, messages, connections.
+  CategoryList muted = 6;
 }
 
 message UpdatePreferencesResponse {}
@@ -64,4 +90,5 @@ message NotificationPreferences {
   bool email_enabled = 2;
   string quiet_hours_start = 3; // HH:MM or empty
   string quiet_hours_end = 4;
+  repeated string muted_categories = 5;
 }

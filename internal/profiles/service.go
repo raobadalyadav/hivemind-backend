@@ -3,6 +3,7 @@ package profiles
 import (
 	"context"
 	"errors"
+	"github.com/hivemind/backend/internal/notifications"
 	"strings"
 
 	"github.com/hivemind/backend/pkg/media"
@@ -92,11 +93,37 @@ func (s *Service) UpdateProfile(ctx context.Context, u *Update) (*Profile, error
 	return s.repo.Update(ctx, u)
 }
 
-func (s *Service) SetPrivacy(ctx context.Context, userID string, showInPreviews bool) (*Profile, error) {
+func (s *Service) SetPrivacy(ctx context.Context, userID string, showInPreviews, hideViews *bool) (*Profile, error) {
 	if userID == "" {
 		return nil, ErrInvalidInput
 	}
-	return s.repo.SetPrivacy(ctx, userID, showInPreviews)
+	return s.repo.SetPrivacy(ctx, userID, showInPreviews, hideViews)
+}
+
+// GetUserStats: counts for someone else's profile page.
+func (s *Service) GetUserStats(ctx context.Context, viewerID, targetID string) (*UserStats, error) {
+	if viewerID == "" || targetID == "" {
+		return nil, ErrInvalidInput
+	}
+	return s.repo.UserStats(ctx, viewerID, targetID)
+}
+
+// RecordProfileView notes that viewer opened target's profile and, once a day per
+// viewer, tells target (unless either of them hides profile views).
+func (s *Service) RecordProfileView(ctx context.Context, viewerID, targetID string) error {
+	if viewerID == "" || targetID == "" {
+		return ErrInvalidInput
+	}
+	first, err := s.repo.RecordView(ctx, viewerID, targetID)
+	if err != nil || !first {
+		return err
+	}
+	_, _ = notifications.Emit(ctx, s.repo.pool, notifications.Event{
+		UserID: targetID, ActorID: viewerID, Type: notifications.TypeProfileView, TargetID: viewerID,
+		Title: "{actor} viewed your profile", DeepLink: "hivemind://people/" + viewerID,
+		DedupeKey: "profileview:" + viewerID,
+	})
+	return nil
 }
 
 func (s *Service) AddPhoto(ctx context.Context, userID, mediaID string) (*Photo, error) {

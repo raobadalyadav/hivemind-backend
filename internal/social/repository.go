@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hivemind/backend/internal/notifications"
 	"strings"
 	"time"
 
@@ -205,10 +206,15 @@ func (r *Repository) GetVisible(ctx context.Context, id, viewerID string) (*Post
 }
 
 // ListForAuthor returns the author's posts that viewerID may see.
-func (r *Repository) ListForAuthor(ctx context.Context, authorID, viewerID string, limit int) ([]*Post, error) {
-	rows, err := r.pool.Query(ctx, `SELECT `+postCols+` FROM posts p
-		WHERE p.author_id = $1 AND `+visibleSQL("$2")+`
-		ORDER BY p.created_at DESC, p.id DESC LIMIT $3`, authorID, viewerID, limit)
+func (r *Repository) ListForAuthor(ctx context.Context, authorID, viewerID string, cur *cursor, limit int) ([]*Post, error) {
+	q := `SELECT ` + postCols + ` FROM posts p WHERE p.author_id = $1 AND ` + visibleSQL("$2")
+	args := []any{authorID, viewerID}
+	if cur != nil {
+		args = append(args, cur.At, cur.ID)
+		q += ` AND (p.created_at, p.id) < ($3::timestamptz, $4::uuid)`
+	}
+	args = append(args, limit)
+	rows, err := r.pool.Query(ctx, q+fmt.Sprintf(` ORDER BY p.created_at DESC, p.id DESC LIMIT $%d`, len(args)), args...)
 	if err != nil {
 		return nil, err
 	}
@@ -342,21 +348,27 @@ func (r *Repository) ListComments(ctx context.Context, postID, viewerID string, 
 }
 
 // Like is idempotent (ON CONFLICT DO NOTHING — a repeated like isn't an
-// error) and returns the current total count either way.
-func (r *Repository) Like(ctx context.Context, postID, userID string) (int32, error) {
-	if _, err := r.pool.Exec(ctx,
+// error) and returns the current total count either way, plus whether this
+// call created the like (so only a real new like notifies the author).
+func (r *Repository) Like(ctx context.Context, postID, userID string) (count int32, inserted bool, err error) {
+	tag, err := r.pool.Exec(ctx,
 		`INSERT INTO likes (post_id, user_id) VALUES ($1, $2) ON CONFLICT (post_id, user_id) DO NOTHING`,
 		postID, userID,
-	); err != nil {
-		return 0, err
+	)
+	if err != nil {
+		return 0, false, err
 	}
-	var count int32
 	if err := r.pool.QueryRow(ctx,
 		`SELECT count(*) FROM likes WHERE post_id = $1`, postID,
 	).Scan(&count); err != nil {
-		return 0, err
+		return 0, false, err
 	}
-	return count, nil
+	return count, tag.RowsAffected() == 1, nil
+}
+
+// notify is best-effort: a failed notification never fails the like/comment.
+func (r *Repository) notify(ctx context.Context, e notifications.Event) {
+	_, _ = notifications.Emit(ctx, r.pool, e)
 }
 
 // CanAttachToPlan: only someone who attended a plan (or hosts it) may tag a
@@ -437,4 +449,11 @@ func (r *Repository) ForYou(ctx context.Context, viewerID string, offset, limit 
 		return nil, err
 	}
 	return posts, r.hydrate(ctx, posts, viewerID)
+}
+
+// CountVisibleByAuthor is how many of authorID's posts viewerID may open (same rule as every list).
+func (r *Repository) CountVisibleByAuthor(ctx context.Context, authorID, viewerID string) (int32, error) {
+	var n int32
+	err := r.pool.QueryRow(ctx, `SELECT count(*)::int FROM posts p WHERE p.author_id = $1 AND `+visibleSQL("$2"), authorID, viewerID).Scan(&n)
+	return n, err
 }

@@ -84,6 +84,9 @@ type Story struct {
 	// Non-destructive edits (filter id + text/emoji overlays, normalised
 	// coordinates) applied when rendering — see the mobile StoryCanvas.
 	EditsJson     string `protobuf:"bytes,12,opt,name=edits_json,json=editsJson,proto3" json:"edits_json,omitempty"`
+	LikeCount     int32  `protobuf:"varint,13,opt,name=like_count,json=likeCount,proto3" json:"like_count,omitempty"`
+	LikedByMe     bool   `protobuf:"varint,14,opt,name=liked_by_me,json=likedByMe,proto3" json:"liked_by_me,omitempty"`
+	ViewerCount   int32  `protobuf:"varint,15,opt,name=viewer_count,json=viewerCount,proto3" json:"viewer_count,omitempty"` // only filled for the author's own stories
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -200,6 +203,27 @@ func (x *Story) GetEditsJson() string {
 		return x.EditsJson
 	}
 	return ""
+}
+
+func (x *Story) GetLikeCount() int32 {
+	if x != nil {
+		return x.LikeCount
+	}
+	return 0
+}
+
+func (x *Story) GetLikedByMe() bool {
+	if x != nil {
+		return x.LikedByMe
+	}
+	return false
+}
+
+func (x *Story) GetViewerCount() int32 {
+	if x != nil {
+		return x.ViewerCount
+	}
+	return 0
 }
 
 type CreateStoryRequest struct {
@@ -614,11 +638,351 @@ func (*DeleteStoryResponse) Descriptor() ([]byte, []int) {
 	return file_social_v1_story_proto_rawDescGZIP(), []int{8}
 }
 
+type MarkStoryViewedRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	StoryId       string                 `protobuf:"bytes,1,opt,name=story_id,json=storyId,proto3" json:"story_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkStoryViewedRequest) Reset() {
+	*x = MarkStoryViewedRequest{}
+	mi := &file_social_v1_story_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkStoryViewedRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkStoryViewedRequest) ProtoMessage() {}
+
+func (x *MarkStoryViewedRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_story_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkStoryViewedRequest.ProtoReflect.Descriptor instead.
+func (*MarkStoryViewedRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_story_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *MarkStoryViewedRequest) GetStoryId() string {
+	if x != nil {
+		return x.StoryId
+	}
+	return ""
+}
+
+type MarkStoryViewedResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkStoryViewedResponse) Reset() {
+	*x = MarkStoryViewedResponse{}
+	mi := &file_social_v1_story_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkStoryViewedResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkStoryViewedResponse) ProtoMessage() {}
+
+func (x *MarkStoryViewedResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_story_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkStoryViewedResponse.ProtoReflect.Descriptor instead.
+func (*MarkStoryViewedResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_story_proto_rawDescGZIP(), []int{10}
+}
+
+type StoryLikeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	StoryId       string                 `protobuf:"bytes,1,opt,name=story_id,json=storyId,proto3" json:"story_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StoryLikeRequest) Reset() {
+	*x = StoryLikeRequest{}
+	mi := &file_social_v1_story_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StoryLikeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StoryLikeRequest) ProtoMessage() {}
+
+func (x *StoryLikeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_story_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StoryLikeRequest.ProtoReflect.Descriptor instead.
+func (*StoryLikeRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_story_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *StoryLikeRequest) GetStoryId() string {
+	if x != nil {
+		return x.StoryId
+	}
+	return ""
+}
+
+type StoryLikeResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	LikeCount     int32                  `protobuf:"varint,1,opt,name=like_count,json=likeCount,proto3" json:"like_count,omitempty"`
+	Liked         bool                   `protobuf:"varint,2,opt,name=liked,proto3" json:"liked,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StoryLikeResponse) Reset() {
+	*x = StoryLikeResponse{}
+	mi := &file_social_v1_story_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StoryLikeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StoryLikeResponse) ProtoMessage() {}
+
+func (x *StoryLikeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_story_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StoryLikeResponse.ProtoReflect.Descriptor instead.
+func (*StoryLikeResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_story_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *StoryLikeResponse) GetLikeCount() int32 {
+	if x != nil {
+		return x.LikeCount
+	}
+	return 0
+}
+
+func (x *StoryLikeResponse) GetLiked() bool {
+	if x != nil {
+		return x.Liked
+	}
+	return false
+}
+
+type ListStoryViewersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	StoryId       string                 `protobuf:"bytes,1,opt,name=story_id,json=storyId,proto3" json:"story_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListStoryViewersRequest) Reset() {
+	*x = ListStoryViewersRequest{}
+	mi := &file_social_v1_story_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListStoryViewersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListStoryViewersRequest) ProtoMessage() {}
+
+func (x *ListStoryViewersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_story_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListStoryViewersRequest.ProtoReflect.Descriptor instead.
+func (*ListStoryViewersRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_story_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ListStoryViewersRequest) GetStoryId() string {
+	if x != nil {
+		return x.StoryId
+	}
+	return ""
+}
+
+type StoryViewer struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	DisplayName   string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	PhotoUrl      string                 `protobuf:"bytes,3,opt,name=photo_url,json=photoUrl,proto3" json:"photo_url,omitempty"`
+	ViewedAt      *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=viewed_at,json=viewedAt,proto3" json:"viewed_at,omitempty"`
+	Liked         bool                   `protobuf:"varint,5,opt,name=liked,proto3" json:"liked,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StoryViewer) Reset() {
+	*x = StoryViewer{}
+	mi := &file_social_v1_story_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StoryViewer) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StoryViewer) ProtoMessage() {}
+
+func (x *StoryViewer) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_story_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StoryViewer.ProtoReflect.Descriptor instead.
+func (*StoryViewer) Descriptor() ([]byte, []int) {
+	return file_social_v1_story_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *StoryViewer) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *StoryViewer) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+func (x *StoryViewer) GetPhotoUrl() string {
+	if x != nil {
+		return x.PhotoUrl
+	}
+	return ""
+}
+
+func (x *StoryViewer) GetViewedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ViewedAt
+	}
+	return nil
+}
+
+func (x *StoryViewer) GetLiked() bool {
+	if x != nil {
+		return x.Liked
+	}
+	return false
+}
+
+type ListStoryViewersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Viewers       []*StoryViewer         `protobuf:"bytes,1,rep,name=viewers,proto3" json:"viewers,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListStoryViewersResponse) Reset() {
+	*x = ListStoryViewersResponse{}
+	mi := &file_social_v1_story_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListStoryViewersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListStoryViewersResponse) ProtoMessage() {}
+
+func (x *ListStoryViewersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_story_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListStoryViewersResponse.ProtoReflect.Descriptor instead.
+func (*ListStoryViewersResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_story_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *ListStoryViewersResponse) GetViewers() []*StoryViewer {
+	if x != nil {
+		return x.Viewers
+	}
+	return nil
+}
+
 var File_social_v1_story_proto protoreflect.FileDescriptor
 
 const file_social_v1_story_proto_rawDesc = "" +
 	"\n" +
-	"\x15social/v1/story.proto\x12\tsocial.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x16social/v1/common.proto\"\xc8\x03\n" +
+	"\x15social/v1/story.proto\x12\tsocial.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x16social/v1/common.proto\"\xaa\x04\n" +
 	"\x05Story\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tauthor_id\x18\x02 \x01(\tR\bauthorId\x12\x1b\n" +
@@ -636,7 +1000,11 @@ const file_social_v1_story_proto_rawDesc = "" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12+\n" +
 	"\x05media\x18\v \x01(\v2\x15.social.v1.MediaAssetR\x05media\x12\x1d\n" +
 	"\n" +
-	"edits_json\x18\f \x01(\tR\teditsJson\"\xa8\x02\n" +
+	"edits_json\x18\f \x01(\tR\teditsJson\x12\x1d\n" +
+	"\n" +
+	"like_count\x18\r \x01(\x05R\tlikeCount\x12\x1e\n" +
+	"\vliked_by_me\x18\x0e \x01(\bR\tlikedByMe\x12!\n" +
+	"\fviewer_count\x18\x0f \x01(\x05R\vviewerCount\"\xa8\x02\n" +
 	"\x12CreateStoryRequest\x12\x1f\n" +
 	"\tmedia_url\x18\x01 \x01(\tB\x02\x18\x01R\bmediaUrl\x12!\n" +
 	"\n" +
@@ -663,15 +1031,38 @@ const file_social_v1_story_proto_rawDesc = "" +
 	"\astories\x18\x01 \x03(\v2\x10.social.v1.StoryR\astories\"/\n" +
 	"\x12DeleteStoryRequest\x12\x19\n" +
 	"\bstory_id\x18\x01 \x01(\tR\astoryId\"\x15\n" +
-	"\x13DeleteStoryResponse*M\n" +
+	"\x13DeleteStoryResponse\"3\n" +
+	"\x16MarkStoryViewedRequest\x12\x19\n" +
+	"\bstory_id\x18\x01 \x01(\tR\astoryId\"\x19\n" +
+	"\x17MarkStoryViewedResponse\"-\n" +
+	"\x10StoryLikeRequest\x12\x19\n" +
+	"\bstory_id\x18\x01 \x01(\tR\astoryId\"H\n" +
+	"\x11StoryLikeResponse\x12\x1d\n" +
+	"\n" +
+	"like_count\x18\x01 \x01(\x05R\tlikeCount\x12\x14\n" +
+	"\x05liked\x18\x02 \x01(\bR\x05liked\"4\n" +
+	"\x17ListStoryViewersRequest\x12\x19\n" +
+	"\bstory_id\x18\x01 \x01(\tR\astoryId\"\xb5\x01\n" +
+	"\vStoryViewer\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
+	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12\x1b\n" +
+	"\tphoto_url\x18\x03 \x01(\tR\bphotoUrl\x127\n" +
+	"\tviewed_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bviewedAt\x12\x14\n" +
+	"\x05liked\x18\x05 \x01(\bR\x05liked\"L\n" +
+	"\x18ListStoryViewersResponse\x120\n" +
+	"\aviewers\x18\x01 \x03(\v2\x16.social.v1.StoryViewerR\aviewers*M\n" +
 	"\rStoryAudience\x12\x1e\n" +
 	"\x1aSTORY_AUDIENCE_CONNECTIONS\x10\x00\x12\x1c\n" +
-	"\x18STORY_AUDIENCE_COMMUNITY\x10\x012\xbe\x02\n" +
+	"\x18STORY_AUDIENCE_COMMUNITY\x10\x012\x87\x05\n" +
 	"\fStoryService\x12>\n" +
 	"\vCreateStory\x12\x1d.social.v1.CreateStoryRequest\x1a\x10.social.v1.Story\x12L\n" +
 	"\vListStories\x12\x1d.social.v1.ListStoriesRequest\x1a\x1e.social.v1.ListStoriesResponse\x12R\n" +
 	"\rListMyStories\x12\x1f.social.v1.ListMyStoriesRequest\x1a .social.v1.ListMyStoriesResponse\x12L\n" +
-	"\vDeleteStory\x12\x1d.social.v1.DeleteStoryRequest\x1a\x1e.social.v1.DeleteStoryResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
+	"\vDeleteStory\x12\x1d.social.v1.DeleteStoryRequest\x1a\x1e.social.v1.DeleteStoryResponse\x12X\n" +
+	"\x0fMarkStoryViewed\x12!.social.v1.MarkStoryViewedRequest\x1a\".social.v1.MarkStoryViewedResponse\x12F\n" +
+	"\tLikeStory\x12\x1b.social.v1.StoryLikeRequest\x1a\x1c.social.v1.StoryLikeResponse\x12H\n" +
+	"\vUnlikeStory\x12\x1b.social.v1.StoryLikeRequest\x1a\x1c.social.v1.StoryLikeResponse\x12[\n" +
+	"\x10ListStoryViewers\x12\".social.v1.ListStoryViewersRequest\x1a#.social.v1.ListStoryViewersResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
 var (
 	file_social_v1_story_proto_rawDescOnce sync.Once
@@ -686,43 +1077,60 @@ func file_social_v1_story_proto_rawDescGZIP() []byte {
 }
 
 var file_social_v1_story_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_social_v1_story_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_social_v1_story_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_social_v1_story_proto_goTypes = []any{
-	(StoryAudience)(0),            // 0: social.v1.StoryAudience
-	(*Story)(nil),                 // 1: social.v1.Story
-	(*CreateStoryRequest)(nil),    // 2: social.v1.CreateStoryRequest
-	(*StoryGroup)(nil),            // 3: social.v1.StoryGroup
-	(*ListStoriesRequest)(nil),    // 4: social.v1.ListStoriesRequest
-	(*ListStoriesResponse)(nil),   // 5: social.v1.ListStoriesResponse
-	(*ListMyStoriesRequest)(nil),  // 6: social.v1.ListMyStoriesRequest
-	(*ListMyStoriesResponse)(nil), // 7: social.v1.ListMyStoriesResponse
-	(*DeleteStoryRequest)(nil),    // 8: social.v1.DeleteStoryRequest
-	(*DeleteStoryResponse)(nil),   // 9: social.v1.DeleteStoryResponse
-	(*timestamppb.Timestamp)(nil), // 10: google.protobuf.Timestamp
-	(*MediaAsset)(nil),            // 11: social.v1.MediaAsset
+	(StoryAudience)(0),               // 0: social.v1.StoryAudience
+	(*Story)(nil),                    // 1: social.v1.Story
+	(*CreateStoryRequest)(nil),       // 2: social.v1.CreateStoryRequest
+	(*StoryGroup)(nil),               // 3: social.v1.StoryGroup
+	(*ListStoriesRequest)(nil),       // 4: social.v1.ListStoriesRequest
+	(*ListStoriesResponse)(nil),      // 5: social.v1.ListStoriesResponse
+	(*ListMyStoriesRequest)(nil),     // 6: social.v1.ListMyStoriesRequest
+	(*ListMyStoriesResponse)(nil),    // 7: social.v1.ListMyStoriesResponse
+	(*DeleteStoryRequest)(nil),       // 8: social.v1.DeleteStoryRequest
+	(*DeleteStoryResponse)(nil),      // 9: social.v1.DeleteStoryResponse
+	(*MarkStoryViewedRequest)(nil),   // 10: social.v1.MarkStoryViewedRequest
+	(*MarkStoryViewedResponse)(nil),  // 11: social.v1.MarkStoryViewedResponse
+	(*StoryLikeRequest)(nil),         // 12: social.v1.StoryLikeRequest
+	(*StoryLikeResponse)(nil),        // 13: social.v1.StoryLikeResponse
+	(*ListStoryViewersRequest)(nil),  // 14: social.v1.ListStoryViewersRequest
+	(*StoryViewer)(nil),              // 15: social.v1.StoryViewer
+	(*ListStoryViewersResponse)(nil), // 16: social.v1.ListStoryViewersResponse
+	(*timestamppb.Timestamp)(nil),    // 17: google.protobuf.Timestamp
+	(*MediaAsset)(nil),               // 18: social.v1.MediaAsset
 }
 var file_social_v1_story_proto_depIdxs = []int32{
 	0,  // 0: social.v1.Story.audience:type_name -> social.v1.StoryAudience
-	10, // 1: social.v1.Story.created_at:type_name -> google.protobuf.Timestamp
-	10, // 2: social.v1.Story.expires_at:type_name -> google.protobuf.Timestamp
-	11, // 3: social.v1.Story.media:type_name -> social.v1.MediaAsset
+	17, // 1: social.v1.Story.created_at:type_name -> google.protobuf.Timestamp
+	17, // 2: social.v1.Story.expires_at:type_name -> google.protobuf.Timestamp
+	18, // 3: social.v1.Story.media:type_name -> social.v1.MediaAsset
 	0,  // 4: social.v1.CreateStoryRequest.audience:type_name -> social.v1.StoryAudience
 	1,  // 5: social.v1.StoryGroup.stories:type_name -> social.v1.Story
 	3,  // 6: social.v1.ListStoriesResponse.groups:type_name -> social.v1.StoryGroup
 	1,  // 7: social.v1.ListMyStoriesResponse.stories:type_name -> social.v1.Story
-	2,  // 8: social.v1.StoryService.CreateStory:input_type -> social.v1.CreateStoryRequest
-	4,  // 9: social.v1.StoryService.ListStories:input_type -> social.v1.ListStoriesRequest
-	6,  // 10: social.v1.StoryService.ListMyStories:input_type -> social.v1.ListMyStoriesRequest
-	8,  // 11: social.v1.StoryService.DeleteStory:input_type -> social.v1.DeleteStoryRequest
-	1,  // 12: social.v1.StoryService.CreateStory:output_type -> social.v1.Story
-	5,  // 13: social.v1.StoryService.ListStories:output_type -> social.v1.ListStoriesResponse
-	7,  // 14: social.v1.StoryService.ListMyStories:output_type -> social.v1.ListMyStoriesResponse
-	9,  // 15: social.v1.StoryService.DeleteStory:output_type -> social.v1.DeleteStoryResponse
-	12, // [12:16] is the sub-list for method output_type
-	8,  // [8:12] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	17, // 8: social.v1.StoryViewer.viewed_at:type_name -> google.protobuf.Timestamp
+	15, // 9: social.v1.ListStoryViewersResponse.viewers:type_name -> social.v1.StoryViewer
+	2,  // 10: social.v1.StoryService.CreateStory:input_type -> social.v1.CreateStoryRequest
+	4,  // 11: social.v1.StoryService.ListStories:input_type -> social.v1.ListStoriesRequest
+	6,  // 12: social.v1.StoryService.ListMyStories:input_type -> social.v1.ListMyStoriesRequest
+	8,  // 13: social.v1.StoryService.DeleteStory:input_type -> social.v1.DeleteStoryRequest
+	10, // 14: social.v1.StoryService.MarkStoryViewed:input_type -> social.v1.MarkStoryViewedRequest
+	12, // 15: social.v1.StoryService.LikeStory:input_type -> social.v1.StoryLikeRequest
+	12, // 16: social.v1.StoryService.UnlikeStory:input_type -> social.v1.StoryLikeRequest
+	14, // 17: social.v1.StoryService.ListStoryViewers:input_type -> social.v1.ListStoryViewersRequest
+	1,  // 18: social.v1.StoryService.CreateStory:output_type -> social.v1.Story
+	5,  // 19: social.v1.StoryService.ListStories:output_type -> social.v1.ListStoriesResponse
+	7,  // 20: social.v1.StoryService.ListMyStories:output_type -> social.v1.ListMyStoriesResponse
+	9,  // 21: social.v1.StoryService.DeleteStory:output_type -> social.v1.DeleteStoryResponse
+	11, // 22: social.v1.StoryService.MarkStoryViewed:output_type -> social.v1.MarkStoryViewedResponse
+	13, // 23: social.v1.StoryService.LikeStory:output_type -> social.v1.StoryLikeResponse
+	13, // 24: social.v1.StoryService.UnlikeStory:output_type -> social.v1.StoryLikeResponse
+	16, // 25: social.v1.StoryService.ListStoryViewers:output_type -> social.v1.ListStoryViewersResponse
+	18, // [18:26] is the sub-list for method output_type
+	10, // [10:18] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_story_proto_init() }
@@ -737,7 +1145,7 @@ func file_social_v1_story_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_story_proto_rawDesc), len(file_social_v1_story_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   9,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

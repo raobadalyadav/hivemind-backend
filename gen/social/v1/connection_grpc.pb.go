@@ -22,6 +22,7 @@ const (
 	ConnectionService_RequestConnection_FullMethodName    = "/social.v1.ConnectionService/RequestConnection"
 	ConnectionService_RespondConnection_FullMethodName    = "/social.v1.ConnectionService/RespondConnection"
 	ConnectionService_ListConnections_FullMethodName      = "/social.v1.ConnectionService/ListConnections"
+	ConnectionService_GetConnectionStatus_FullMethodName  = "/social.v1.ConnectionService/GetConnectionStatus"
 	ConnectionService_ListPeopleMet_FullMethodName        = "/social.v1.ConnectionService/ListPeopleMet"
 	ConnectionService_CreateMeetAgainGroup_FullMethodName = "/social.v1.ConnectionService/CreateMeetAgainGroup"
 )
@@ -35,6 +36,8 @@ type ConnectionServiceClient interface {
 	RequestConnection(ctx context.Context, in *RequestConnectionRequest, opts ...grpc.CallOption) (*Connection, error)
 	RespondConnection(ctx context.Context, in *RespondConnectionRequest, opts ...grpc.CallOption) (*Connection, error)
 	ListConnections(ctx context.Context, in *ListConnectionsRequest, opts ...grpc.CallOption) (*ListConnectionsResponse, error)
+	// GetConnectionStatus: the caller's relationship with one person (no page limit, unlike ListConnections).
+	GetConnectionStatus(ctx context.Context, in *GetConnectionStatusRequest, opts ...grpc.CallOption) (*GetConnectionStatusResponse, error)
 	// Meet Again (flow.md §26). Both require the caller to have attended the plan.
 	ListPeopleMet(ctx context.Context, in *ListPeopleMetRequest, opts ...grpc.CallOption) (*ListPeopleMetResponse, error)
 	CreateMeetAgainGroup(ctx context.Context, in *CreateMeetAgainGroupRequest, opts ...grpc.CallOption) (*CreateMeetAgainGroupResponse, error)
@@ -78,6 +81,16 @@ func (c *connectionServiceClient) ListConnections(ctx context.Context, in *ListC
 	return out, nil
 }
 
+func (c *connectionServiceClient) GetConnectionStatus(ctx context.Context, in *GetConnectionStatusRequest, opts ...grpc.CallOption) (*GetConnectionStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetConnectionStatusResponse)
+	err := c.cc.Invoke(ctx, ConnectionService_GetConnectionStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *connectionServiceClient) ListPeopleMet(ctx context.Context, in *ListPeopleMetRequest, opts ...grpc.CallOption) (*ListPeopleMetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListPeopleMetResponse)
@@ -107,6 +120,8 @@ type ConnectionServiceServer interface {
 	RequestConnection(context.Context, *RequestConnectionRequest) (*Connection, error)
 	RespondConnection(context.Context, *RespondConnectionRequest) (*Connection, error)
 	ListConnections(context.Context, *ListConnectionsRequest) (*ListConnectionsResponse, error)
+	// GetConnectionStatus: the caller's relationship with one person (no page limit, unlike ListConnections).
+	GetConnectionStatus(context.Context, *GetConnectionStatusRequest) (*GetConnectionStatusResponse, error)
 	// Meet Again (flow.md §26). Both require the caller to have attended the plan.
 	ListPeopleMet(context.Context, *ListPeopleMetRequest) (*ListPeopleMetResponse, error)
 	CreateMeetAgainGroup(context.Context, *CreateMeetAgainGroupRequest) (*CreateMeetAgainGroupResponse, error)
@@ -128,6 +143,9 @@ func (UnimplementedConnectionServiceServer) RespondConnection(context.Context, *
 }
 func (UnimplementedConnectionServiceServer) ListConnections(context.Context, *ListConnectionsRequest) (*ListConnectionsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListConnections not implemented")
+}
+func (UnimplementedConnectionServiceServer) GetConnectionStatus(context.Context, *GetConnectionStatusRequest) (*GetConnectionStatusResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetConnectionStatus not implemented")
 }
 func (UnimplementedConnectionServiceServer) ListPeopleMet(context.Context, *ListPeopleMetRequest) (*ListPeopleMetResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListPeopleMet not implemented")
@@ -210,6 +228,24 @@ func _ConnectionService_ListConnections_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConnectionService_GetConnectionStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetConnectionStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConnectionServiceServer).GetConnectionStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConnectionService_GetConnectionStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConnectionServiceServer).GetConnectionStatus(ctx, req.(*GetConnectionStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ConnectionService_ListPeopleMet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListPeopleMetRequest)
 	if err := dec(in); err != nil {
@@ -264,6 +300,10 @@ var ConnectionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListConnections",
 			Handler:    _ConnectionService_ListConnections_Handler,
+		},
+		{
+			MethodName: "GetConnectionStatus",
+			Handler:    _ConnectionService_GetConnectionStatus_Handler,
 		},
 		{
 			MethodName: "ListPeopleMet",

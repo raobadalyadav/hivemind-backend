@@ -758,6 +758,103 @@ func (x *ListConnectionsResponse) GetPage() *PageResponse {
 	return nil
 }
 
+type GetConnectionStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetConnectionStatusRequest) Reset() {
+	*x = GetConnectionStatusRequest{}
+	mi := &file_social_v1_connection_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetConnectionStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetConnectionStatusRequest) ProtoMessage() {}
+
+func (x *GetConnectionStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_connection_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetConnectionStatusRequest.ProtoReflect.Descriptor instead.
+func (*GetConnectionStatusRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_connection_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *GetConnectionStatusRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type GetConnectionStatusResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// none | connected | pending_outgoing (I asked) | pending_incoming (they asked me)
+	State         string `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"`
+	ConnectionId  string `protobuf:"bytes,2,opt,name=connection_id,json=connectionId,proto3" json:"connection_id,omitempty"` // set unless none — lets the app accept a pending_incoming request
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetConnectionStatusResponse) Reset() {
+	*x = GetConnectionStatusResponse{}
+	mi := &file_social_v1_connection_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetConnectionStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetConnectionStatusResponse) ProtoMessage() {}
+
+func (x *GetConnectionStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_connection_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetConnectionStatusResponse.ProtoReflect.Descriptor instead.
+func (*GetConnectionStatusResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_connection_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *GetConnectionStatusResponse) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+func (x *GetConnectionStatusResponse) GetConnectionId() string {
+	if x != nil {
+		return x.ConnectionId
+	}
+	return ""
+}
+
 var File_social_v1_connection_proto protoreflect.FileDescriptor
 
 const file_social_v1_connection_proto_rawDesc = "" +
@@ -804,7 +901,12 @@ const file_social_v1_connection_proto_rawDesc = "" +
 	"\tdirection\x18\x04 \x01(\x0e2\x1e.social.v1.ConnectionDirectionR\tdirection\"\x7f\n" +
 	"\x17ListConnectionsResponse\x127\n" +
 	"\vconnections\x18\x01 \x03(\v2\x15.social.v1.ConnectionR\vconnections\x12+\n" +
-	"\x04page\x18\x02 \x01(\v2\x17.social.v1.PageResponseR\x04page*j\n" +
+	"\x04page\x18\x02 \x01(\v2\x17.social.v1.PageResponseR\x04page\"5\n" +
+	"\x1aGetConnectionStatusRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"X\n" +
+	"\x1bGetConnectionStatusResponse\x12\x14\n" +
+	"\x05state\x18\x01 \x01(\tR\x05state\x12#\n" +
+	"\rconnection_id\x18\x02 \x01(\tR\fconnectionId*j\n" +
 	"\x0fConnectionState\x12\x19\n" +
 	"\x15CONNECTION_STATE_NONE\x10\x00\x12\x1c\n" +
 	"\x18CONNECTION_STATE_PENDING\x10\x01\x12\x1e\n" +
@@ -817,11 +919,12 @@ const file_social_v1_connection_proto_rawDesc = "" +
 	"\x13ConnectionDirection\x12\x1c\n" +
 	"\x18CONNECTION_DIRECTION_ANY\x10\x00\x12!\n" +
 	"\x1dCONNECTION_DIRECTION_INCOMING\x10\x01\x12!\n" +
-	"\x1dCONNECTION_DIRECTION_OUTGOING\x10\x022\xcc\x03\n" +
+	"\x1dCONNECTION_DIRECTION_OUTGOING\x10\x022\xb2\x04\n" +
 	"\x11ConnectionService\x12O\n" +
 	"\x11RequestConnection\x12#.social.v1.RequestConnectionRequest\x1a\x15.social.v1.Connection\x12O\n" +
 	"\x11RespondConnection\x12#.social.v1.RespondConnectionRequest\x1a\x15.social.v1.Connection\x12X\n" +
-	"\x0fListConnections\x12!.social.v1.ListConnectionsRequest\x1a\".social.v1.ListConnectionsResponse\x12R\n" +
+	"\x0fListConnections\x12!.social.v1.ListConnectionsRequest\x1a\".social.v1.ListConnectionsResponse\x12d\n" +
+	"\x13GetConnectionStatus\x12%.social.v1.GetConnectionStatusRequest\x1a&.social.v1.GetConnectionStatusResponse\x12R\n" +
 	"\rListPeopleMet\x12\x1f.social.v1.ListPeopleMetRequest\x1a .social.v1.ListPeopleMetResponse\x12g\n" +
 	"\x14CreateMeetAgainGroup\x12&.social.v1.CreateMeetAgainGroupRequest\x1a'.social.v1.CreateMeetAgainGroupResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
@@ -838,7 +941,7 @@ func file_social_v1_connection_proto_rawDescGZIP() []byte {
 }
 
 var file_social_v1_connection_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_social_v1_connection_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_social_v1_connection_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_social_v1_connection_proto_goTypes = []any{
 	(ConnectionState)(0),                 // 0: social.v1.ConnectionState
 	(ConnectionStatus)(0),                // 1: social.v1.ConnectionStatus
@@ -853,32 +956,36 @@ var file_social_v1_connection_proto_goTypes = []any{
 	(*RespondConnectionRequest)(nil),     // 10: social.v1.RespondConnectionRequest
 	(*ListConnectionsRequest)(nil),       // 11: social.v1.ListConnectionsRequest
 	(*ListConnectionsResponse)(nil),      // 12: social.v1.ListConnectionsResponse
-	(*Audit)(nil),                        // 13: social.v1.Audit
-	(*PageRequest)(nil),                  // 14: social.v1.PageRequest
-	(*PageResponse)(nil),                 // 15: social.v1.PageResponse
+	(*GetConnectionStatusRequest)(nil),   // 13: social.v1.GetConnectionStatusRequest
+	(*GetConnectionStatusResponse)(nil),  // 14: social.v1.GetConnectionStatusResponse
+	(*Audit)(nil),                        // 15: social.v1.Audit
+	(*PageRequest)(nil),                  // 16: social.v1.PageRequest
+	(*PageResponse)(nil),                 // 17: social.v1.PageResponse
 }
 var file_social_v1_connection_proto_depIdxs = []int32{
 	0,  // 0: social.v1.PersonMet.state:type_name -> social.v1.ConnectionState
 	3,  // 1: social.v1.ListPeopleMetResponse.people:type_name -> social.v1.PersonMet
 	1,  // 2: social.v1.Connection.status:type_name -> social.v1.ConnectionStatus
-	13, // 3: social.v1.Connection.audit:type_name -> social.v1.Audit
-	14, // 4: social.v1.ListConnectionsRequest.page:type_name -> social.v1.PageRequest
+	15, // 3: social.v1.Connection.audit:type_name -> social.v1.Audit
+	16, // 4: social.v1.ListConnectionsRequest.page:type_name -> social.v1.PageRequest
 	1,  // 5: social.v1.ListConnectionsRequest.status:type_name -> social.v1.ConnectionStatus
 	2,  // 6: social.v1.ListConnectionsRequest.direction:type_name -> social.v1.ConnectionDirection
 	8,  // 7: social.v1.ListConnectionsResponse.connections:type_name -> social.v1.Connection
-	15, // 8: social.v1.ListConnectionsResponse.page:type_name -> social.v1.PageResponse
+	17, // 8: social.v1.ListConnectionsResponse.page:type_name -> social.v1.PageResponse
 	9,  // 9: social.v1.ConnectionService.RequestConnection:input_type -> social.v1.RequestConnectionRequest
 	10, // 10: social.v1.ConnectionService.RespondConnection:input_type -> social.v1.RespondConnectionRequest
 	11, // 11: social.v1.ConnectionService.ListConnections:input_type -> social.v1.ListConnectionsRequest
-	4,  // 12: social.v1.ConnectionService.ListPeopleMet:input_type -> social.v1.ListPeopleMetRequest
-	6,  // 13: social.v1.ConnectionService.CreateMeetAgainGroup:input_type -> social.v1.CreateMeetAgainGroupRequest
-	8,  // 14: social.v1.ConnectionService.RequestConnection:output_type -> social.v1.Connection
-	8,  // 15: social.v1.ConnectionService.RespondConnection:output_type -> social.v1.Connection
-	12, // 16: social.v1.ConnectionService.ListConnections:output_type -> social.v1.ListConnectionsResponse
-	5,  // 17: social.v1.ConnectionService.ListPeopleMet:output_type -> social.v1.ListPeopleMetResponse
-	7,  // 18: social.v1.ConnectionService.CreateMeetAgainGroup:output_type -> social.v1.CreateMeetAgainGroupResponse
-	14, // [14:19] is the sub-list for method output_type
-	9,  // [9:14] is the sub-list for method input_type
+	13, // 12: social.v1.ConnectionService.GetConnectionStatus:input_type -> social.v1.GetConnectionStatusRequest
+	4,  // 13: social.v1.ConnectionService.ListPeopleMet:input_type -> social.v1.ListPeopleMetRequest
+	6,  // 14: social.v1.ConnectionService.CreateMeetAgainGroup:input_type -> social.v1.CreateMeetAgainGroupRequest
+	8,  // 15: social.v1.ConnectionService.RequestConnection:output_type -> social.v1.Connection
+	8,  // 16: social.v1.ConnectionService.RespondConnection:output_type -> social.v1.Connection
+	12, // 17: social.v1.ConnectionService.ListConnections:output_type -> social.v1.ListConnectionsResponse
+	14, // 18: social.v1.ConnectionService.GetConnectionStatus:output_type -> social.v1.GetConnectionStatusResponse
+	5,  // 19: social.v1.ConnectionService.ListPeopleMet:output_type -> social.v1.ListPeopleMetResponse
+	7,  // 20: social.v1.ConnectionService.CreateMeetAgainGroup:output_type -> social.v1.CreateMeetAgainGroupResponse
+	15, // [15:21] is the sub-list for method output_type
+	9,  // [9:15] is the sub-list for method input_type
 	9,  // [9:9] is the sub-list for extension type_name
 	9,  // [9:9] is the sub-list for extension extendee
 	0,  // [0:9] is the sub-list for field type_name
@@ -896,7 +1003,7 @@ func file_social_v1_connection_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_connection_proto_rawDesc), len(file_social_v1_connection_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

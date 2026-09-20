@@ -192,7 +192,8 @@ func main() {
 
 	socialv1.RegisterAuthServiceServer(srv, auth.NewHandler(auth.NewService(auth.NewRepository(pool), issuer, googleVerifier, appleVerifier, emailSender, analyticsRec, logger)))
 	socialv1.RegisterUserServiceServer(srv, users.NewHandler(users.NewService(users.NewRepository(pool))))
-	socialv1.RegisterProfileServiceServer(srv, profiles.NewHandler(profiles.NewService(profiles.NewRepository(pool)).WithMedia(mediaResolver)))
+	socialRepo := social.NewRepository(pool)
+	socialv1.RegisterProfileServiceServer(srv, profiles.NewHandler(profiles.NewService(profiles.NewRepository(pool)).WithMedia(mediaResolver)).WithPostCounter(socialRepo))
 	socialv1.RegisterDiscoveryServiceServer(srv, discovery.NewHandler(discovery.NewService(discovery.NewRepository(pool))))
 	socialv1.RegisterPlanServiceServer(srv, plans.NewHandler(plansSvc))
 	socialv1.RegisterBookingServiceServer(srv, bookings.NewHandler(bookingsSvc))
@@ -210,7 +211,7 @@ func main() {
 	socialv1.RegisterMeetServiceServer(srv, meet.NewHandler(meet.NewService(meet.NewRepository(pool)).WithDM(chatSvc)))
 	socialv1.RegisterVerificationServiceServer(srv, verification.NewHandler(verification.NewService(pool).WithMedia(mediaResolver)))
 	socialv1.RegisterStoryServiceServer(srv, stories.NewHandler(stories.NewService(stories.NewRepository(pool), contentScreener).WithMedia(mediaResolver)))
-	socialv1.RegisterSocialServiceServer(srv, social.NewHandler(social.NewService(social.NewRepository(pool), moderationSvc, contentScreener).WithMedia(mediaResolver).WithWebBaseURL(cfg.PublicWebBaseURL)))
+	socialv1.RegisterSocialServiceServer(srv, social.NewHandler(social.NewService(socialRepo, moderationSvc, contentScreener).WithMedia(mediaResolver).WithWebBaseURL(cfg.PublicWebBaseURL)))
 	socialv1.RegisterModerationServiceServer(srv, moderation.NewHandler(moderationSvc))
 	socialv1.RegisterNotificationServiceServer(srv, notifications.NewHandler(notifications.NewService(notifications.NewRepository(pool), emailSender, pushSender, logger)))
 	socialv1.RegisterSearchServiceServer(srv, search.NewHandler(search.NewService(search.NewRepository(pool))))

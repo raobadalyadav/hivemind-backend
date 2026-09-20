@@ -18,6 +18,13 @@ service StoryService {
   // archived (keep_archive) ones that have expired.
   rpc ListMyStories(ListMyStoriesRequest) returns (ListMyStoriesResponse);
   rpc DeleteStory(DeleteStoryRequest) returns (DeleteStoryResponse);
+  // MarkStoryViewed records that the caller saw a story they're allowed to see
+  // (idempotent; the author is told once per viewer). Own stories are a no-op.
+  rpc MarkStoryViewed(MarkStoryViewedRequest) returns (MarkStoryViewedResponse);
+  rpc LikeStory(StoryLikeRequest) returns (StoryLikeResponse);
+  rpc UnlikeStory(StoryLikeRequest) returns (StoryLikeResponse);
+  // ListStoryViewers: who saw one of the caller's own live stories, newest first.
+  rpc ListStoryViewers(ListStoryViewersRequest) returns (ListStoryViewersResponse);
 }
 
 enum StoryAudience {
@@ -40,6 +47,9 @@ message Story {
   // Non-destructive edits (filter id + text/emoji overlays, normalised
   // coordinates) applied when rendering — see the mobile StoryCanvas.
   string edits_json = 12;
+  int32 like_count = 13;
+  bool liked_by_me = 14;
+  int32 viewer_count = 15; // only filled for the author's own stories
 }
 
 message CreateStoryRequest {
@@ -75,3 +85,22 @@ message DeleteStoryRequest {
   string story_id = 1;
 }
 message DeleteStoryResponse {}
+
+message MarkStoryViewedRequest { string story_id = 1; }
+message MarkStoryViewedResponse {}
+
+message StoryLikeRequest { string story_id = 1; }
+message StoryLikeResponse {
+  int32 like_count = 1;
+  bool liked = 2;
+}
+
+message ListStoryViewersRequest { string story_id = 1; }
+message StoryViewer {
+  string user_id = 1;
+  string display_name = 2;
+  string photo_url = 3;
+  google.protobuf.Timestamp viewed_at = 4;
+  bool liked = 5;
+}
+message ListStoryViewersResponse { repeated StoryViewer viewers = 1; }

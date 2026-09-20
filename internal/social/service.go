@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"github.com/hivemind/backend/internal/notifications"
 	"strconv"
 	"strings"
 	"time"
@@ -163,18 +164,38 @@ func (s *Service) ListComments(ctx context.Context, postID, callerID string) ([]
 
 const defaultPostPageSize = 20
 
-func (s *Service) ListPosts(ctx context.Context, authorID, callerID string) ([]*Post, error) {
+// ListPosts pages an author's posts newest-first (what callerID may see: own profile = everything,
+// someone else's = public / connections-if-connected / community-if-member, never across a block).
+func (s *Service) ListPosts(ctx context.Context, authorID, callerID string, pageSize int32, pageToken string) ([]*Post, string, error) {
 	if authorID == "" || callerID == "" {
-		return nil, ErrInvalidInput
+		return nil, "", ErrInvalidInput
 	}
-	return s.repo.ListForAuthor(ctx, authorID, callerID, defaultPostPageSize)
+	cur, err := decodeCursor(pageToken)
+	if err != nil {
+		return nil, "", err
+	}
+	limit := int(pageSize)
+	if limit <= 0 || limit > 50 {
+		limit = defaultPostPageSize
+	}
+	posts, err := s.repo.ListForAuthor(ctx, authorID, callerID, cur, limit+1)
+	if err != nil {
+		return nil, "", err
+	}
+	next := ""
+	if len(posts) > limit {
+		posts = posts[:limit]
+		next = encodeCursor(posts[limit-1])
+	}
+	return posts, next, nil
 }
 
 func (s *Service) CommentOnPost(ctx context.Context, c *Comment) (*Comment, error) {
 	if c.PostID == "" || c.AuthorID == "" || strings.TrimSpace(c.Body) == "" || len(c.Body) > maxCommentLen {
 		return nil, ErrInvalidInput
 	}
-	if _, err := s.repo.GetVisible(ctx, c.PostID, c.AuthorID); err != nil {
+	post, err := s.repo.GetVisible(ctx, c.PostID, c.AuthorID)
+	if err != nil {
 		return nil, err
 	}
 	severity, reason := s.screener.Screen(ctx, c.Body)
@@ -188,6 +209,11 @@ func (s *Service) CommentOnPost(ctx context.Context, c *Comment) (*Comment, erro
 	if severity == "review" {
 		_, _ = s.reporter.AutoFlagForSubject(ctx, "comment", created.ID, c.AuthorID, severity, reason)
 	}
+	s.repo.notify(ctx, notifications.Event{
+		UserID: post.AuthorID, ActorID: c.AuthorID, Type: notifications.TypePostComment, TargetID: post.ID,
+		Title: "{actor} commented on your post", Body: snippet(c.Body, 80), DeepLink: "hivemind://posts/" + post.ID,
+		DedupeKey: "comment:" + created.ID,
+	})
 	return created, nil
 }
 
@@ -195,10 +221,22 @@ func (s *Service) LikePost(ctx context.Context, postID, userID string) (int32, e
 	if postID == "" || userID == "" {
 		return 0, ErrInvalidInput
 	}
-	if _, err := s.repo.GetVisible(ctx, postID, userID); err != nil {
+	post, err := s.repo.GetVisible(ctx, postID, userID)
+	if err != nil {
 		return 0, err
 	}
-	return s.repo.Like(ctx, postID, userID)
+	count, inserted, err := s.repo.Like(ctx, postID, userID)
+	if err != nil {
+		return 0, err
+	}
+	if inserted {
+		s.repo.notify(ctx, notifications.Event{
+			UserID: post.AuthorID, ActorID: userID, Type: notifications.TypePostLike, TargetID: post.ID,
+			Title: "{actor} liked your post", Body: snippet(post.Body, 80), DeepLink: "hivemind://posts/" + post.ID,
+			DedupeKey: "like:" + post.ID + ":" + userID,
+		})
+	}
+	return count, nil
 }
 
 func (s *Service) SavePost(ctx context.Context, postID, userID string) error {
@@ -347,4 +385,13 @@ func (s *Service) ListMyMemories(ctx context.Context, userID string, year int32)
 		out[len(out)-1].Memories = append(out[len(out)-1].Memories, m)
 	}
 	return out, nil
+}
+
+// snippet is the first n runes of s, for notification bodies.
+func snippet(s string, n int) string {
+	r := []rune(strings.TrimSpace(s))
+	if len(r) <= n {
+		return string(r)
+	}
+	return string(r[:n]) + "…"
 }

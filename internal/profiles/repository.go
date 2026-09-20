@@ -4,6 +4,8 @@ package profiles
 
 import (
 	"context"
+	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -22,6 +24,8 @@ type Profile struct {
 	Photos             []Photo
 	SelfieVerified     bool
 	ShowInPreviews     bool // privacy: appear in "who's going" cards
+	HideProfileViews   bool // privacy: nobody is told I viewed them (and I'm not told about theirs)
+	CreatedAt          time.Time
 }
 
 // Update is a partial update: nil pointer / nil slice = leave unchanged.
@@ -48,11 +52,11 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 }
 
 const profileCols = `display_name, bio, interests, languages, occupation, verification_status,
-	COALESCE(gender,''), education, hobbies, selfie_verified_at IS NOT NULL, show_in_participant_previews`
+	COALESCE(gender,''), education, hobbies, selfie_verified_at IS NOT NULL, show_in_participant_previews, hide_profile_views, created_at`
 
 func scanProfile(row interface{ Scan(...any) error }, p *Profile) error {
 	return row.Scan(&p.DisplayName, &p.Bio, &p.Interests, &p.Languages, &p.Occupation,
-		&p.VerificationStatus, &p.Gender, &p.Education, &p.Hobbies, &p.SelfieVerified, &p.ShowInPreviews)
+		&p.VerificationStatus, &p.Gender, &p.Education, &p.Hobbies, &p.SelfieVerified, &p.ShowInPreviews, &p.HideProfileViews, &p.CreatedAt)
 }
 
 // Create fills in the (empty) profile row created during signup — see
@@ -112,12 +116,16 @@ func (r *Repository) Update(ctx context.Context, u *Update) (*Profile, error) {
 	return &p, nil
 }
 
-func (r *Repository) SetPrivacy(ctx context.Context, userID string, showInPreviews bool) (*Profile, error) {
+// SetPrivacy changes only the settings that are non-nil.
+func (r *Repository) SetPrivacy(ctx context.Context, userID string, showInPreviews, hideViews *bool) (*Profile, error) {
 	p := Profile{UserID: userID}
 	err := scanProfile(r.pool.QueryRow(ctx, `
-		UPDATE user_profiles SET show_in_participant_previews = $2, updated_at = now()
+		UPDATE user_profiles SET
+			show_in_participant_previews = COALESCE($2, show_in_participant_previews),
+			hide_profile_views = COALESCE($3, hide_profile_views),
+			updated_at = now()
 		WHERE user_id = $1
-		RETURNING `+profileCols, userID, showInPreviews), &p)
+		RETURNING `+profileCols, userID, showInPreviews, hideViews), &p)
 	if err != nil {
 		return nil, err
 	}
@@ -139,4 +147,80 @@ func (r *Repository) Stats(ctx context.Context, userID string) (*Stats, error) {
 		  (SELECT count(*) FROM connections WHERE status = 'accepted'::connection_status AND (requester_id = $1 OR recipient_id = $1))::int,
 		  (SELECT count(*) FROM community_members WHERE user_id = $1)::int`, userID).Scan(&s.PlansAttended, &s.PlansUpcoming, &s.Connections, &s.Communities)
 	return &s, err
+}
+
+// UserStats is what a profile page shows about another person.
+type UserStats struct {
+	Connections, PlansAttended, MutualConnections, SharedCommunities, PlansHosted int32
+	SharedCommunityNames                                                          []string
+	MemberSince                                                                   time.Time
+	HostRatingAvg                                                                 float64
+	HostRatingCount                                                               int32
+}
+
+// ErrBlockedOrGone: the target doesn't exist / isn't active, or a block exists in either direction.
+var ErrBlockedOrGone = errors.New("profiles: user not available")
+
+// CanView reports whether viewer may see target's profile at all (active, not blocked either way).
+func (r *Repository) CanView(ctx context.Context, viewerID, targetID string) (bool, error) {
+	var ok bool
+	err := r.pool.QueryRow(ctx, `
+		SELECT EXISTS (SELECT 1 FROM users u WHERE u.id = $2::uuid AND u.status = 'active')
+		   AND NOT EXISTS (SELECT 1 FROM blocks b WHERE (b.user_id = $1::uuid AND b.blocked_user_id = $2::uuid)
+		                                              OR (b.user_id = $2::uuid AND b.blocked_user_id = $1::uuid))`,
+		viewerID, targetID).Scan(&ok)
+	return ok, err
+}
+
+func (r *Repository) UserStats(ctx context.Context, viewerID, targetID string) (*UserStats, error) {
+	ok, err := r.CanView(ctx, viewerID, targetID)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, ErrBlockedOrGone
+	}
+	var s UserStats
+	err = r.pool.QueryRow(ctx, `
+		WITH mine AS (
+			SELECT CASE WHEN requester_id = $1::uuid THEN recipient_id ELSE requester_id END AS uid
+			FROM connections WHERE status = 'accepted'::connection_status AND $1::uuid IN (requester_id, recipient_id)
+		), theirs AS (
+			SELECT CASE WHEN requester_id = $2::uuid THEN recipient_id ELSE requester_id END AS uid
+			FROM connections WHERE status = 'accepted'::connection_status AND $2::uuid IN (requester_id, recipient_id)
+		)
+		SELECT (SELECT count(*) FROM theirs)::int,
+		       (SELECT count(*) FROM bookings WHERE user_id = $2::uuid AND status = 'attended')::int,
+		       (SELECT count(*) FROM theirs WHERE uid IN (SELECT uid FROM mine))::int,
+		       (SELECT count(*) FROM community_members a JOIN community_members b ON b.community_id = a.community_id
+		          WHERE a.user_id = $1::uuid AND b.user_id = $2::uuid)::int,
+		       COALESCE((SELECT array_agg(name) FROM (SELECT c.name FROM community_members a
+		          JOIN community_members b ON b.community_id = a.community_id
+		          JOIN communities c ON c.id = a.community_id
+		          WHERE a.user_id = $1::uuid AND b.user_id = $2::uuid ORDER BY c.name LIMIT 3) x), '{}'),
+		       (SELECT created_at FROM users WHERE id = $2::uuid),
+		       COALESCE((SELECT avg(r.rating)::float8 FROM reviews r JOIN plans p ON p.id = r.plan_id WHERE p.host_id = $2::uuid), 0),
+		       (SELECT count(*) FROM reviews r JOIN plans p ON p.id = r.plan_id WHERE p.host_id = $2::uuid)::int,
+		       (SELECT count(*) FROM plans_discoverable WHERE host_id = $2::uuid)::int`,
+		viewerID, targetID).Scan(&s.Connections, &s.PlansAttended, &s.MutualConnections, &s.SharedCommunities,
+		&s.SharedCommunityNames, &s.MemberSince, &s.HostRatingAvg, &s.HostRatingCount, &s.PlansHosted)
+	return &s, err
+}
+
+// RecordView stores today's view and reports whether it was the first from this
+// viewer to this person today. It records nothing (false) when either side hides
+// views, when the viewer is the target, or when a block/inactive account applies.
+func (r *Repository) RecordView(ctx context.Context, viewerID, targetID string) (bool, error) {
+	if viewerID == targetID {
+		return false, nil
+	}
+	tag, err := r.pool.Exec(ctx, `
+		INSERT INTO profile_views (viewer_id, viewed_id)
+		SELECT $1::uuid, $2::uuid
+		WHERE NOT EXISTS (SELECT 1 FROM user_profiles WHERE user_id IN ($1::uuid, $2::uuid) AND hide_profile_views)
+		  AND EXISTS (SELECT 1 FROM users u WHERE u.id = $2::uuid AND u.status = 'active')
+		  AND NOT EXISTS (SELECT 1 FROM blocks b WHERE (b.user_id = $1::uuid AND b.blocked_user_id = $2::uuid)
+		                                             OR (b.user_id = $2::uuid AND b.blocked_user_id = $1::uuid))
+		ON CONFLICT DO NOTHING`, viewerID, targetID)
+	return tag.RowsAffected() == 1, err
 }

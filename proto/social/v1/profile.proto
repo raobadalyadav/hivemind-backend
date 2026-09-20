@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package social.v1;
 
+import "google/protobuf/timestamp.proto";
 import "social/v1/common.proto";
 
 option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
@@ -27,6 +28,12 @@ service ProfileService {
   rpc GetMyPreferences(GetMyPreferencesRequest) returns (UserPreferences);
   // GetMyStats: real counts for the Me tab.
   rpc GetMyStats(GetMyStatsRequest) returns (MyStats);
+  // GetUserStats: what a profile page shows about someone else (counts follow what
+  // the caller may see). NotFound when either side blocked the other or the account is gone.
+  rpc GetUserStats(GetUserStatsRequest) returns (UserStats);
+  // RecordProfileView is called once when the caller opens someone's profile: it
+  // throttles to one per viewer/target/day and tells the person (unless either hides views).
+  rpc RecordProfileView(RecordProfileViewRequest) returns (RecordProfileViewResponse);
 }
 
 message Profile {
@@ -44,6 +51,7 @@ message Profile {
   repeated ProfilePhoto photos = 12;
   bool selfie_verified = 13; // blue tick (live-selfie verification approved)
   bool show_in_participant_previews = 14; // privacy setting; only filled when you read your own profile
+  bool hide_profile_views = 15;           // privacy setting; only filled when you read your own profile
 }
 
 message ProfilePhoto {
@@ -134,7 +142,9 @@ message GetMyPreferencesRequest {}
 
 message SetPrivacyRequest {
   string user_id = 1;
-  bool show_in_participant_previews = 2;
+  // Each setting is only changed when present.
+  optional bool show_in_participant_previews = 2;
+  optional bool hide_profile_views = 3; // true: nobody is told you viewed them, and you aren't told about views
 }
 
 message GetMyStatsRequest {}
@@ -144,3 +154,20 @@ message MyStats {
   int32 connections = 3;   // accepted connections
   int32 communities = 4;   // communities the caller belongs to
 }
+
+message GetUserStatsRequest { string user_id = 1; }
+message UserStats {
+  int32 posts = 1;               // posts the caller may open
+  int32 connections = 2;
+  int32 plans_attended = 3;
+  int32 mutual_connections = 4;
+  int32 shared_communities = 5;
+  repeated string shared_community_names = 6; // up to 3
+  google.protobuf.Timestamp member_since = 7;
+  double host_rating_avg = 8;    // over reviews of plans they hosted; 0 when none
+  int32 host_rating_count = 9;
+  int32 plans_hosted = 10;       // public, published plans
+}
+
+message RecordProfileViewRequest { string user_id = 1; }
+message RecordProfileViewResponse {}

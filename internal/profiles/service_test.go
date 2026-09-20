@@ -230,3 +230,80 @@ func TestGetMyStats_CountsAreReal(t *testing.T) {
 		t.Errorf("connections: %+v", st)
 	}
 }
+
+func TestProfileView_ThrottleHideAndBlock(t *testing.T) {
+	pool := testPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	svc := NewService(NewRepository(pool))
+	target, viewer, hider, blocker := seedUser(t, pool, "pvt"), seedUser(t, pool, "pvv"), seedUser(t, pool, "pvh"), seedUser(t, pool, "pvb")
+	count := func() int {
+		var n int
+		pool.QueryRow(ctx, `SELECT count(*) FROM notifications WHERE user_id=$1 AND type='profile_view'`, target).Scan(&n)
+		return n
+	}
+	if err := svc.RecordProfileView(ctx, target, target); err != nil || count() != 0 {
+		t.Fatalf("opening your own profile is not a view: %v", err)
+	}
+	for i := 0; i < 3; i++ {
+		if err := svc.RecordProfileView(ctx, viewer, target); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if count() != 1 {
+		t.Fatalf("one notification per viewer per day, got %d", count())
+	}
+	// the viewer hides their own views → nothing recorded or sent
+	yes := true
+	if _, err := svc.SetPrivacy(ctx, hider, nil, &yes); err != nil {
+		t.Fatal(err)
+	}
+	svc.RecordProfileView(ctx, hider, target)
+	if count() != 1 {
+		t.Fatal("a viewer who hides views doesn't notify")
+	}
+	// the target hides theirs → nobody's views are announced
+	if _, err := svc.SetPrivacy(ctx, target, nil, &yes); err != nil {
+		t.Fatal(err)
+	}
+	other := seedUser(t, pool, "pvo")
+	svc.RecordProfileView(ctx, other, target)
+	if count() != 1 {
+		t.Fatal("a target who hides views isn't notified")
+	}
+	// SetPrivacy with only one field leaves the other alone
+	p, _ := svc.GetProfile(ctx, target)
+	if !p.ShowInPreviews || !p.HideProfileViews {
+		t.Fatalf("partial privacy update clobbered a setting: %+v", p)
+	}
+	no := false
+	svc.SetPrivacy(ctx, target, nil, &no)
+	pool.Exec(ctx, `INSERT INTO blocks (user_id, blocked_user_id) VALUES ($1,$2)`, target, blocker)
+	svc.RecordProfileView(ctx, blocker, target)
+	if count() != 1 {
+		t.Fatal("blocked viewers don't notify")
+	}
+	if _, err := svc.GetUserStats(ctx, blocker, target); err != ErrBlockedOrGone {
+		t.Fatalf("stats of a blocked person are unavailable: %v", err)
+	}
+}
+
+func TestUserStats_MutualsAndSharedCommunities(t *testing.T) {
+	pool := testPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	svc := NewService(NewRepository(pool))
+	me, them, mutual, other := seedUser(t, pool, "usme"), seedUser(t, pool, "ust"), seedUser(t, pool, "usm"), seedUser(t, pool, "uso")
+	pool.Exec(ctx, `INSERT INTO connections (requester_id, recipient_id, status) VALUES ($1,$2,'accepted'),($3,$2,'accepted'),($3,$4,'accepted')`, me, mutual, them, other)
+	pool.Exec(ctx, `INSERT INTO connections (requester_id, recipient_id, status) VALUES ($1,$2,'accepted')`, them, mutual)
+	var comm string
+	pool.QueryRow(ctx, `INSERT INTO communities (name, owner_id) VALUES ($1,$2) RETURNING id`, "Shared Club "+time.Now().Format("150405.000000000"), them).Scan(&comm)
+	pool.Exec(ctx, `INSERT INTO community_members (community_id, user_id) VALUES ($1,$2),($1,$3)`, comm, me, them)
+	st, err := svc.GetUserStats(ctx, me, them)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if st.Connections != 2 || st.MutualConnections != 1 || st.SharedCommunities != 1 || len(st.SharedCommunityNames) != 1 || st.MemberSince.IsZero() {
+		t.Fatalf("stats: %+v", st)
+	}
+}

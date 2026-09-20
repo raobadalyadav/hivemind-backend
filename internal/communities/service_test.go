@@ -222,3 +222,35 @@ func TestJoinApprovalCommunity_PendingSurvivesReopenAndDeclinedIsExplained(t *te
 		t.Error("declined is no longer pending")
 	}
 }
+
+func TestCommunity_NotifiesOwnerAndDecidedUser(t *testing.T) {
+	pool := testPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	svc := NewService(NewRepository(pool))
+	owner, asker, joiner := seedUser(t, pool, "no"), seedUser(t, pool, "na"), seedUser(t, pool, "nj")
+	count := func(user, typ string) int {
+		var n int
+		pool.QueryRow(ctx, `SELECT count(*) FROM notifications WHERE user_id=$1 AND type=$2`, user, typ).Scan(&n)
+		return n
+	}
+	appr, _ := svc.CreateCommunity(ctx, &Community{Name: "Notify Approval " + time.Now().Format("150405.000000000"), OwnerID: owner, MembershipType: "approval"})
+	open, _ := svc.CreateCommunity(ctx, &Community{Name: "Notify Open " + time.Now().Format("150405.000000000"), OwnerID: owner, MembershipType: "public"})
+
+	svc.JoinCommunity(ctx, appr.ID, asker)
+	svc.JoinCommunity(ctx, appr.ID, asker) // repeat: no second notification
+	if count(owner, "community_join_request") != 1 {
+		t.Fatalf("owner is told of a join request once, got %d", count(owner, "community_join_request"))
+	}
+	reqs, _ := svc.ListJoinRequests(ctx, appr.ID, "pending", owner)
+	if _, err := svc.RespondJoinRequest(ctx, reqs[0].ID, owner, true); err != nil {
+		t.Fatal(err)
+	}
+	if count(asker, "community_approved") != 1 {
+		t.Fatal("the requester is told they were approved")
+	}
+	svc.JoinCommunity(ctx, open.ID, joiner)
+	if count(owner, "community_member_joined") != 1 {
+		t.Fatal("owner is told when someone joins an open community")
+	}
+}

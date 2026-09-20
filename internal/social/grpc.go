@@ -87,11 +87,11 @@ func (h *Handler) ListPosts(ctx context.Context, req *socialv1.ListPostsRequest)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "auth required")
 	}
-	list, err := h.svc.ListPosts(ctx, req.GetAuthorId(), callerID)
+	list, next, err := h.svc.ListPosts(ctx, req.GetAuthorId(), callerID, req.GetPage().GetPageSize(), req.GetPage().GetPageToken())
 	if err != nil {
 		return nil, socialErr(err, "failed to list posts")
 	}
-	return &socialv1.ListPostsResponse{Posts: postsToProto(list)}, nil
+	return &socialv1.ListPostsResponse{Posts: postsToProto(list), Page: &socialv1.PageResponse{NextPageToken: next, HasMore: next != ""}}, nil
 }
 
 func (h *Handler) CommentOnPost(ctx context.Context, req *socialv1.CommentOnPostRequest) (*socialv1.Comment, error) {

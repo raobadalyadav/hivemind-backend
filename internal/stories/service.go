@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/hivemind/backend/internal/notifications"
 	"time"
 
 	"github.com/hivemind/backend/pkg/media"
@@ -134,4 +135,66 @@ func (s *Service) DeleteStory(ctx context.Context, storyID, userID string) error
 // PurgeExpired is the hourly worker job.
 func (s *Service) PurgeExpired(ctx context.Context, now time.Time) (int, error) {
 	return s.repo.PurgeExpired(ctx, now)
+}
+
+// MarkViewed records a view of a story the caller may see and, the first time,
+// tells the author. Viewing your own story is a no-op.
+func (s *Service) MarkViewed(ctx context.Context, storyID, viewerID string) error {
+	if storyID == "" || viewerID == "" {
+		return ErrInvalidInput
+	}
+	author, err := s.repo.CanSee(ctx, storyID, viewerID, s.now())
+	if err != nil {
+		return err
+	}
+	if author == viewerID {
+		return nil
+	}
+	first, err := s.repo.RecordView(ctx, storyID, viewerID)
+	if err != nil || !first {
+		return err
+	}
+	_, _ = notifications.Emit(ctx, s.repo.pool, notifications.Event{
+		UserID: author, ActorID: viewerID, Type: notifications.TypeStoryView, TargetID: storyID,
+		Title: "{actor} viewed your story", DeepLink: "hivemind://stories/" + author,
+		DedupeKey: "storyview:" + storyID + ":" + viewerID,
+	})
+	return nil
+}
+
+// SetLike likes or unlikes a story the caller may see; only a new like notifies the author.
+func (s *Service) SetLike(ctx context.Context, storyID, userID string, like bool) (int32, error) {
+	if storyID == "" || userID == "" {
+		return 0, ErrInvalidInput
+	}
+	author, err := s.repo.CanSee(ctx, storyID, userID, s.now())
+	if err != nil {
+		return 0, err
+	}
+	count, inserted, err := s.repo.SetLike(ctx, storyID, userID, like)
+	if err != nil {
+		return 0, err
+	}
+	if inserted && author != userID {
+		_, _ = notifications.Emit(ctx, s.repo.pool, notifications.Event{
+			UserID: author, ActorID: userID, Type: notifications.TypeStoryLike, TargetID: storyID,
+			Title: "{actor} liked your story", DeepLink: "hivemind://stories/" + author,
+			DedupeKey: "storylike:" + storyID + ":" + userID,
+		})
+	}
+	return count, nil
+}
+
+func (s *Service) ListViewers(ctx context.Context, storyID, userID string) ([]*Viewer, error) {
+	if storyID == "" || userID == "" {
+		return nil, ErrInvalidInput
+	}
+	own, err := s.repo.IsAuthor(ctx, storyID, userID)
+	if err != nil {
+		return nil, err
+	}
+	if !own {
+		return nil, ErrForbidden
+	}
+	return s.repo.ListViewers(ctx, storyID, 200)
 }

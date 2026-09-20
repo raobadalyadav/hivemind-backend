@@ -1,8 +1,11 @@
 package chat
 
 import (
+	"strings"
+
 	"context"
 	"errors"
+	"github.com/hivemind/backend/internal/notifications"
 	"time"
 )
 
@@ -84,7 +87,42 @@ func (r *Repository) MarkRead(ctx context.Context, roomID, userID string, now ti
 	if tag.RowsAffected() == 0 {
 		return ErrNotAMember
 	}
+	// Reading the chat clears its "new message" notification too.
+	_, _ = r.pool.Exec(ctx, `UPDATE notifications SET read = true WHERE user_id = $1 AND type = 'chat_message' AND target_id = $2 AND NOT read`, userID, roomID)
 	return nil
+}
+
+// notifyDM tells the other person in a 1:1 chat about a new message (unless they muted it);
+// while an earlier message notification is unread, further messages collapse into it.
+func (r *Repository) notifyDM(ctx context.Context, m *Message) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT cm.user_id::text FROM chat_rooms cr JOIN chat_members cm ON cm.room_id = cr.id
+		WHERE cr.id = $1 AND cr.kind = 'dm' AND cm.user_id <> $2 AND NOT cm.muted`, m.RoomID, m.SenderID)
+	if err != nil {
+		return
+	}
+	var to []string
+	for rows.Next() {
+		var id string
+		if rows.Scan(&id) == nil {
+			to = append(to, id)
+		}
+	}
+	rows.Close()
+	body := strings.TrimSpace(m.Body)
+	if r := []rune(body); len(r) > 80 {
+		body = string(r[:80]) + "…"
+	}
+	if body == "" {
+		body = "Sent an attachment"
+	}
+	for _, u := range to {
+		_, _ = notifications.Emit(ctx, r.pool, notifications.Event{
+			UserID: u, ActorID: m.SenderID, Type: notifications.TypeChatMessage, TargetID: m.RoomID,
+			Title: "{actor} sent you a message", Body: body, DeepLink: "hivemind://chat/" + m.RoomID,
+			DedupeKey: "chat:" + m.RoomID,
+		})
+	}
 }
 
 // AreConnected: an accepted connection either way, and no block.

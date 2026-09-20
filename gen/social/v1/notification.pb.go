@@ -9,6 +9,7 @@ package socialv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -22,14 +23,23 @@ const (
 )
 
 type Notification struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Channel       string                 `protobuf:"bytes,3,opt,name=channel,proto3" json:"channel,omitempty"` // push | in_app | email
-	Title         string                 `protobuf:"bytes,4,opt,name=title,proto3" json:"title,omitempty"`
-	Body          string                 `protobuf:"bytes,5,opt,name=body,proto3" json:"body,omitempty"`
-	DeepLink      string                 `protobuf:"bytes,6,opt,name=deep_link,json=deepLink,proto3" json:"deep_link,omitempty"`
-	Read          bool                   `protobuf:"varint,7,opt,name=read,proto3" json:"read,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Id       string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	UserId   string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Channel  string                 `protobuf:"bytes,3,opt,name=channel,proto3" json:"channel,omitempty"` // push | in_app | email
+	Title    string                 `protobuf:"bytes,4,opt,name=title,proto3" json:"title,omitempty"`
+	Body     string                 `protobuf:"bytes,5,opt,name=body,proto3" json:"body,omitempty"`
+	DeepLink string                 `protobuf:"bytes,6,opt,name=deep_link,json=deepLink,proto3" json:"deep_link,omitempty"`
+	Read     bool                   `protobuf:"varint,7,opt,name=read,proto3" json:"read,omitempty"`
+	// type is the event kind (post_like, post_comment, story_view, story_like,
+	// profile_view, connection_request, chat_message, …); empty for older rows.
+	// The app renders localized text from type + actor_name and falls back to title/body.
+	Type          string                 `protobuf:"bytes,8,opt,name=type,proto3" json:"type,omitempty"`
+	ActorId       string                 `protobuf:"bytes,9,opt,name=actor_id,json=actorId,proto3" json:"actor_id,omitempty"`
+	ActorName     string                 `protobuf:"bytes,10,opt,name=actor_name,json=actorName,proto3" json:"actor_name,omitempty"`
+	ActorPhotoUrl string                 `protobuf:"bytes,11,opt,name=actor_photo_url,json=actorPhotoUrl,proto3" json:"actor_photo_url,omitempty"`
+	TargetId      string                 `protobuf:"bytes,12,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"` // post / story / plan / room id the event is about
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -111,6 +121,48 @@ func (x *Notification) GetRead() bool {
 		return x.Read
 	}
 	return false
+}
+
+func (x *Notification) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *Notification) GetActorId() string {
+	if x != nil {
+		return x.ActorId
+	}
+	return ""
+}
+
+func (x *Notification) GetActorName() string {
+	if x != nil {
+		return x.ActorName
+	}
+	return ""
+}
+
+func (x *Notification) GetActorPhotoUrl() string {
+	if x != nil {
+		return x.ActorPhotoUrl
+	}
+	return ""
+}
+
+func (x *Notification) GetTargetId() string {
+	if x != nil {
+		return x.TargetId
+	}
+	return ""
+}
+
+func (x *Notification) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
 }
 
 type SendNotificationRequest struct {
@@ -337,6 +389,226 @@ func (x *ListNotificationsResponse) GetPage() *PageResponse {
 	return nil
 }
 
+type CategoryList struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Items         []string               `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CategoryList) Reset() {
+	*x = CategoryList{}
+	mi := &file_social_v1_notification_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CategoryList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CategoryList) ProtoMessage() {}
+
+func (x *CategoryList) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_notification_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CategoryList.ProtoReflect.Descriptor instead.
+func (*CategoryList) Descriptor() ([]byte, []int) {
+	return file_social_v1_notification_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *CategoryList) GetItems() []string {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+type MarkNotificationsReadRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ids           []string               `protobuf:"bytes,1,rep,name=ids,proto3" json:"ids,omitempty"`
+	All           bool                   `protobuf:"varint,2,opt,name=all,proto3" json:"all,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkNotificationsReadRequest) Reset() {
+	*x = MarkNotificationsReadRequest{}
+	mi := &file_social_v1_notification_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkNotificationsReadRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkNotificationsReadRequest) ProtoMessage() {}
+
+func (x *MarkNotificationsReadRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_notification_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkNotificationsReadRequest.ProtoReflect.Descriptor instead.
+func (*MarkNotificationsReadRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_notification_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *MarkNotificationsReadRequest) GetIds() []string {
+	if x != nil {
+		return x.Ids
+	}
+	return nil
+}
+
+func (x *MarkNotificationsReadRequest) GetAll() bool {
+	if x != nil {
+		return x.All
+	}
+	return false
+}
+
+type MarkNotificationsReadResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Unread        int32                  `protobuf:"varint,1,opt,name=unread,proto3" json:"unread,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkNotificationsReadResponse) Reset() {
+	*x = MarkNotificationsReadResponse{}
+	mi := &file_social_v1_notification_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkNotificationsReadResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkNotificationsReadResponse) ProtoMessage() {}
+
+func (x *MarkNotificationsReadResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_notification_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkNotificationsReadResponse.ProtoReflect.Descriptor instead.
+func (*MarkNotificationsReadResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_notification_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *MarkNotificationsReadResponse) GetUnread() int32 {
+	if x != nil {
+		return x.Unread
+	}
+	return 0
+}
+
+type GetUnreadCountRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUnreadCountRequest) Reset() {
+	*x = GetUnreadCountRequest{}
+	mi := &file_social_v1_notification_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUnreadCountRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUnreadCountRequest) ProtoMessage() {}
+
+func (x *GetUnreadCountRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_notification_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUnreadCountRequest.ProtoReflect.Descriptor instead.
+func (*GetUnreadCountRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_notification_proto_rawDescGZIP(), []int{8}
+}
+
+type GetUnreadCountResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Unread        int32                  `protobuf:"varint,1,opt,name=unread,proto3" json:"unread,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUnreadCountResponse) Reset() {
+	*x = GetUnreadCountResponse{}
+	mi := &file_social_v1_notification_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUnreadCountResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUnreadCountResponse) ProtoMessage() {}
+
+func (x *GetUnreadCountResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_notification_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUnreadCountResponse.ProtoReflect.Descriptor instead.
+func (*GetUnreadCountResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_notification_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *GetUnreadCountResponse) GetUnread() int32 {
+	if x != nil {
+		return x.Unread
+	}
+	return 0
+}
+
 type UpdatePreferencesRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	UserId          string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -344,13 +616,16 @@ type UpdatePreferencesRequest struct {
 	EmailEnabled    bool                   `protobuf:"varint,3,opt,name=email_enabled,json=emailEnabled,proto3" json:"email_enabled,omitempty"`
 	QuietHoursStart string                 `protobuf:"bytes,4,opt,name=quiet_hours_start,json=quietHoursStart,proto3" json:"quiet_hours_start,omitempty"`
 	QuietHoursEnd   string                 `protobuf:"bytes,5,opt,name=quiet_hours_end,json=quietHoursEnd,proto3" json:"quiet_hours_end,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// muted; when present (even empty) replaces the muted categories, when absent leaves them untouched.
+	// Categories: social, stories, profile_views, messages, connections.
+	Muted         *CategoryList `protobuf:"bytes,6,opt,name=muted,proto3" json:"muted,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UpdatePreferencesRequest) Reset() {
 	*x = UpdatePreferencesRequest{}
-	mi := &file_social_v1_notification_proto_msgTypes[5]
+	mi := &file_social_v1_notification_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -362,7 +637,7 @@ func (x *UpdatePreferencesRequest) String() string {
 func (*UpdatePreferencesRequest) ProtoMessage() {}
 
 func (x *UpdatePreferencesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_notification_proto_msgTypes[5]
+	mi := &file_social_v1_notification_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -375,7 +650,7 @@ func (x *UpdatePreferencesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdatePreferencesRequest.ProtoReflect.Descriptor instead.
 func (*UpdatePreferencesRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_notification_proto_rawDescGZIP(), []int{5}
+	return file_social_v1_notification_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *UpdatePreferencesRequest) GetUserId() string {
@@ -413,6 +688,13 @@ func (x *UpdatePreferencesRequest) GetQuietHoursEnd() string {
 	return ""
 }
 
+func (x *UpdatePreferencesRequest) GetMuted() *CategoryList {
+	if x != nil {
+		return x.Muted
+	}
+	return nil
+}
+
 type UpdatePreferencesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -421,7 +703,7 @@ type UpdatePreferencesResponse struct {
 
 func (x *UpdatePreferencesResponse) Reset() {
 	*x = UpdatePreferencesResponse{}
-	mi := &file_social_v1_notification_proto_msgTypes[6]
+	mi := &file_social_v1_notification_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -433,7 +715,7 @@ func (x *UpdatePreferencesResponse) String() string {
 func (*UpdatePreferencesResponse) ProtoMessage() {}
 
 func (x *UpdatePreferencesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_notification_proto_msgTypes[6]
+	mi := &file_social_v1_notification_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -446,7 +728,7 @@ func (x *UpdatePreferencesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdatePreferencesResponse.ProtoReflect.Descriptor instead.
 func (*UpdatePreferencesResponse) Descriptor() ([]byte, []int) {
-	return file_social_v1_notification_proto_rawDescGZIP(), []int{6}
+	return file_social_v1_notification_proto_rawDescGZIP(), []int{11}
 }
 
 type GetPreferencesRequest struct {
@@ -457,7 +739,7 @@ type GetPreferencesRequest struct {
 
 func (x *GetPreferencesRequest) Reset() {
 	*x = GetPreferencesRequest{}
-	mi := &file_social_v1_notification_proto_msgTypes[7]
+	mi := &file_social_v1_notification_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -469,7 +751,7 @@ func (x *GetPreferencesRequest) String() string {
 func (*GetPreferencesRequest) ProtoMessage() {}
 
 func (x *GetPreferencesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_notification_proto_msgTypes[7]
+	mi := &file_social_v1_notification_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -482,7 +764,7 @@ func (x *GetPreferencesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPreferencesRequest.ProtoReflect.Descriptor instead.
 func (*GetPreferencesRequest) Descriptor() ([]byte, []int) {
-	return file_social_v1_notification_proto_rawDescGZIP(), []int{7}
+	return file_social_v1_notification_proto_rawDescGZIP(), []int{12}
 }
 
 type NotificationPreferences struct {
@@ -491,13 +773,14 @@ type NotificationPreferences struct {
 	EmailEnabled    bool                   `protobuf:"varint,2,opt,name=email_enabled,json=emailEnabled,proto3" json:"email_enabled,omitempty"`
 	QuietHoursStart string                 `protobuf:"bytes,3,opt,name=quiet_hours_start,json=quietHoursStart,proto3" json:"quiet_hours_start,omitempty"` // HH:MM or empty
 	QuietHoursEnd   string                 `protobuf:"bytes,4,opt,name=quiet_hours_end,json=quietHoursEnd,proto3" json:"quiet_hours_end,omitempty"`
+	MutedCategories []string               `protobuf:"bytes,5,rep,name=muted_categories,json=mutedCategories,proto3" json:"muted_categories,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
 
 func (x *NotificationPreferences) Reset() {
 	*x = NotificationPreferences{}
-	mi := &file_social_v1_notification_proto_msgTypes[8]
+	mi := &file_social_v1_notification_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -509,7 +792,7 @@ func (x *NotificationPreferences) String() string {
 func (*NotificationPreferences) ProtoMessage() {}
 
 func (x *NotificationPreferences) ProtoReflect() protoreflect.Message {
-	mi := &file_social_v1_notification_proto_msgTypes[8]
+	mi := &file_social_v1_notification_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -522,7 +805,7 @@ func (x *NotificationPreferences) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NotificationPreferences.ProtoReflect.Descriptor instead.
 func (*NotificationPreferences) Descriptor() ([]byte, []int) {
-	return file_social_v1_notification_proto_rawDescGZIP(), []int{8}
+	return file_social_v1_notification_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *NotificationPreferences) GetPushEnabled() bool {
@@ -553,11 +836,18 @@ func (x *NotificationPreferences) GetQuietHoursEnd() string {
 	return ""
 }
 
+func (x *NotificationPreferences) GetMutedCategories() []string {
+	if x != nil {
+		return x.MutedCategories
+	}
+	return nil
+}
+
 var File_social_v1_notification_proto protoreflect.FileDescriptor
 
 const file_social_v1_notification_proto_rawDesc = "" +
 	"\n" +
-	"\x1csocial/v1/notification.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"\xac\x01\n" +
+	"\x1csocial/v1/notification.proto\x12\tsocial.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x16social/v1/common.proto\"\xfa\x02\n" +
 	"\fNotification\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x18\n" +
@@ -565,7 +855,16 @@ const file_social_v1_notification_proto_rawDesc = "" +
 	"\x05title\x18\x04 \x01(\tR\x05title\x12\x12\n" +
 	"\x04body\x18\x05 \x01(\tR\x04body\x12\x1b\n" +
 	"\tdeep_link\x18\x06 \x01(\tR\bdeepLink\x12\x12\n" +
-	"\x04read\x18\a \x01(\bR\x04read\"\x93\x01\n" +
+	"\x04read\x18\a \x01(\bR\x04read\x12\x12\n" +
+	"\x04type\x18\b \x01(\tR\x04type\x12\x19\n" +
+	"\bactor_id\x18\t \x01(\tR\aactorId\x12\x1d\n" +
+	"\n" +
+	"actor_name\x18\n" +
+	" \x01(\tR\tactorName\x12&\n" +
+	"\x0factor_photo_url\x18\v \x01(\tR\ractorPhotoUrl\x12\x1b\n" +
+	"\ttarget_id\x18\f \x01(\tR\btargetId\x129\n" +
+	"\n" +
+	"created_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\x93\x01\n" +
 	"\x17SendNotificationRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x18\n" +
 	"\achannel\x18\x02 \x01(\tR\achannel\x12\x14\n" +
@@ -579,25 +878,39 @@ const file_social_v1_notification_proto_rawDesc = "" +
 	"\x04page\x18\x02 \x01(\v2\x16.social.v1.PageRequestR\x04page\"\x87\x01\n" +
 	"\x19ListNotificationsResponse\x12=\n" +
 	"\rnotifications\x18\x01 \x03(\v2\x17.social.v1.NotificationR\rnotifications\x12+\n" +
-	"\x04page\x18\x02 \x01(\v2\x17.social.v1.PageResponseR\x04page\"\xcf\x01\n" +
+	"\x04page\x18\x02 \x01(\v2\x17.social.v1.PageResponseR\x04page\"$\n" +
+	"\fCategoryList\x12\x14\n" +
+	"\x05items\x18\x01 \x03(\tR\x05items\"B\n" +
+	"\x1cMarkNotificationsReadRequest\x12\x10\n" +
+	"\x03ids\x18\x01 \x03(\tR\x03ids\x12\x10\n" +
+	"\x03all\x18\x02 \x01(\bR\x03all\"7\n" +
+	"\x1dMarkNotificationsReadResponse\x12\x16\n" +
+	"\x06unread\x18\x01 \x01(\x05R\x06unread\"\x17\n" +
+	"\x15GetUnreadCountRequest\"0\n" +
+	"\x16GetUnreadCountResponse\x12\x16\n" +
+	"\x06unread\x18\x01 \x01(\x05R\x06unread\"\xfe\x01\n" +
 	"\x18UpdatePreferencesRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
 	"\fpush_enabled\x18\x02 \x01(\bR\vpushEnabled\x12#\n" +
 	"\remail_enabled\x18\x03 \x01(\bR\femailEnabled\x12*\n" +
 	"\x11quiet_hours_start\x18\x04 \x01(\tR\x0fquietHoursStart\x12&\n" +
-	"\x0fquiet_hours_end\x18\x05 \x01(\tR\rquietHoursEnd\"\x1b\n" +
+	"\x0fquiet_hours_end\x18\x05 \x01(\tR\rquietHoursEnd\x12-\n" +
+	"\x05muted\x18\x06 \x01(\v2\x17.social.v1.CategoryListR\x05muted\"\x1b\n" +
 	"\x19UpdatePreferencesResponse\"\x17\n" +
-	"\x15GetPreferencesRequest\"\xb5\x01\n" +
+	"\x15GetPreferencesRequest\"\xe0\x01\n" +
 	"\x17NotificationPreferences\x12!\n" +
 	"\fpush_enabled\x18\x01 \x01(\bR\vpushEnabled\x12#\n" +
 	"\remail_enabled\x18\x02 \x01(\bR\femailEnabled\x12*\n" +
 	"\x11quiet_hours_start\x18\x03 \x01(\tR\x0fquietHoursStart\x12&\n" +
-	"\x0fquiet_hours_end\x18\x04 \x01(\tR\rquietHoursEnd2\x8a\x03\n" +
+	"\x0fquiet_hours_end\x18\x04 \x01(\tR\rquietHoursEnd\x12)\n" +
+	"\x10muted_categories\x18\x05 \x03(\tR\x0fmutedCategories2\xcd\x04\n" +
 	"\x13NotificationService\x12[\n" +
 	"\x10SendNotification\x12\".social.v1.SendNotificationRequest\x1a#.social.v1.SendNotificationResponse\x12^\n" +
 	"\x11ListNotifications\x12#.social.v1.ListNotificationsRequest\x1a$.social.v1.ListNotificationsResponse\x12^\n" +
 	"\x11UpdatePreferences\x12#.social.v1.UpdatePreferencesRequest\x1a$.social.v1.UpdatePreferencesResponse\x12V\n" +
-	"\x0eGetPreferences\x12 .social.v1.GetPreferencesRequest\x1a\".social.v1.NotificationPreferencesB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
+	"\x0eGetPreferences\x12 .social.v1.GetPreferencesRequest\x1a\".social.v1.NotificationPreferences\x12j\n" +
+	"\x15MarkNotificationsRead\x12'.social.v1.MarkNotificationsReadRequest\x1a(.social.v1.MarkNotificationsReadResponse\x12U\n" +
+	"\x0eGetUnreadCount\x12 .social.v1.GetUnreadCountRequest\x1a!.social.v1.GetUnreadCountResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
 var (
 	file_social_v1_notification_proto_rawDescOnce sync.Once
@@ -611,37 +924,49 @@ func file_social_v1_notification_proto_rawDescGZIP() []byte {
 	return file_social_v1_notification_proto_rawDescData
 }
 
-var file_social_v1_notification_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_social_v1_notification_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_social_v1_notification_proto_goTypes = []any{
-	(*Notification)(nil),              // 0: social.v1.Notification
-	(*SendNotificationRequest)(nil),   // 1: social.v1.SendNotificationRequest
-	(*SendNotificationResponse)(nil),  // 2: social.v1.SendNotificationResponse
-	(*ListNotificationsRequest)(nil),  // 3: social.v1.ListNotificationsRequest
-	(*ListNotificationsResponse)(nil), // 4: social.v1.ListNotificationsResponse
-	(*UpdatePreferencesRequest)(nil),  // 5: social.v1.UpdatePreferencesRequest
-	(*UpdatePreferencesResponse)(nil), // 6: social.v1.UpdatePreferencesResponse
-	(*GetPreferencesRequest)(nil),     // 7: social.v1.GetPreferencesRequest
-	(*NotificationPreferences)(nil),   // 8: social.v1.NotificationPreferences
-	(*PageRequest)(nil),               // 9: social.v1.PageRequest
-	(*PageResponse)(nil),              // 10: social.v1.PageResponse
+	(*Notification)(nil),                  // 0: social.v1.Notification
+	(*SendNotificationRequest)(nil),       // 1: social.v1.SendNotificationRequest
+	(*SendNotificationResponse)(nil),      // 2: social.v1.SendNotificationResponse
+	(*ListNotificationsRequest)(nil),      // 3: social.v1.ListNotificationsRequest
+	(*ListNotificationsResponse)(nil),     // 4: social.v1.ListNotificationsResponse
+	(*CategoryList)(nil),                  // 5: social.v1.CategoryList
+	(*MarkNotificationsReadRequest)(nil),  // 6: social.v1.MarkNotificationsReadRequest
+	(*MarkNotificationsReadResponse)(nil), // 7: social.v1.MarkNotificationsReadResponse
+	(*GetUnreadCountRequest)(nil),         // 8: social.v1.GetUnreadCountRequest
+	(*GetUnreadCountResponse)(nil),        // 9: social.v1.GetUnreadCountResponse
+	(*UpdatePreferencesRequest)(nil),      // 10: social.v1.UpdatePreferencesRequest
+	(*UpdatePreferencesResponse)(nil),     // 11: social.v1.UpdatePreferencesResponse
+	(*GetPreferencesRequest)(nil),         // 12: social.v1.GetPreferencesRequest
+	(*NotificationPreferences)(nil),       // 13: social.v1.NotificationPreferences
+	(*timestamppb.Timestamp)(nil),         // 14: google.protobuf.Timestamp
+	(*PageRequest)(nil),                   // 15: social.v1.PageRequest
+	(*PageResponse)(nil),                  // 16: social.v1.PageResponse
 }
 var file_social_v1_notification_proto_depIdxs = []int32{
-	9,  // 0: social.v1.ListNotificationsRequest.page:type_name -> social.v1.PageRequest
-	0,  // 1: social.v1.ListNotificationsResponse.notifications:type_name -> social.v1.Notification
-	10, // 2: social.v1.ListNotificationsResponse.page:type_name -> social.v1.PageResponse
-	1,  // 3: social.v1.NotificationService.SendNotification:input_type -> social.v1.SendNotificationRequest
-	3,  // 4: social.v1.NotificationService.ListNotifications:input_type -> social.v1.ListNotificationsRequest
-	5,  // 5: social.v1.NotificationService.UpdatePreferences:input_type -> social.v1.UpdatePreferencesRequest
-	7,  // 6: social.v1.NotificationService.GetPreferences:input_type -> social.v1.GetPreferencesRequest
-	2,  // 7: social.v1.NotificationService.SendNotification:output_type -> social.v1.SendNotificationResponse
-	4,  // 8: social.v1.NotificationService.ListNotifications:output_type -> social.v1.ListNotificationsResponse
-	6,  // 9: social.v1.NotificationService.UpdatePreferences:output_type -> social.v1.UpdatePreferencesResponse
-	8,  // 10: social.v1.NotificationService.GetPreferences:output_type -> social.v1.NotificationPreferences
-	7,  // [7:11] is the sub-list for method output_type
-	3,  // [3:7] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	14, // 0: social.v1.Notification.created_at:type_name -> google.protobuf.Timestamp
+	15, // 1: social.v1.ListNotificationsRequest.page:type_name -> social.v1.PageRequest
+	0,  // 2: social.v1.ListNotificationsResponse.notifications:type_name -> social.v1.Notification
+	16, // 3: social.v1.ListNotificationsResponse.page:type_name -> social.v1.PageResponse
+	5,  // 4: social.v1.UpdatePreferencesRequest.muted:type_name -> social.v1.CategoryList
+	1,  // 5: social.v1.NotificationService.SendNotification:input_type -> social.v1.SendNotificationRequest
+	3,  // 6: social.v1.NotificationService.ListNotifications:input_type -> social.v1.ListNotificationsRequest
+	10, // 7: social.v1.NotificationService.UpdatePreferences:input_type -> social.v1.UpdatePreferencesRequest
+	12, // 8: social.v1.NotificationService.GetPreferences:input_type -> social.v1.GetPreferencesRequest
+	6,  // 9: social.v1.NotificationService.MarkNotificationsRead:input_type -> social.v1.MarkNotificationsReadRequest
+	8,  // 10: social.v1.NotificationService.GetUnreadCount:input_type -> social.v1.GetUnreadCountRequest
+	2,  // 11: social.v1.NotificationService.SendNotification:output_type -> social.v1.SendNotificationResponse
+	4,  // 12: social.v1.NotificationService.ListNotifications:output_type -> social.v1.ListNotificationsResponse
+	11, // 13: social.v1.NotificationService.UpdatePreferences:output_type -> social.v1.UpdatePreferencesResponse
+	13, // 14: social.v1.NotificationService.GetPreferences:output_type -> social.v1.NotificationPreferences
+	7,  // 15: social.v1.NotificationService.MarkNotificationsRead:output_type -> social.v1.MarkNotificationsReadResponse
+	9,  // 16: social.v1.NotificationService.GetUnreadCount:output_type -> social.v1.GetUnreadCountResponse
+	11, // [11:17] is the sub-list for method output_type
+	5,  // [5:11] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_notification_proto_init() }
@@ -656,7 +981,7 @@ func file_social_v1_notification_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_notification_proto_rawDesc), len(file_social_v1_notification_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

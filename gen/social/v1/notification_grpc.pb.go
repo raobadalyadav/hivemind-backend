@@ -19,10 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	NotificationService_SendNotification_FullMethodName  = "/social.v1.NotificationService/SendNotification"
-	NotificationService_ListNotifications_FullMethodName = "/social.v1.NotificationService/ListNotifications"
-	NotificationService_UpdatePreferences_FullMethodName = "/social.v1.NotificationService/UpdatePreferences"
-	NotificationService_GetPreferences_FullMethodName    = "/social.v1.NotificationService/GetPreferences"
+	NotificationService_SendNotification_FullMethodName      = "/social.v1.NotificationService/SendNotification"
+	NotificationService_ListNotifications_FullMethodName     = "/social.v1.NotificationService/ListNotifications"
+	NotificationService_UpdatePreferences_FullMethodName     = "/social.v1.NotificationService/UpdatePreferences"
+	NotificationService_GetPreferences_FullMethodName        = "/social.v1.NotificationService/GetPreferences"
+	NotificationService_MarkNotificationsRead_FullMethodName = "/social.v1.NotificationService/MarkNotificationsRead"
+	NotificationService_GetUnreadCount_FullMethodName        = "/social.v1.NotificationService/GetUnreadCount"
 )
 
 // NotificationServiceClient is the client API for NotificationService service.
@@ -37,6 +39,9 @@ type NotificationServiceClient interface {
 	UpdatePreferences(ctx context.Context, in *UpdatePreferencesRequest, opts ...grpc.CallOption) (*UpdatePreferencesResponse, error)
 	// GetPreferences: the caller's current settings (defaults: push and e-mail on).
 	GetPreferences(ctx context.Context, in *GetPreferencesRequest, opts ...grpc.CallOption) (*NotificationPreferences, error)
+	// MarkNotificationsRead marks the given ids (or every unread one when all=true) read.
+	MarkNotificationsRead(ctx context.Context, in *MarkNotificationsReadRequest, opts ...grpc.CallOption) (*MarkNotificationsReadResponse, error)
+	GetUnreadCount(ctx context.Context, in *GetUnreadCountRequest, opts ...grpc.CallOption) (*GetUnreadCountResponse, error)
 }
 
 type notificationServiceClient struct {
@@ -87,6 +92,26 @@ func (c *notificationServiceClient) GetPreferences(ctx context.Context, in *GetP
 	return out, nil
 }
 
+func (c *notificationServiceClient) MarkNotificationsRead(ctx context.Context, in *MarkNotificationsReadRequest, opts ...grpc.CallOption) (*MarkNotificationsReadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MarkNotificationsReadResponse)
+	err := c.cc.Invoke(ctx, NotificationService_MarkNotificationsRead_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *notificationServiceClient) GetUnreadCount(ctx context.Context, in *GetUnreadCountRequest, opts ...grpc.CallOption) (*GetUnreadCountResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUnreadCountResponse)
+	err := c.cc.Invoke(ctx, NotificationService_GetUnreadCount_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // NotificationServiceServer is the server API for NotificationService service.
 // All implementations must embed UnimplementedNotificationServiceServer
 // for forward compatibility.
@@ -99,6 +124,9 @@ type NotificationServiceServer interface {
 	UpdatePreferences(context.Context, *UpdatePreferencesRequest) (*UpdatePreferencesResponse, error)
 	// GetPreferences: the caller's current settings (defaults: push and e-mail on).
 	GetPreferences(context.Context, *GetPreferencesRequest) (*NotificationPreferences, error)
+	// MarkNotificationsRead marks the given ids (or every unread one when all=true) read.
+	MarkNotificationsRead(context.Context, *MarkNotificationsReadRequest) (*MarkNotificationsReadResponse, error)
+	GetUnreadCount(context.Context, *GetUnreadCountRequest) (*GetUnreadCountResponse, error)
 	mustEmbedUnimplementedNotificationServiceServer()
 }
 
@@ -120,6 +148,12 @@ func (UnimplementedNotificationServiceServer) UpdatePreferences(context.Context,
 }
 func (UnimplementedNotificationServiceServer) GetPreferences(context.Context, *GetPreferencesRequest) (*NotificationPreferences, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetPreferences not implemented")
+}
+func (UnimplementedNotificationServiceServer) MarkNotificationsRead(context.Context, *MarkNotificationsReadRequest) (*MarkNotificationsReadResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method MarkNotificationsRead not implemented")
+}
+func (UnimplementedNotificationServiceServer) GetUnreadCount(context.Context, *GetUnreadCountRequest) (*GetUnreadCountResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUnreadCount not implemented")
 }
 func (UnimplementedNotificationServiceServer) mustEmbedUnimplementedNotificationServiceServer() {}
 func (UnimplementedNotificationServiceServer) testEmbeddedByValue()                             {}
@@ -214,6 +248,42 @@ func _NotificationService_GetPreferences_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _NotificationService_MarkNotificationsRead_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarkNotificationsReadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NotificationServiceServer).MarkNotificationsRead(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NotificationService_MarkNotificationsRead_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NotificationServiceServer).MarkNotificationsRead(ctx, req.(*MarkNotificationsReadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NotificationService_GetUnreadCount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUnreadCountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NotificationServiceServer).GetUnreadCount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NotificationService_GetUnreadCount_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NotificationServiceServer).GetUnreadCount(ctx, req.(*GetUnreadCountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // NotificationService_ServiceDesc is the grpc.ServiceDesc for NotificationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -236,6 +306,14 @@ var NotificationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPreferences",
 			Handler:    _NotificationService_GetPreferences_Handler,
+		},
+		{
+			MethodName: "MarkNotificationsRead",
+			Handler:    _NotificationService_MarkNotificationsRead_Handler,
+		},
+		{
+			MethodName: "GetUnreadCount",
+			Handler:    _NotificationService_GetUnreadCount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -19,10 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	StoryService_CreateStory_FullMethodName   = "/social.v1.StoryService/CreateStory"
-	StoryService_ListStories_FullMethodName   = "/social.v1.StoryService/ListStories"
-	StoryService_ListMyStories_FullMethodName = "/social.v1.StoryService/ListMyStories"
-	StoryService_DeleteStory_FullMethodName   = "/social.v1.StoryService/DeleteStory"
+	StoryService_CreateStory_FullMethodName      = "/social.v1.StoryService/CreateStory"
+	StoryService_ListStories_FullMethodName      = "/social.v1.StoryService/ListStories"
+	StoryService_ListMyStories_FullMethodName    = "/social.v1.StoryService/ListMyStories"
+	StoryService_DeleteStory_FullMethodName      = "/social.v1.StoryService/DeleteStory"
+	StoryService_MarkStoryViewed_FullMethodName  = "/social.v1.StoryService/MarkStoryViewed"
+	StoryService_LikeStory_FullMethodName        = "/social.v1.StoryService/LikeStory"
+	StoryService_UnlikeStory_FullMethodName      = "/social.v1.StoryService/UnlikeStory"
+	StoryService_ListStoryViewers_FullMethodName = "/social.v1.StoryService/ListStoryViewers"
 )
 
 // StoryServiceClient is the client API for StoryService service.
@@ -40,6 +44,13 @@ type StoryServiceClient interface {
 	// archived (keep_archive) ones that have expired.
 	ListMyStories(ctx context.Context, in *ListMyStoriesRequest, opts ...grpc.CallOption) (*ListMyStoriesResponse, error)
 	DeleteStory(ctx context.Context, in *DeleteStoryRequest, opts ...grpc.CallOption) (*DeleteStoryResponse, error)
+	// MarkStoryViewed records that the caller saw a story they're allowed to see
+	// (idempotent; the author is told once per viewer). Own stories are a no-op.
+	MarkStoryViewed(ctx context.Context, in *MarkStoryViewedRequest, opts ...grpc.CallOption) (*MarkStoryViewedResponse, error)
+	LikeStory(ctx context.Context, in *StoryLikeRequest, opts ...grpc.CallOption) (*StoryLikeResponse, error)
+	UnlikeStory(ctx context.Context, in *StoryLikeRequest, opts ...grpc.CallOption) (*StoryLikeResponse, error)
+	// ListStoryViewers: who saw one of the caller's own live stories, newest first.
+	ListStoryViewers(ctx context.Context, in *ListStoryViewersRequest, opts ...grpc.CallOption) (*ListStoryViewersResponse, error)
 }
 
 type storyServiceClient struct {
@@ -90,6 +101,46 @@ func (c *storyServiceClient) DeleteStory(ctx context.Context, in *DeleteStoryReq
 	return out, nil
 }
 
+func (c *storyServiceClient) MarkStoryViewed(ctx context.Context, in *MarkStoryViewedRequest, opts ...grpc.CallOption) (*MarkStoryViewedResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MarkStoryViewedResponse)
+	err := c.cc.Invoke(ctx, StoryService_MarkStoryViewed_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *storyServiceClient) LikeStory(ctx context.Context, in *StoryLikeRequest, opts ...grpc.CallOption) (*StoryLikeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StoryLikeResponse)
+	err := c.cc.Invoke(ctx, StoryService_LikeStory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *storyServiceClient) UnlikeStory(ctx context.Context, in *StoryLikeRequest, opts ...grpc.CallOption) (*StoryLikeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StoryLikeResponse)
+	err := c.cc.Invoke(ctx, StoryService_UnlikeStory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *storyServiceClient) ListStoryViewers(ctx context.Context, in *ListStoryViewersRequest, opts ...grpc.CallOption) (*ListStoryViewersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListStoryViewersResponse)
+	err := c.cc.Invoke(ctx, StoryService_ListStoryViewers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StoryServiceServer is the server API for StoryService service.
 // All implementations must embed UnimplementedStoryServiceServer
 // for forward compatibility.
@@ -105,6 +156,13 @@ type StoryServiceServer interface {
 	// archived (keep_archive) ones that have expired.
 	ListMyStories(context.Context, *ListMyStoriesRequest) (*ListMyStoriesResponse, error)
 	DeleteStory(context.Context, *DeleteStoryRequest) (*DeleteStoryResponse, error)
+	// MarkStoryViewed records that the caller saw a story they're allowed to see
+	// (idempotent; the author is told once per viewer). Own stories are a no-op.
+	MarkStoryViewed(context.Context, *MarkStoryViewedRequest) (*MarkStoryViewedResponse, error)
+	LikeStory(context.Context, *StoryLikeRequest) (*StoryLikeResponse, error)
+	UnlikeStory(context.Context, *StoryLikeRequest) (*StoryLikeResponse, error)
+	// ListStoryViewers: who saw one of the caller's own live stories, newest first.
+	ListStoryViewers(context.Context, *ListStoryViewersRequest) (*ListStoryViewersResponse, error)
 	mustEmbedUnimplementedStoryServiceServer()
 }
 
@@ -126,6 +184,18 @@ func (UnimplementedStoryServiceServer) ListMyStories(context.Context, *ListMySto
 }
 func (UnimplementedStoryServiceServer) DeleteStory(context.Context, *DeleteStoryRequest) (*DeleteStoryResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteStory not implemented")
+}
+func (UnimplementedStoryServiceServer) MarkStoryViewed(context.Context, *MarkStoryViewedRequest) (*MarkStoryViewedResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method MarkStoryViewed not implemented")
+}
+func (UnimplementedStoryServiceServer) LikeStory(context.Context, *StoryLikeRequest) (*StoryLikeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method LikeStory not implemented")
+}
+func (UnimplementedStoryServiceServer) UnlikeStory(context.Context, *StoryLikeRequest) (*StoryLikeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UnlikeStory not implemented")
+}
+func (UnimplementedStoryServiceServer) ListStoryViewers(context.Context, *ListStoryViewersRequest) (*ListStoryViewersResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListStoryViewers not implemented")
 }
 func (UnimplementedStoryServiceServer) mustEmbedUnimplementedStoryServiceServer() {}
 func (UnimplementedStoryServiceServer) testEmbeddedByValue()                      {}
@@ -220,6 +290,78 @@ func _StoryService_DeleteStory_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StoryService_MarkStoryViewed_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarkStoryViewedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StoryServiceServer).MarkStoryViewed(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StoryService_MarkStoryViewed_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StoryServiceServer).MarkStoryViewed(ctx, req.(*MarkStoryViewedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _StoryService_LikeStory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StoryLikeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StoryServiceServer).LikeStory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StoryService_LikeStory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StoryServiceServer).LikeStory(ctx, req.(*StoryLikeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _StoryService_UnlikeStory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StoryLikeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StoryServiceServer).UnlikeStory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StoryService_UnlikeStory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StoryServiceServer).UnlikeStory(ctx, req.(*StoryLikeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _StoryService_ListStoryViewers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListStoryViewersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StoryServiceServer).ListStoryViewers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StoryService_ListStoryViewers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StoryServiceServer).ListStoryViewers(ctx, req.(*ListStoryViewersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // StoryService_ServiceDesc is the grpc.ServiceDesc for StoryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -242,6 +384,22 @@ var StoryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteStory",
 			Handler:    _StoryService_DeleteStory_Handler,
+		},
+		{
+			MethodName: "MarkStoryViewed",
+			Handler:    _StoryService_MarkStoryViewed_Handler,
+		},
+		{
+			MethodName: "LikeStory",
+			Handler:    _StoryService_LikeStory_Handler,
+		},
+		{
+			MethodName: "UnlikeStory",
+			Handler:    _StoryService_UnlikeStory_Handler,
+		},
+		{
+			MethodName: "ListStoryViewers",
+			Handler:    _StoryService_ListStoryViewers_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

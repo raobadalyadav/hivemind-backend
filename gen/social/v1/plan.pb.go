@@ -1138,6 +1138,7 @@ type SearchPlansRequest struct {
 	Origin        *GeoPoint              `protobuf:"bytes,3,opt,name=origin,proto3" json:"origin,omitempty"`
 	RadiusKm      float64                `protobuf:"fixed64,4,opt,name=radius_km,json=radiusKm,proto3" json:"radius_km,omitempty"`
 	Page          *PageRequest           `protobuf:"bytes,5,opt,name=page,proto3" json:"page,omitempty"`
+	HostId        string                 `protobuf:"bytes,6,opt,name=host_id,json=hostId,proto3" json:"host_id,omitempty"` // only plans hosted by this user (still public + published only)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1205,6 +1206,13 @@ func (x *SearchPlansRequest) GetPage() *PageRequest {
 		return x.Page
 	}
 	return nil
+}
+
+func (x *SearchPlansRequest) GetHostId() string {
+	if x != nil {
+		return x.HostId
+	}
+	return ""
 }
 
 type SearchPlansResponse struct {
@@ -2399,14 +2407,15 @@ const file_social_v1_plan_proto_rawDesc = "" +
 	"\x0frecurrence_rule\x18\x10 \x01(\tR\x0erecurrenceRule\x12$\n" +
 	"\x0ecover_media_id\x18\x11 \x01(\tR\fcoverMediaId\" \n" +
 	"\x0eGetPlanRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\xc4\x01\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\xdd\x01\n" +
 	"\x12SearchPlansRequest\x12\x17\n" +
 	"\acity_id\x18\x01 \x01(\tR\x06cityId\x12\x1f\n" +
 	"\vcategory_id\x18\x02 \x01(\tR\n" +
 	"categoryId\x12+\n" +
 	"\x06origin\x18\x03 \x01(\v2\x13.social.v1.GeoPointR\x06origin\x12\x1b\n" +
 	"\tradius_km\x18\x04 \x01(\x01R\bradiusKm\x12*\n" +
-	"\x04page\x18\x05 \x01(\v2\x16.social.v1.PageRequestR\x04page\"i\n" +
+	"\x04page\x18\x05 \x01(\v2\x16.social.v1.PageRequestR\x04page\x12\x17\n" +
+	"\ahost_id\x18\x06 \x01(\tR\x06hostId\"i\n" +
 	"\x13SearchPlansResponse\x12%\n" +
 	"\x05plans\x18\x01 \x03(\v2\x0f.social.v1.PlanR\x05plans\x12+\n" +
 	"\x04page\x18\x02 \x01(\v2\x17.social.v1.PageResponseR\x04page\"l\n" +

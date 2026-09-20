@@ -5,6 +5,7 @@ package connections
 import (
 	"context"
 	"errors"
+	"github.com/hivemind/backend/internal/notifications"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -81,6 +82,7 @@ func (r *Repository) Create(ctx context.Context, c *Connection) (*Connection, er
 	}
 
 	var out Connection
+	var created, mutual bool
 	err = tx.QueryRow(ctx, `
 		SELECT id, requester_id, recipient_id, COALESCE(origin_plan_id::text,''), status
 		FROM connections
@@ -95,8 +97,10 @@ func (r *Repository) Create(ctx context.Context, c *Connection) (*Connection, er
 				WHERE id = $1 RETURNING status`, out.ID).Scan(&out.Status); err != nil {
 				return nil, err
 			}
+			mutual = true
 		}
 	case errors.Is(err, pgx.ErrNoRows):
+		created = true
 		out = *c
 		if err := tx.QueryRow(ctx, `
 			INSERT INTO connections (requester_id, recipient_id, origin_plan_id)
@@ -109,7 +113,48 @@ func (r *Repository) Create(ctx context.Context, c *Connection) (*Connection, er
 	default:
 		return nil, err
 	}
-	return &out, tx.Commit(ctx)
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+	switch {
+	case created:
+		_, _ = notifications.Emit(ctx, r.pool, notifications.Event{
+			UserID: c.RecipientID, ActorID: c.RequesterID, Type: notifications.TypeConnectionRequest, TargetID: out.ID,
+			Title: "{actor} wants to connect with you", DeepLink: "hivemind://people/" + c.RequesterID,
+			DedupeKey: "connreq:" + out.ID,
+		})
+	case mutual:
+		_, _ = notifications.Emit(ctx, r.pool, notifications.Event{
+			UserID: out.RequesterID, ActorID: c.RequesterID, Type: notifications.TypeConnectionAccepted, TargetID: out.ID,
+			Title: "You and {actor} are now connected", DeepLink: "hivemind://people/" + c.RequesterID,
+			DedupeKey: "connacc:" + out.ID,
+		})
+	}
+	return &out, nil
+}
+
+// Status is the caller's relationship with another person.
+func (r *Repository) Status(ctx context.Context, me, other string) (state, id string, err error) {
+	var requester, st string
+	err = r.pool.QueryRow(ctx, `
+		SELECT id, requester_id, status::text FROM connections
+		WHERE (requester_id = $1 AND recipient_id = $2) OR (requester_id = $2 AND recipient_id = $1)
+		ORDER BY created_at DESC LIMIT 1`, me, other).Scan(&id, &requester, &st)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "none", "", nil
+	}
+	if err != nil {
+		return "", "", err
+	}
+	switch {
+	case st == "accepted":
+		return "connected", id, nil
+	case st == "pending" && requester == me:
+		return "pending_outgoing", id, nil
+	case st == "pending":
+		return "pending_incoming", id, nil
+	}
+	return "none", "", nil // rejected: they can ask again
 }
 
 func (r *Repository) Get(ctx context.Context, id string) (*Connection, error) {
