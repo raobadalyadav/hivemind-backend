@@ -191,14 +191,16 @@ func (BookingTab) EnumDescriptor() ([]byte, []int) {
 }
 
 type Booking struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	PlanId        string                 `protobuf:"bytes,2,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
-	UserId        string                 `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Status        BookingStatus          `protobuf:"varint,4,opt,name=status,proto3,enum=social.v1.BookingStatus" json:"status,omitempty"`
-	Price         *Money                 `protobuf:"bytes,5,opt,name=price,proto3" json:"price,omitempty"`
-	CheckedInAt   *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=checked_in_at,json=checkedInAt,proto3" json:"checked_in_at,omitempty"`
-	Audit         *Audit                 `protobuf:"bytes,7,opt,name=audit,proto3" json:"audit,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Id          string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	PlanId      string                 `protobuf:"bytes,2,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
+	UserId      string                 `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Status      BookingStatus          `protobuf:"varint,4,opt,name=status,proto3,enum=social.v1.BookingStatus" json:"status,omitempty"`
+	Price       *Money                 `protobuf:"bytes,5,opt,name=price,proto3" json:"price,omitempty"`
+	CheckedInAt *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=checked_in_at,json=checkedInAt,proto3" json:"checked_in_at,omitempty"`
+	Audit       *Audit                 `protobuf:"bytes,7,opt,name=audit,proto3" json:"audit,omitempty"`
+	// payment_pending only: the seat is held until then; pay before it or the hold is released.
+	HoldExpiresAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=hold_expires_at,json=holdExpiresAt,proto3" json:"hold_expires_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -282,6 +284,13 @@ func (x *Booking) GetAudit() *Audit {
 	return nil
 }
 
+func (x *Booking) GetHoldExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.HoldExpiresAt
+	}
+	return nil
+}
+
 type QuoteBookingRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PlanId        string                 `protobuf:"bytes,1,opt,name=plan_id,json=planId,proto3" json:"plan_id,omitempty"`
@@ -335,13 +344,17 @@ func (x *QuoteBookingRequest) GetUserId() string {
 }
 
 type BookingQuote struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Price         *Money                 `protobuf:"bytes,1,opt,name=price,proto3" json:"price,omitempty"`
-	ServiceFee    *Money                 `protobuf:"bytes,2,opt,name=service_fee,json=serviceFee,proto3" json:"service_fee,omitempty"`
-	Total         *Money                 `protobuf:"bytes,3,opt,name=total,proto3" json:"total,omitempty"`
-	Eligible      bool                   `protobuf:"varint,4,opt,name=eligible,proto3" json:"eligible,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	Price      *Money                 `protobuf:"bytes,1,opt,name=price,proto3" json:"price,omitempty"`
+	ServiceFee *Money                 `protobuf:"bytes,2,opt,name=service_fee,json=serviceFee,proto3" json:"service_fee,omitempty"`
+	Total      *Money                 `protobuf:"bytes,3,opt,name=total,proto3" json:"total,omitempty"`
+	Eligible   bool                   `protobuf:"varint,4,opt,name=eligible,proto3" json:"eligible,omitempty"`
+	// Cancellation policy, shown before the person commits: cancel by this time for a full refund
+	// (host cancellations always refund in full). Unset for free plans.
+	RefundFullUntil *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=refund_full_until,json=refundFullUntil,proto3" json:"refund_full_until,omitempty"`
+	RefundFullHours int32                  `protobuf:"varint,6,opt,name=refund_full_hours,json=refundFullHours,proto3" json:"refund_full_hours,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *BookingQuote) Reset() {
@@ -400,6 +413,20 @@ func (x *BookingQuote) GetEligible() bool {
 		return x.Eligible
 	}
 	return false
+}
+
+func (x *BookingQuote) GetRefundFullUntil() *timestamppb.Timestamp {
+	if x != nil {
+		return x.RefundFullUntil
+	}
+	return nil
+}
+
+func (x *BookingQuote) GetRefundFullHours() int32 {
+	if x != nil {
+		return x.RefundFullHours
+	}
+	return 0
 }
 
 type CreateBookingRequest struct {
@@ -1418,7 +1445,7 @@ var File_social_v1_booking_proto protoreflect.FileDescriptor
 
 const file_social_v1_booking_proto_rawDesc = "" +
 	"\n" +
-	"\x17social/v1/booking.proto\x12\tsocial.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x16social/v1/common.proto\"\x8d\x02\n" +
+	"\x17social/v1/booking.proto\x12\tsocial.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x16social/v1/common.proto\"\xd1\x02\n" +
 	"\aBooking\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\aplan_id\x18\x02 \x01(\tR\x06planId\x12\x17\n" +
@@ -1426,16 +1453,19 @@ const file_social_v1_booking_proto_rawDesc = "" +
 	"\x06status\x18\x04 \x01(\x0e2\x18.social.v1.BookingStatusR\x06status\x12&\n" +
 	"\x05price\x18\x05 \x01(\v2\x10.social.v1.MoneyR\x05price\x12>\n" +
 	"\rchecked_in_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\vcheckedInAt\x12&\n" +
-	"\x05audit\x18\a \x01(\v2\x10.social.v1.AuditR\x05audit\"G\n" +
+	"\x05audit\x18\a \x01(\v2\x10.social.v1.AuditR\x05audit\x12B\n" +
+	"\x0fhold_expires_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\rholdExpiresAt\"G\n" +
 	"\x13QuoteBookingRequest\x12\x17\n" +
 	"\aplan_id\x18\x01 \x01(\tR\x06planId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xad\x01\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xa1\x02\n" +
 	"\fBookingQuote\x12&\n" +
 	"\x05price\x18\x01 \x01(\v2\x10.social.v1.MoneyR\x05price\x121\n" +
 	"\vservice_fee\x18\x02 \x01(\v2\x10.social.v1.MoneyR\n" +
 	"serviceFee\x12&\n" +
 	"\x05total\x18\x03 \x01(\v2\x10.social.v1.MoneyR\x05total\x12\x1a\n" +
-	"\beligible\x18\x04 \x01(\bR\beligible\"q\n" +
+	"\beligible\x18\x04 \x01(\bR\beligible\x12F\n" +
+	"\x11refund_full_until\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x0frefundFullUntil\x12*\n" +
+	"\x11refund_full_hours\x18\x06 \x01(\x05R\x0frefundFullHours\"q\n" +
 	"\x14CreateBookingRequest\x12\x17\n" +
 	"\aplan_id\x18\x01 \x01(\tR\x06planId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12'\n" +
@@ -1588,52 +1618,54 @@ var file_social_v1_booking_proto_depIdxs = []int32{
 	25, // 1: social.v1.Booking.price:type_name -> social.v1.Money
 	26, // 2: social.v1.Booking.checked_in_at:type_name -> google.protobuf.Timestamp
 	27, // 3: social.v1.Booking.audit:type_name -> social.v1.Audit
-	25, // 4: social.v1.BookingQuote.price:type_name -> social.v1.Money
-	25, // 5: social.v1.BookingQuote.service_fee:type_name -> social.v1.Money
-	25, // 6: social.v1.BookingQuote.total:type_name -> social.v1.Money
-	3,  // 7: social.v1.CheckInResult.booking:type_name -> social.v1.Booking
-	1,  // 8: social.v1.WaitlistStatus.state:type_name -> social.v1.WaitlistState
-	26, // 9: social.v1.WaitlistStatus.offer_expires_at:type_name -> google.protobuf.Timestamp
-	11, // 10: social.v1.ListMyWaitlistResponse.entries:type_name -> social.v1.WaitlistStatus
-	3,  // 11: social.v1.BookingSummary.booking:type_name -> social.v1.Booking
-	26, // 12: social.v1.BookingSummary.starts_at:type_name -> google.protobuf.Timestamp
-	26, // 13: social.v1.BookingSummary.ends_at:type_name -> google.protobuf.Timestamp
-	2,  // 14: social.v1.ListMyBookingsRequest.tab:type_name -> social.v1.BookingTab
-	18, // 15: social.v1.ListMyBookingsResponse.bookings:type_name -> social.v1.BookingSummary
-	26, // 16: social.v1.Pass.starts_at:type_name -> google.protobuf.Timestamp
-	26, // 17: social.v1.Pass.ends_at:type_name -> google.protobuf.Timestamp
-	26, // 18: social.v1.Pass.valid_until:type_name -> google.protobuf.Timestamp
-	0,  // 19: social.v1.Pass.status:type_name -> social.v1.BookingStatus
-	3,  // 20: social.v1.ScanPassResult.booking:type_name -> social.v1.Booking
-	4,  // 21: social.v1.BookingService.QuoteBooking:input_type -> social.v1.QuoteBookingRequest
-	6,  // 22: social.v1.BookingService.CreateBooking:input_type -> social.v1.CreateBookingRequest
-	7,  // 23: social.v1.BookingService.GetBooking:input_type -> social.v1.GetBookingRequest
-	8,  // 24: social.v1.BookingService.CancelBooking:input_type -> social.v1.CancelBookingRequest
-	9,  // 25: social.v1.BookingService.CheckIn:input_type -> social.v1.CheckInRequest
-	12, // 26: social.v1.BookingService.JoinWaitlist:input_type -> social.v1.JoinWaitlistRequest
-	13, // 27: social.v1.BookingService.LeaveWaitlist:input_type -> social.v1.LeaveWaitlistRequest
-	15, // 28: social.v1.BookingService.GetWaitlistStatus:input_type -> social.v1.GetWaitlistStatusRequest
-	16, // 29: social.v1.BookingService.ListMyWaitlist:input_type -> social.v1.ListMyWaitlistRequest
-	19, // 30: social.v1.BookingService.ListMyBookings:input_type -> social.v1.ListMyBookingsRequest
-	21, // 31: social.v1.BookingService.GetPass:input_type -> social.v1.GetPassRequest
-	23, // 32: social.v1.BookingService.ScanPass:input_type -> social.v1.ScanPassRequest
-	5,  // 33: social.v1.BookingService.QuoteBooking:output_type -> social.v1.BookingQuote
-	3,  // 34: social.v1.BookingService.CreateBooking:output_type -> social.v1.Booking
-	3,  // 35: social.v1.BookingService.GetBooking:output_type -> social.v1.Booking
-	3,  // 36: social.v1.BookingService.CancelBooking:output_type -> social.v1.Booking
-	10, // 37: social.v1.BookingService.CheckIn:output_type -> social.v1.CheckInResult
-	11, // 38: social.v1.BookingService.JoinWaitlist:output_type -> social.v1.WaitlistStatus
-	14, // 39: social.v1.BookingService.LeaveWaitlist:output_type -> social.v1.LeaveWaitlistResponse
-	11, // 40: social.v1.BookingService.GetWaitlistStatus:output_type -> social.v1.WaitlistStatus
-	17, // 41: social.v1.BookingService.ListMyWaitlist:output_type -> social.v1.ListMyWaitlistResponse
-	20, // 42: social.v1.BookingService.ListMyBookings:output_type -> social.v1.ListMyBookingsResponse
-	22, // 43: social.v1.BookingService.GetPass:output_type -> social.v1.Pass
-	24, // 44: social.v1.BookingService.ScanPass:output_type -> social.v1.ScanPassResult
-	33, // [33:45] is the sub-list for method output_type
-	21, // [21:33] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	26, // 4: social.v1.Booking.hold_expires_at:type_name -> google.protobuf.Timestamp
+	25, // 5: social.v1.BookingQuote.price:type_name -> social.v1.Money
+	25, // 6: social.v1.BookingQuote.service_fee:type_name -> social.v1.Money
+	25, // 7: social.v1.BookingQuote.total:type_name -> social.v1.Money
+	26, // 8: social.v1.BookingQuote.refund_full_until:type_name -> google.protobuf.Timestamp
+	3,  // 9: social.v1.CheckInResult.booking:type_name -> social.v1.Booking
+	1,  // 10: social.v1.WaitlistStatus.state:type_name -> social.v1.WaitlistState
+	26, // 11: social.v1.WaitlistStatus.offer_expires_at:type_name -> google.protobuf.Timestamp
+	11, // 12: social.v1.ListMyWaitlistResponse.entries:type_name -> social.v1.WaitlistStatus
+	3,  // 13: social.v1.BookingSummary.booking:type_name -> social.v1.Booking
+	26, // 14: social.v1.BookingSummary.starts_at:type_name -> google.protobuf.Timestamp
+	26, // 15: social.v1.BookingSummary.ends_at:type_name -> google.protobuf.Timestamp
+	2,  // 16: social.v1.ListMyBookingsRequest.tab:type_name -> social.v1.BookingTab
+	18, // 17: social.v1.ListMyBookingsResponse.bookings:type_name -> social.v1.BookingSummary
+	26, // 18: social.v1.Pass.starts_at:type_name -> google.protobuf.Timestamp
+	26, // 19: social.v1.Pass.ends_at:type_name -> google.protobuf.Timestamp
+	26, // 20: social.v1.Pass.valid_until:type_name -> google.protobuf.Timestamp
+	0,  // 21: social.v1.Pass.status:type_name -> social.v1.BookingStatus
+	3,  // 22: social.v1.ScanPassResult.booking:type_name -> social.v1.Booking
+	4,  // 23: social.v1.BookingService.QuoteBooking:input_type -> social.v1.QuoteBookingRequest
+	6,  // 24: social.v1.BookingService.CreateBooking:input_type -> social.v1.CreateBookingRequest
+	7,  // 25: social.v1.BookingService.GetBooking:input_type -> social.v1.GetBookingRequest
+	8,  // 26: social.v1.BookingService.CancelBooking:input_type -> social.v1.CancelBookingRequest
+	9,  // 27: social.v1.BookingService.CheckIn:input_type -> social.v1.CheckInRequest
+	12, // 28: social.v1.BookingService.JoinWaitlist:input_type -> social.v1.JoinWaitlistRequest
+	13, // 29: social.v1.BookingService.LeaveWaitlist:input_type -> social.v1.LeaveWaitlistRequest
+	15, // 30: social.v1.BookingService.GetWaitlistStatus:input_type -> social.v1.GetWaitlistStatusRequest
+	16, // 31: social.v1.BookingService.ListMyWaitlist:input_type -> social.v1.ListMyWaitlistRequest
+	19, // 32: social.v1.BookingService.ListMyBookings:input_type -> social.v1.ListMyBookingsRequest
+	21, // 33: social.v1.BookingService.GetPass:input_type -> social.v1.GetPassRequest
+	23, // 34: social.v1.BookingService.ScanPass:input_type -> social.v1.ScanPassRequest
+	5,  // 35: social.v1.BookingService.QuoteBooking:output_type -> social.v1.BookingQuote
+	3,  // 36: social.v1.BookingService.CreateBooking:output_type -> social.v1.Booking
+	3,  // 37: social.v1.BookingService.GetBooking:output_type -> social.v1.Booking
+	3,  // 38: social.v1.BookingService.CancelBooking:output_type -> social.v1.Booking
+	10, // 39: social.v1.BookingService.CheckIn:output_type -> social.v1.CheckInResult
+	11, // 40: social.v1.BookingService.JoinWaitlist:output_type -> social.v1.WaitlistStatus
+	14, // 41: social.v1.BookingService.LeaveWaitlist:output_type -> social.v1.LeaveWaitlistResponse
+	11, // 42: social.v1.BookingService.GetWaitlistStatus:output_type -> social.v1.WaitlistStatus
+	17, // 43: social.v1.BookingService.ListMyWaitlist:output_type -> social.v1.ListMyWaitlistResponse
+	20, // 44: social.v1.BookingService.ListMyBookings:output_type -> social.v1.ListMyBookingsResponse
+	22, // 45: social.v1.BookingService.GetPass:output_type -> social.v1.Pass
+	24, // 46: social.v1.BookingService.ScanPass:output_type -> social.v1.ScanPassResult
+	35, // [35:47] is the sub-list for method output_type
+	23, // [23:35] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_booking_proto_init() }

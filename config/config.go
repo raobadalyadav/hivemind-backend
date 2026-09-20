@@ -35,6 +35,8 @@ type Config struct {
 	// stricter cap for sign-in / refresh / recovery, keyed by client IP.
 	RateLimitPerMinute     int
 	AuthRateLimitPerMinute int
+	// DBMaxConns bounds the Postgres pool (DB_MAX_CONNS).
+	DBMaxConns int
 	// TrustProxyHeaders: read the client IP from X-Forwarded-For (only behind a proxy that sets it).
 	TrustProxyHeaders bool
 	// PassSecretSet: PASS_SECRET was provided explicitly (not derived from JWT_SECRET).
@@ -87,6 +89,7 @@ func Load() Config {
 		TLSKeyFile:             getEnv("TLS_KEY_FILE", ""),
 		RateLimitPerMinute:     getEnvIntAllowZero("RATE_LIMIT_PER_MINUTE", 600),
 		AuthRateLimitPerMinute: getEnvIntAllowZero("AUTH_RATE_LIMIT_PER_MINUTE", 20),
+		DBMaxConns:             getEnvInt("DB_MAX_CONNS", 20),
 		TrustProxyHeaders:      getEnvBool("TRUST_PROXY_HEADERS", false),
 		PassSecretSet:          os.Getenv("PASS_SECRET") != "",
 		GRPCPort:               getEnv("GRPC_PORT", "50051"),
@@ -122,15 +125,17 @@ func Load() Config {
 	}
 }
 
+// getEnv trims surrounding whitespace: a stray trailing space (or a make-style "VALUE   # comment" line) in
+// .env must not turn "600" into an unparsable "600   ".
 func getEnv(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
+	if v := strings.TrimSpace(os.Getenv(key)); v != "" {
 		return v
 	}
 	return fallback
 }
 
 func getEnvBool(key string, fallback bool) bool {
-	v := os.Getenv(key)
+	v := strings.TrimSpace(os.Getenv(key))
 	if v == "" {
 		return fallback
 	}
@@ -143,7 +148,7 @@ func getEnvBool(key string, fallback bool) bool {
 }
 
 func getEnvDuration(key string, fallback time.Duration) time.Duration {
-	v := os.Getenv(key)
+	v := strings.TrimSpace(os.Getenv(key))
 	if v == "" {
 		return fallback
 	}
@@ -156,7 +161,7 @@ func getEnvDuration(key string, fallback time.Duration) time.Duration {
 }
 
 func getEnvInt(key string, fallback int) int {
-	if v := os.Getenv(key); v != "" {
+	if v := strings.TrimSpace(os.Getenv(key)); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
 			return n
 		}
@@ -167,7 +172,7 @@ func getEnvInt(key string, fallback int) int {
 
 // getEnvIntAllowZero is getEnvInt where 0 is meaningful (0 = disabled).
 func getEnvIntAllowZero(key string, fallback int) int {
-	if v := os.Getenv(key); v != "" {
+	if v := strings.TrimSpace(os.Getenv(key)); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n >= 0 {
 			return n
 		}

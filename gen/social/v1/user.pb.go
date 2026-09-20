@@ -28,6 +28,7 @@ type User struct {
 	CityId        string                 `protobuf:"bytes,3,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"`
 	AgeVerified   bool                   `protobuf:"varint,4,opt,name=age_verified,json=ageVerified,proto3" json:"age_verified,omitempty"`
 	Audit         *Audit                 `protobuf:"bytes,5,opt,name=audit,proto3" json:"audit,omitempty"`
+	DateOfBirth   string                 `protobuf:"bytes,6,opt,name=date_of_birth,json=dateOfBirth,proto3" json:"date_of_birth,omitempty"` // YYYY-MM-DD; only ever returned to the person themself (or staff)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -97,6 +98,13 @@ func (x *User) GetAudit() *Audit {
 	return nil
 }
 
+func (x *User) GetDateOfBirth() string {
+	if x != nil {
+		return x.DateOfBirth
+	}
+	return ""
+}
+
 type GetUserRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -142,9 +150,12 @@ func (x *GetUserRequest) GetUserId() string {
 }
 
 type UpdateUserRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	CityId        string                 `protobuf:"bytes,2,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	UserId string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	CityId string                 `protobuf:"bytes,2,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"`
+	// Set once, YYYY-MM-DD; must make the person 18 or older. Sets age_verified. Can't be changed afterwards
+	// (FAILED_PRECONDITION) — support fixes genuine mistakes.
+	DateOfBirth   string `protobuf:"bytes,3,opt,name=date_of_birth,json=dateOfBirth,proto3" json:"date_of_birth,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -189,6 +200,13 @@ func (x *UpdateUserRequest) GetUserId() string {
 func (x *UpdateUserRequest) GetCityId() string {
 	if x != nil {
 		return x.CityId
+	}
+	return ""
+}
+
+func (x *UpdateUserRequest) GetDateOfBirth() string {
+	if x != nil {
+		return x.DateOfBirth
 	}
 	return ""
 }
@@ -461,18 +479,20 @@ var File_social_v1_user_proto protoreflect.FileDescriptor
 
 const file_social_v1_user_proto_rawDesc = "" +
 	"\n" +
-	"\x14social/v1/user.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"\x90\x01\n" +
+	"\x14social/v1/user.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"\xb4\x01\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x17\n" +
 	"\acity_id\x18\x03 \x01(\tR\x06cityId\x12!\n" +
 	"\fage_verified\x18\x04 \x01(\bR\vageVerified\x12&\n" +
-	"\x05audit\x18\x05 \x01(\v2\x10.social.v1.AuditR\x05audit\")\n" +
+	"\x05audit\x18\x05 \x01(\v2\x10.social.v1.AuditR\x05audit\x12\"\n" +
+	"\rdate_of_birth\x18\x06 \x01(\tR\vdateOfBirth\")\n" +
 	"\x0eGetUserRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"E\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"i\n" +
 	"\x11UpdateUserRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x17\n" +
-	"\acity_id\x18\x02 \x01(\tR\x06cityId\"/\n" +
+	"\acity_id\x18\x02 \x01(\tR\x06cityId\x12\"\n" +
+	"\rdate_of_birth\x18\x03 \x01(\tR\vdateOfBirth\"/\n" +
 	"\x14DeleteAccountRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\"\x17\n" +
 	"\x15DeleteAccountResponse\"\x88\x01\n" +

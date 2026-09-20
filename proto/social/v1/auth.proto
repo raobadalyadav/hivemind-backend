@@ -35,9 +35,9 @@ enum OAuthProvider {
 message OAuthSignInRequest {
   string id_token = 1;
   string device_id = 2;
-  // Only required on first sign-in for a brand-new account — the 18+ age
-  // gate needs it since OAuth providers don't reliably supply a birthdate.
-  string date_of_birth = 3;
+  // Ignored. The 18+ birthday is collected right after sign-in (UserService.UpdateUser) because OAuth
+  // providers don't reliably supply one, and the API refuses everything else until it's set.
+  string date_of_birth = 3 [deprecated = true];
 }
 
 message RefreshTokenRequest {

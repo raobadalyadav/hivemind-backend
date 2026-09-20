@@ -25,6 +25,9 @@ type Quote struct {
 	TotalMinor      int64
 	Currency        string
 	Eligible        bool
+	// Cancellation policy for a paid plan: full refund when cancelled before RefundFullUntil.
+	RefundFullUntil *time.Time
+	RefundFullHours int
 }
 
 type Service struct {
@@ -84,7 +87,7 @@ func (s *Service) CancelAllForPlan(ctx context.Context, planID, reason string) e
 		return err
 	}
 	for _, id := range ids {
-		if _, err := s.CancelBooking(ctx, id, reason); err != nil {
+		if _, err := s.cancel(ctx, id, reason, true); err != nil { // the host/plan cancelled: everyone gets everything back
 			return err
 		}
 	}
@@ -184,13 +187,47 @@ func (s *Service) QuoteBooking(ctx context.Context, planID, userID string) (*Quo
 		}
 	}
 
-	return &Quote{
+	q := &Quote{
 		PriceMinor:      pricing.PriceMinor,
 		ServiceFeeMinor: fee,
 		TotalMinor:      pricing.PriceMinor + fee,
 		Currency:        pricing.Currency,
 		Eligible:        eligible,
-	}, nil
+	}
+	if pricing.PriceMinor > 0 {
+		until := pricing.StartsAt.Add(-RefundFullHours * time.Hour)
+		q.RefundFullUntil, q.RefundFullHours = &until, RefundFullHours
+	}
+	return q, nil
+}
+
+// ConfirmPaidBooking is called once a booking's payment is captured (webhook or VerifyOrder). Idempotent.
+// ErrPlanFull means the hold had expired and the last seat went to someone else — the caller refunds.
+func (s *Service) ConfirmPaidBooking(ctx context.Context, bookingID string) error {
+	if bookingID == "" {
+		return ErrInvalidInput
+	}
+	return s.repo.ConfirmPaid(ctx, bookingID)
+}
+
+// ExpirePendingBookings releases seats whose payment never arrived (worker job).
+func (s *Service) ExpirePendingBookings(ctx context.Context, now time.Time) (int, error) {
+	return s.repo.ExpirePending(ctx, now)
+}
+
+// GetBookingCharge satisfies payments.BookingChargeChecker: who owns the booking and exactly what they
+// owe (plan price + service fee, computed here — never taken from the client) and whether it still
+// awaits payment.
+func (s *Service) GetBookingCharge(ctx context.Context, bookingID string) (ownerID string, totalMinor int64, currency, status string, err error) {
+	b, err := s.GetBooking(ctx, bookingID)
+	if err != nil {
+		return "", 0, "", "", err
+	}
+	fee := int64(float64(b.PriceMinor) * serviceFeeRate)
+	if fee > maxServiceFeeMinor {
+		fee = maxServiceFeeMinor
+	}
+	return b.UserID, b.PriceMinor + fee, b.Currency, b.Status, nil
 }
 
 // CancelBooking is the unauthenticated core used by internal callers that
@@ -202,10 +239,14 @@ func (s *Service) QuoteBooking(ctx context.Context, planID, userID string) (*Quo
 // follows is a separate decision made downstream (cmd/worker's
 // BOOKING_CANCELLED handler), not something this method gates.
 func (s *Service) CancelBooking(ctx context.Context, bookingID, reason string) (*Booking, error) {
+	return s.cancel(ctx, bookingID, reason, false)
+}
+
+func (s *Service) cancel(ctx context.Context, bookingID, reason string, byHost bool) (*Booking, error) {
 	if bookingID == "" {
 		return nil, ErrInvalidInput
 	}
-	return s.repo.Cancel(ctx, bookingID, reason)
+	return s.repo.Cancel(ctx, bookingID, reason, byHost)
 }
 
 // CancelBookingAsUser is what the gRPC handler calls — only the booking's

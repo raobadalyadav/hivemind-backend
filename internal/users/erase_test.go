@@ -110,3 +110,40 @@ func TestDeleteAccount_RefusedWhileCommitmentsExist(t *testing.T) {
 		t.Fatalf("a refused deletion must change nothing, status=%s", status)
 	}
 }
+
+func TestBirthday_SetOnceAndOnlyFor18Plus(t *testing.T) {
+	pool := testPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	svc := NewService(NewRepository(pool))
+	sfx := time.Now().Format("150405.000000000")
+	var id string
+	pool.QueryRow(ctx, `INSERT INTO users (email) VALUES ($1) RETURNING id`, "dob-"+sfx+"@example.com").Scan(&id)
+
+	now := time.Now().UTC()
+	for name, dob := range map[string]string{
+		"not a date":     "yesterday",
+		"in the future":  now.AddDate(0, 0, 1).Format("2006-01-02"),
+		"older than 120": now.AddDate(-121, 0, 0).Format("2006-01-02"),
+	} {
+		if _, err := svc.UpdateUser(ctx, id, "", dob); err != ErrInvalidInput {
+			t.Errorf("%s must be invalid, got %v", name, err)
+		}
+	}
+	// 18 tomorrow = still 17 today
+	if _, err := svc.UpdateUser(ctx, id, "", now.AddDate(-18, 0, 1).Format("2006-01-02")); err != ErrUnderage {
+		t.Fatalf("one day short of 18 is underage: %v", err)
+	}
+	if u, _ := svc.GetUser(ctx, id); u.AgeVerified || u.DateOfBirth != "" {
+		t.Fatalf("a refused birthday must store nothing: %+v", u)
+	}
+	// exactly 18 today is fine
+	u, err := svc.UpdateUser(ctx, id, "", now.AddDate(-18, 0, 0).Format("2006-01-02"))
+	if err != nil || !u.AgeVerified || u.DateOfBirth == "" {
+		t.Fatalf("18 today is allowed: %+v %v", u, err)
+	}
+	// and it can't be edited afterwards
+	if _, err := svc.UpdateUser(ctx, id, "", now.AddDate(-30, 0, 0).Format("2006-01-02")); err != ErrBirthdayLocked {
+		t.Fatalf("the birthday is locked once set: %v", err)
+	}
+}

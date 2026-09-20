@@ -510,6 +510,50 @@ func (x *CreditBalance) GetBalanceMinor() int64 {
 	return 0
 }
 
+type VerifyOrderRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OrderId       string                 `protobuf:"bytes,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VerifyOrderRequest) Reset() {
+	*x = VerifyOrderRequest{}
+	mi := &file_social_v1_payment_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VerifyOrderRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VerifyOrderRequest) ProtoMessage() {}
+
+func (x *VerifyOrderRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_payment_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VerifyOrderRequest.ProtoReflect.Descriptor instead.
+func (*VerifyOrderRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_payment_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *VerifyOrderRequest) GetOrderId() string {
+	if x != nil {
+		return x.OrderId
+	}
+	return ""
+}
+
 var File_social_v1_payment_proto protoreflect.FileDescriptor
 
 const file_social_v1_payment_proto_rawDesc = "" +
@@ -552,9 +596,12 @@ const file_social_v1_payment_proto_rawDesc = "" +
 	"\x06reason\x18\x03 \x01(\tR\x06reason\"\x1b\n" +
 	"\x19GetMyCreditBalanceRequest\"4\n" +
 	"\rCreditBalance\x12#\n" +
-	"\rbalance_minor\x18\x01 \x01(\x03R\fbalanceMinor2\xab\x02\n" +
+	"\rbalance_minor\x18\x01 \x01(\x03R\fbalanceMinor\"/\n" +
+	"\x12VerifyOrderRequest\x12\x19\n" +
+	"\border_id\x18\x01 \x01(\tR\aorderId2\xeb\x02\n" +
 	"\x0ePaymentService\x12>\n" +
 	"\vCreateOrder\x12\x1d.social.v1.CreateOrderRequest\x1a\x10.social.v1.Order\x12>\n" +
+	"\vVerifyOrder\x12\x1d.social.v1.VerifyOrderRequest\x1a\x10.social.v1.Order\x12>\n" +
 	"\n" +
 	"GetPayment\x12\x1c.social.v1.GetPaymentRequest\x1a\x12.social.v1.Payment\x12C\n" +
 	"\rRefundPayment\x12\x1f.social.v1.RefundPaymentRequest\x1a\x11.social.v1.Refund\x12T\n" +
@@ -572,7 +619,7 @@ func file_social_v1_payment_proto_rawDescGZIP() []byte {
 	return file_social_v1_payment_proto_rawDescData
 }
 
-var file_social_v1_payment_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_social_v1_payment_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_social_v1_payment_proto_goTypes = []any{
 	(*Order)(nil),                     // 0: social.v1.Order
 	(*Payment)(nil),                   // 1: social.v1.Payment
@@ -582,27 +629,30 @@ var file_social_v1_payment_proto_goTypes = []any{
 	(*RefundPaymentRequest)(nil),      // 5: social.v1.RefundPaymentRequest
 	(*GetMyCreditBalanceRequest)(nil), // 6: social.v1.GetMyCreditBalanceRequest
 	(*CreditBalance)(nil),             // 7: social.v1.CreditBalance
-	(*Money)(nil),                     // 8: social.v1.Money
+	(*VerifyOrderRequest)(nil),        // 8: social.v1.VerifyOrderRequest
+	(*Money)(nil),                     // 9: social.v1.Money
 }
 var file_social_v1_payment_proto_depIdxs = []int32{
-	8, // 0: social.v1.Order.amount:type_name -> social.v1.Money
-	8, // 1: social.v1.Payment.amount:type_name -> social.v1.Money
-	8, // 2: social.v1.Refund.amount:type_name -> social.v1.Money
-	8, // 3: social.v1.CreateOrderRequest.amount:type_name -> social.v1.Money
-	8, // 4: social.v1.RefundPaymentRequest.amount:type_name -> social.v1.Money
-	3, // 5: social.v1.PaymentService.CreateOrder:input_type -> social.v1.CreateOrderRequest
-	4, // 6: social.v1.PaymentService.GetPayment:input_type -> social.v1.GetPaymentRequest
-	5, // 7: social.v1.PaymentService.RefundPayment:input_type -> social.v1.RefundPaymentRequest
-	6, // 8: social.v1.PaymentService.GetMyCreditBalance:input_type -> social.v1.GetMyCreditBalanceRequest
-	0, // 9: social.v1.PaymentService.CreateOrder:output_type -> social.v1.Order
-	1, // 10: social.v1.PaymentService.GetPayment:output_type -> social.v1.Payment
-	2, // 11: social.v1.PaymentService.RefundPayment:output_type -> social.v1.Refund
-	7, // 12: social.v1.PaymentService.GetMyCreditBalance:output_type -> social.v1.CreditBalance
-	9, // [9:13] is the sub-list for method output_type
-	5, // [5:9] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	9,  // 0: social.v1.Order.amount:type_name -> social.v1.Money
+	9,  // 1: social.v1.Payment.amount:type_name -> social.v1.Money
+	9,  // 2: social.v1.Refund.amount:type_name -> social.v1.Money
+	9,  // 3: social.v1.CreateOrderRequest.amount:type_name -> social.v1.Money
+	9,  // 4: social.v1.RefundPaymentRequest.amount:type_name -> social.v1.Money
+	3,  // 5: social.v1.PaymentService.CreateOrder:input_type -> social.v1.CreateOrderRequest
+	8,  // 6: social.v1.PaymentService.VerifyOrder:input_type -> social.v1.VerifyOrderRequest
+	4,  // 7: social.v1.PaymentService.GetPayment:input_type -> social.v1.GetPaymentRequest
+	5,  // 8: social.v1.PaymentService.RefundPayment:input_type -> social.v1.RefundPaymentRequest
+	6,  // 9: social.v1.PaymentService.GetMyCreditBalance:input_type -> social.v1.GetMyCreditBalanceRequest
+	0,  // 10: social.v1.PaymentService.CreateOrder:output_type -> social.v1.Order
+	0,  // 11: social.v1.PaymentService.VerifyOrder:output_type -> social.v1.Order
+	1,  // 12: social.v1.PaymentService.GetPayment:output_type -> social.v1.Payment
+	2,  // 13: social.v1.PaymentService.RefundPayment:output_type -> social.v1.Refund
+	7,  // 14: social.v1.PaymentService.GetMyCreditBalance:output_type -> social.v1.CreditBalance
+	10, // [10:15] is the sub-list for method output_type
+	5,  // [5:10] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_payment_proto_init() }
@@ -617,7 +667,7 @@ func file_social_v1_payment_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_payment_proto_rawDesc), len(file_social_v1_payment_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

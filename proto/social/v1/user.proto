@@ -23,6 +23,7 @@ message User {
   string city_id = 3;
   bool age_verified = 4;
   Audit audit = 5;
+  string date_of_birth = 6; // YYYY-MM-DD; only ever returned to the person themself (or staff)
 }
 
 message GetUserRequest {
@@ -32,6 +33,9 @@ message GetUserRequest {
 message UpdateUserRequest {
   string user_id = 1;
   string city_id = 2;
+  // Set once, YYYY-MM-DD; must make the person 18 or older. Sets age_verified. Can't be changed afterwards
+  // (FAILED_PRECONDITION) — support fixes genuine mistakes.
+  string date_of_birth = 3;
 }
 
 message DeleteAccountRequest {

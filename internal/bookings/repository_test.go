@@ -91,7 +91,7 @@ func TestRepository_CancelDecrementsCapacityAndFreesSeat(t *testing.T) {
 		t.Fatalf("Create: %v", err)
 	}
 
-	cancelled, err := repo.Cancel(ctx, booking.ID, "test cancellation")
+	cancelled, err := repo.Cancel(ctx, booking.ID, "test cancellation", false)
 	if err != nil {
 		t.Fatalf("Cancel: %v", err)
 	}

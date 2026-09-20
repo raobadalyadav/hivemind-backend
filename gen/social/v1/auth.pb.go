@@ -74,8 +74,10 @@ type OAuthSignInRequest struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	IdToken  string                 `protobuf:"bytes,1,opt,name=id_token,json=idToken,proto3" json:"id_token,omitempty"`
 	DeviceId string                 `protobuf:"bytes,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
-	// Only required on first sign-in for a brand-new account — the 18+ age
-	// gate needs it since OAuth providers don't reliably supply a birthdate.
+	// Ignored. The 18+ birthday is collected right after sign-in (UserService.UpdateUser) because OAuth
+	// providers don't reliably supply one, and the API refuses everything else until it's set.
+	//
+	// Deprecated: Marked as deprecated in social/v1/auth.proto.
 	DateOfBirth   string `protobuf:"bytes,3,opt,name=date_of_birth,json=dateOfBirth,proto3" json:"date_of_birth,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -125,6 +127,7 @@ func (x *OAuthSignInRequest) GetDeviceId() string {
 	return ""
 }
 
+// Deprecated: Marked as deprecated in social/v1/auth.proto.
 func (x *OAuthSignInRequest) GetDateOfBirth() string {
 	if x != nil {
 		return x.DateOfBirth
@@ -644,11 +647,11 @@ var File_social_v1_auth_proto protoreflect.FileDescriptor
 
 const file_social_v1_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x14social/v1/auth.proto\x12\tsocial.v1\"p\n" +
+	"\x14social/v1/auth.proto\x12\tsocial.v1\"t\n" +
 	"\x12OAuthSignInRequest\x12\x19\n" +
 	"\bid_token\x18\x01 \x01(\tR\aidToken\x12\x1b\n" +
-	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\x12\"\n" +
-	"\rdate_of_birth\x18\x03 \x01(\tR\vdateOfBirth\":\n" +
+	"\tdevice_id\x18\x02 \x01(\tR\bdeviceId\x12&\n" +
+	"\rdate_of_birth\x18\x03 \x01(\tB\x02\x18\x01R\vdateOfBirth\":\n" +
 	"\x13RefreshTokenRequest\x12#\n" +
 	"\rrefresh_token\x18\x01 \x01(\tR\frefreshToken\"-\n" +
 	"\x0eSignOutRequest\x12\x1b\n" +

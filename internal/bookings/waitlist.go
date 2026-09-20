@@ -40,9 +40,12 @@ type queryer interface {
 // moment offer_expires_at passes, before the worker sweeper marks it.
 func activeHolds(ctx context.Context, q queryer, planID, exceptUserID string) (int32, error) {
 	var n int32
+	// Seats held for a waitlisted person's offer, plus seats held for someone who is paying right now.
 	err := q.QueryRow(ctx, `
-		SELECT count(*) FROM waitlist_entries
-		WHERE plan_id = $1 AND status = 'offered' AND offer_expires_at > now() AND user_id::text <> $2`,
+		SELECT (SELECT count(*) FROM waitlist_entries
+		         WHERE plan_id = $1 AND status = 'offered' AND offer_expires_at > now() AND user_id::text <> $2)
+		     + (SELECT count(*) FROM bookings
+		         WHERE plan_id = $1 AND status = 'payment_pending' AND expires_at > now() AND user_id::text <> $2)`,
 		planID, exceptUserID,
 	).Scan(&n)
 	return n, err

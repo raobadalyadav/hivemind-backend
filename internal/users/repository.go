@@ -5,6 +5,7 @@ package users
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -15,6 +16,7 @@ type User struct {
 	CityID      string
 	AgeVerified bool
 	Status      string
+	DateOfBirth string // YYYY-MM-DD, empty until the person sets it
 }
 
 type Repository struct {
@@ -28,8 +30,8 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 func (r *Repository) Get(ctx context.Context, id string) (*User, error) {
 	var u User
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, email, COALESCE(city_id::text,''), age_verified, status FROM users WHERE id = $1`, id,
-	).Scan(&u.ID, &u.Email, &u.CityID, &u.AgeVerified, &u.Status)
+		`SELECT id, email, COALESCE(city_id::text,''), age_verified, status, COALESCE(to_char(date_of_birth,'YYYY-MM-DD'),'') FROM users WHERE id = $1`, id,
+	).Scan(&u.ID, &u.Email, &u.CityID, &u.AgeVerified, &u.Status, &u.DateOfBirth)
 	if err != nil {
 		return nil, err
 	}
@@ -41,9 +43,9 @@ func (r *Repository) UpdateCity(ctx context.Context, userID, cityID string) (*Us
 	err := r.pool.QueryRow(ctx, `
 		UPDATE users SET city_id = NULLIF($2,'')::uuid, updated_at = now()
 		WHERE id = $1
-		RETURNING id, email, COALESCE(city_id::text,''), age_verified, status`,
+		RETURNING id, email, COALESCE(city_id::text,''), age_verified, status, COALESCE(to_char(date_of_birth,'YYYY-MM-DD'),'')`,
 		userID, cityID,
-	).Scan(&u.ID, &u.Email, &u.CityID, &u.AgeVerified, &u.Status)
+	).Scan(&u.ID, &u.Email, &u.CityID, &u.AgeVerified, &u.Status, &u.DateOfBirth)
 	if err != nil {
 		return nil, err
 	}
@@ -142,4 +144,22 @@ func (r *Repository) UpdateLocation(ctx context.Context, userID string, lat, lng
 		userID, lat, lng,
 	)
 	return err
+}
+
+// ErrBirthdayLocked: the date of birth was already set.
+var ErrBirthdayLocked = errors.New("users: your birthday is already set and can't be changed — contact support if it's wrong")
+
+// SetBirthday stores the date of birth once and marks the person as a verified adult. It only ever writes
+// when none is set, so it can't be used to change an age later.
+func (r *Repository) SetBirthday(ctx context.Context, userID string, dob time.Time) error {
+	tag, err := r.pool.Exec(ctx, `
+		UPDATE users SET date_of_birth = $2::date, age_verified = true, updated_at = now()
+		WHERE id = $1 AND date_of_birth IS NULL`, userID, dob.Format("2006-01-02"))
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrBirthdayLocked
+	}
+	return nil
 }

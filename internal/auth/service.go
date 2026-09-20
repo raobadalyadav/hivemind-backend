@@ -84,9 +84,8 @@ func (s *Service) SignInWithApple(ctx context.Context, idToken, deviceID, platfo
 }
 
 // signInWithProvider verifies the ID token, finds-or-creates the account by
-// (provider, provider_user_id), and issues a session. The 18+ age gate only
-// runs on first creation — a client only needs to send date_of_birth on the
-// very first sign-in for a new account.
+// (provider, provider_user_id), and issues a session. New accounts start without a
+// verified age; the API refuses everything but setting a birthday until they add an 18+ one.
 func (s *Service) signInWithProvider(ctx context.Context, verifier *oauth.Verifier, providerName, idToken, deviceID, platform string, dob time.Time) (*Tokens, error) {
 	if idToken == "" {
 		return nil, ErrInvalidInput
@@ -101,10 +100,8 @@ func (s *Service) signInWithProvider(ctx context.Context, verifier *oauth.Verifi
 	case err == nil:
 		// existing account, nothing to create
 	case errors.Is(err, ErrUserNotFound):
-		if !dob.IsZero() && time.Since(dob).Hours()/24/365.25 < minAgeYears {
-			return nil, ErrUnderage
-		}
-		userID, createErr := s.repo.CreateUserFromOAuth(ctx, email, !dob.IsZero(), providerName, providerUserID, email)
+		// The birthday is collected after sign-in (UserService.UpdateUser); until then the account can't do anything else.
+		userID, createErr := s.repo.CreateUserFromOAuth(ctx, email, false, providerName, providerUserID, email)
 		if createErr != nil {
 			return nil, createErr
 		}

@@ -86,6 +86,11 @@ func cashfreeWebhookHandler(paymentsSvc *payments.Service, promotionsSvc *promot
 		ctx, cancel := context.WithTimeout(context.Background(), webhookHandlerTimeout)
 		defer cancel()
 		if _, err := paymentsSvc.MarkCaptured(ctx, event.OrderID, event.CFPaymentID, event.AmountMinor); err != nil {
+			if errors.Is(err, payments.ErrPlanFullAfterPay) {
+				logger.Warn("payment arrived after the seat was taken; refunded", "order_id", event.OrderID)
+				w.WriteHeader(http.StatusOK) // handled — don't have Cashfree redeliver it
+				return
+			}
 			if !errors.Is(err, payments.ErrPaymentNotFound) {
 				logger.Error("mark payment captured", "error", err, "order_id", event.OrderID)
 				http.Error(w, "failed to process webhook", http.StatusInternalServerError)

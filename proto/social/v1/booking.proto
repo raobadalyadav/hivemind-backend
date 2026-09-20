@@ -52,6 +52,8 @@ message Booking {
   Money price = 5;
   google.protobuf.Timestamp checked_in_at = 6;
   Audit audit = 7;
+  // payment_pending only: the seat is held until then; pay before it or the hold is released.
+  google.protobuf.Timestamp hold_expires_at = 8;
 }
 
 message QuoteBookingRequest {
@@ -64,6 +66,10 @@ message BookingQuote {
   Money service_fee = 2;
   Money total = 3;
   bool eligible = 4;
+  // Cancellation policy, shown before the person commits: cancel by this time for a full refund
+  // (host cancellations always refund in full). Unset for free plans.
+  google.protobuf.Timestamp refund_full_until = 5;
+  int32 refund_full_hours = 6;
 }
 
 message CreateBookingRequest {

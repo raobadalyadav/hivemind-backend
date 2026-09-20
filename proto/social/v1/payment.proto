@@ -13,6 +13,10 @@ option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
 // not gRPC — see cmd/api's webhook HTTP listener), not a client-callable RPC.
 service PaymentService {
   rpc CreateOrder(CreateOrderRequest) returns (Order);
+  // VerifyOrder asks the gateway what happened to an order the caller placed and settles it (idempotent):
+  // the app calls it right after the checkout sheet closes, so a booking is confirmed even when the
+  // webhook is slow or can't reach the server.
+  rpc VerifyOrder(VerifyOrderRequest) returns (Order);
   rpc GetPayment(GetPaymentRequest) returns (Payment);
   rpc RefundPayment(RefundPaymentRequest) returns (Refund);
   rpc GetMyCreditBalance(GetMyCreditBalanceRequest) returns (CreditBalance);
@@ -73,3 +77,5 @@ message GetMyCreditBalanceRequest {}
 message CreditBalance {
   int64 balance_minor = 1;
 }
+
+message VerifyOrderRequest { string order_id = 1; }

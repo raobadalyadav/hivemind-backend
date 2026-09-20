@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"errors"
+	"github.com/hivemind/backend/pkg/db"
 	"github.com/jackc/pgx/v5"
 	"google.golang.org/grpc/credentials"
 	"net"
@@ -16,7 +17,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
@@ -79,7 +79,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
+	pool, err := db.NewPool(ctx, cfg.DatabaseURL, cfg.DBMaxConns)
 	if err != nil {
 		logger.Error("connect postgres", "error", err)
 		os.Exit(1)
@@ -117,13 +117,13 @@ func main() {
 	if cfg.RateLimitPerMinute > 0 {
 		userLimiter = grpcmiddleware.NewRateLimiter(ctx, cfg.RateLimitPerMinute)
 	}
-	activeCheck := func(ctx context.Context, userID string) (bool, error) {
-		var active bool
-		err := pool.QueryRow(ctx, `SELECT status = 'active' FROM users WHERE id = $1`, userID).Scan(&active)
+	activeCheck := func(ctx context.Context, userID string) (grpcmiddleware.AccountState, error) {
+		var st grpcmiddleware.AccountState
+		err := pool.QueryRow(ctx, `SELECT status = 'active', age_verified FROM users WHERE id = $1`, userID).Scan(&st.Active, &st.Adult)
 		if errors.Is(err, pgx.ErrNoRows) {
-			return false, nil
+			return grpcmiddleware.AccountState{}, nil
 		}
-		return active, err
+		return st, err
 	}
 	serverOpts := []grpc.ServerOption{grpc.ChainUnaryInterceptor(
 		grpcmiddleware.RecoveryUnaryInterceptor(logger),
@@ -201,11 +201,7 @@ func main() {
 	}
 	// Declared as the interface type for the same nil-interface reason as
 	// emailSender/pushSender above.
-	var paymentGateway payments.GatewayClient
-	if cashfreeClient != nil {
-		paymentGateway = cashfreeClient
-	}
-	paymentsSvc := payments.NewService(payments.NewRepository(pool), paymentGateway, bookingsSvc, logger)
+	paymentsSvc := payments.NewService(payments.NewRepository(pool), payments.NewCashfreeGateway(cashfreeClient), payments.AdaptBookings(bookingsSvc, bookings.ErrPlanFull), logger)
 
 	// plansSvc and subscriptionsSvc are built as named variables (not inline
 	// in their Register call below) so they can also be injected into
@@ -287,6 +283,7 @@ func main() {
 	// Cashfree webhooks are plain HTTP POSTs from Cashfree's servers, not
 	// gRPC — a second, separate listener, same process.
 	webhookMux := http.NewServeMux()
+	registerHealth(webhookMux, pool, rdb)
 	if mediaSvc != nil {
 		media.NewHandler(mediaSvc, issuer, logger).Register(webhookMux)
 	}

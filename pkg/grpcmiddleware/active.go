@@ -10,16 +10,34 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// ActiveChecker reports whether a user may still use the API (exists and isn't suspended or deleted).
-type ActiveChecker func(ctx context.Context, userID string) (bool, error)
+// AccountState is what the API needs to know about a caller on every request.
+type AccountState struct {
+	Active bool // exists and isn't suspended or deleted
+	Adult  bool // has set an 18+ date of birth (age_verified)
+}
 
-// ActiveUserInterceptor rejects calls from suspended or deleted accounts even while their access
+// ActiveChecker looks up the caller's AccountState.
+type ActiveChecker func(ctx context.Context, userID string) (AccountState, error)
+
+// ageGateOpen lists what an account without a verified 18+ birthday may still do: read and complete
+// its own user record, sign out, delete the account, read its own profile — nothing else.
+var ageGateOpen = map[string]bool{
+	"/social.v1.UserService/GetUser":                true,
+	"/social.v1.UserService/UpdateUser":             true,
+	"/social.v1.UserService/DeleteAccount":          true,
+	"/social.v1.UserService/RegisterDevice":         true,
+	"/social.v1.ProfileService/GetProfile":          true,
+	"/social.v1.NotificationService/GetUnreadCount": true,
+}
+
+// ActiveUserInterceptor rejects calls from suspended or deleted accounts, and from accounts that haven't
+// set an 18+ birthday (except the calls in ageGateOpen), even while their access
 // token is still valid. The answer is cached for ttl so this costs one query per user per ttl, not
 // one per call; a lookup error fails open (a database blip must not sign everybody out) but is not cached.
 // Place it after AuthUnaryInterceptor.
 func ActiveUserInterceptor(check ActiveChecker, ttl time.Duration) grpc.UnaryServerInterceptor {
 	type entry struct {
-		active  bool
+		state   AccountState
 		expires time.Time
 	}
 	var mu sync.Mutex
@@ -33,11 +51,14 @@ func ActiveUserInterceptor(check ActiveChecker, ttl time.Duration) grpc.UnarySer
 		e, hit := cache[uid]
 		mu.Unlock()
 		if !hit || time.Now().After(e.expires) {
-			active, err := check(ctx, uid)
+			active, err := check(ctx, uid) // named for history: it is an AccountState
 			if err != nil {
 				return handler(ctx, req)
 			}
-			e = entry{active: active, expires: time.Now().Add(ttl)}
+			e = entry{state: active, expires: time.Now().Add(ttl)}
+			if !active.Adult {
+				e.expires = time.Now().Add(2 * time.Second) // it flips the moment they set a birthday: re-check soon
+			}
 			mu.Lock()
 			if len(cache) > 50000 { // bound memory: start over rather than track LRU
 				cache = map[string]entry{}
@@ -45,8 +66,11 @@ func ActiveUserInterceptor(check ActiveChecker, ttl time.Duration) grpc.UnarySer
 			cache[uid] = e
 			mu.Unlock()
 		}
-		if !e.active {
+		if !e.state.Active {
 			return nil, status.Error(codes.Unauthenticated, "this account is not active")
+		}
+		if !e.state.Adult && !ageGateOpen[info.FullMethod] {
+			return nil, status.Error(codes.FailedPrecondition, "add your date of birth (18+) to continue")
 		}
 		return handler(ctx, req)
 	}

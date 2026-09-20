@@ -26,11 +26,8 @@ func (h *Handler) CreateOrder(ctx context.Context, req *socialv1.CreateOrderRequ
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "auth required")
 	}
+	// req.Amount is deliberately ignored: what a booking costs is decided on the server.
 	o := &Order{BookingID: req.GetBookingId()}
-	if req.GetAmount() != nil {
-		o.AmountMinor = req.GetAmount().GetMinorUnits()
-		o.Currency = req.GetAmount().GetCurrency()
-	}
 	created, sessionID, err := h.svc.CreateOrder(ctx, o, callerID, req.GetCustomerPhone(), req.GetPromoCode(), req.GetUseCredits())
 	if err != nil {
 		switch err {
@@ -38,6 +35,10 @@ func (h *Handler) CreateOrder(ctx context.Context, req *socialv1.CreateOrderRequ
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		case ErrForbidden:
 			return nil, status.Error(codes.PermissionDenied, err.Error())
+		case ErrNotPayable:
+			return nil, status.Error(codes.FailedPrecondition, err.Error())
+		case ErrGatewayUnavailable:
+			return nil, status.Error(codes.Unavailable, "payments are temporarily unavailable — please try again in a moment")
 		case ErrCouponInvalid:
 			return nil, status.Error(codes.FailedPrecondition, err.Error())
 		default:
@@ -110,4 +111,32 @@ func (h *Handler) RefundPayment(ctx context.Context, req *socialv1.RefundPayment
 		Amount:    &socialv1.Money{MinorUnits: r.AmountMinor, Currency: currency},
 		Status:    r.Status,
 	}, nil
+}
+
+func orderToProto(o *Order) *socialv1.Order {
+	return &socialv1.Order{
+		Id:             o.ID,
+		BookingId:      o.BookingID,
+		Amount:         &socialv1.Money{MinorUnits: o.AmountMinor, Currency: o.Currency},
+		GatewayOrderId: o.GatewayOrderID,
+		Status:         o.Status,
+	}
+}
+
+func (h *Handler) VerifyOrder(ctx context.Context, req *socialv1.VerifyOrderRequest) (*socialv1.Order, error) {
+	callerID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	o, err := h.svc.VerifyOrder(ctx, req.GetOrderId(), callerID)
+	if err != nil {
+		switch err {
+		case ErrInvalidInput:
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		case ErrPaymentNotFound:
+			return nil, status.Error(codes.NotFound, "order not found")
+		}
+		return nil, status.Error(codes.Unavailable, "couldn't check the payment yet — try again in a moment")
+	}
+	return orderToProto(o), nil
 }

@@ -4,64 +4,82 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"time"
 )
 
 var (
-	ErrInvalidInput = errors.New("payments: invalid input")
-	ErrForbidden    = errors.New("payments: caller does not own this booking")
+	ErrInvalidInput       = errors.New("payments: invalid input")
+	ErrForbidden          = errors.New("payments: caller does not own this booking")
+	ErrNotPayable         = errors.New("payments: this booking is not waiting for payment")
+	ErrGatewayUnavailable = errors.New("payments: the payment gateway is not available")
+	ErrPlanFullAfterPay   = errors.New("payments: the seat was taken before the payment arrived; it has been refunded")
 )
 
-// BookingOwnerChecker is satisfied by *bookings.Service (wired in
-// cmd/api/main.go) — CreateOrder uses it to verify the caller owns the
-// booking they're paying for. Without this, any authenticated user could
-// create a real Cashfree payment order against someone else's booking.
-type BookingOwnerChecker interface {
-	GetBookingOwnerID(ctx context.Context, bookingID string) (string, error)
+// BookingPort is what payments needs from bookings (satisfied by *bookings.Service, wired in cmd/api/main.go;
+// declared here so this package doesn't import bookings). The charge is computed by bookings from the plan's
+// own price — a payment amount is NEVER taken from the client.
+type BookingPort interface {
+	GetBookingCharge(ctx context.Context, bookingID string) (ownerID string, totalMinor int64, currency, status string, err error)
+	ConfirmPaidBooking(ctx context.Context, bookingID string) error
 }
 
-// GatewayClient is satisfied by *cashfree.Client (wired in cmd/api/main.go)
-// — declared here, not imported from pkg/cashfree, so this package doesn't
-// depend on Cashfree concretely. Nil is valid (CASHFREE_CLIENT_ID not
-// configured): the order is still recorded, just without a real payment
-// session — same graceful-degradation pattern as the OAuth verifiers and
-// email/push senders. Webhook signature verification/parsing is Cashfree-
-// specific enough that it stays in cmd/api's webhook HTTP handler (the
-// composition root) rather than being abstracted through this interface —
-// see MarkCaptured below, which is what that handler calls into.
+// ErrSeatGone is what BookingPort.ConfirmPaidBooking returns when the hold expired and the seat is taken.
+// (bookings.ErrPlanFull is mapped to it by the adapter in cmd/api.)
+var ErrSeatGone = errors.New("payments: seat no longer available")
+
+// GatewayPayment is one payment attempt on an order as the gateway reports it.
+type GatewayPayment struct {
+	ID          string
+	Status      string // SUCCESS | FAILED | PENDING | …
+	AmountMinor int64
+}
+
+// GatewayClient is satisfied (through a small adapter) by *cashfree.Client — declared here so this package
+// doesn't depend on Cashfree concretely. Nil is valid (CASHFREE_CLIENT_ID not configured): an order is
+// recorded without a payment session and money can't move.
 type GatewayClient interface {
 	CreateOrder(ctx context.Context, orderID string, amountMinor int64, currency, customerID, customerPhone, customerEmail string) (cfOrderID, paymentSessionID string, err error)
+	Refund(ctx context.Context, orderID, refundID string, amountMinor int64, note string) (cfRefundID string, err error)
+	OrderPayments(ctx context.Context, orderID string) ([]GatewayPayment, error)
 }
 
 type Service struct {
-	repo         *Repository
-	gateway      GatewayClient
-	bookingOwner BookingOwnerChecker
-	logger       *slog.Logger
+	repo     *Repository
+	gateway  GatewayClient
+	bookings BookingPort
+	logger   *slog.Logger
 }
 
-func NewService(repo *Repository, gateway GatewayClient, bookingOwner BookingOwnerChecker, logger *slog.Logger) *Service {
-	return &Service{repo: repo, gateway: gateway, bookingOwner: bookingOwner, logger: logger}
+func NewService(repo *Repository, gateway GatewayClient, bookings BookingPort, logger *slog.Logger) *Service {
+	return &Service{repo: repo, gateway: gateway, bookings: bookings, logger: logger}
 }
 
-// CreateOrder requires the caller to own the booking being paid for, then
-// always records the order row — a failed/unconfigured gateway call
-// degrades to "order exists, no payment session yet" rather than failing
-// the whole booking flow. PaymentSessionID is returned separately (not
-// stored on Order) since it's short-lived and only needed once,
-// immediately, by the mobile client's Checkout SDK.
+// CreateOrder starts the payment for a booking that is waiting for it. The caller must own the booking; the
+// amount is what the booking owes (price + service fee), less credits/coupon if they opted in — whatever
+// amount the client sent is ignored. It returns the order and, when there is something to pay, the short-lived
+// payment session the app's checkout needs. An order fully covered by credits/coupon confirms the booking on the spot.
 func (s *Service) CreateOrder(ctx context.Context, o *Order, callerID, customerPhone, promoCode string, useCredits bool) (*Order, string, error) {
-	if o.BookingID == "" || o.AmountMinor <= 0 || callerID == "" {
+	if o.BookingID == "" || callerID == "" {
 		return nil, "", ErrInvalidInput
 	}
-	ownerID, err := s.bookingOwner.GetBookingOwnerID(ctx, o.BookingID)
+	ownerID, total, currency, status, err := s.bookings.GetBookingCharge(ctx, o.BookingID)
 	if err != nil {
 		return nil, "", err
 	}
 	if ownerID != callerID {
 		return nil, "", ErrForbidden
 	}
+	if status != "payment_pending" || total <= 0 {
+		return nil, "", ErrNotPayable
+	}
+	o.AmountMinor, o.Currency = total, currency
 	if o.Currency == "" {
 		o.Currency = "INR"
+	}
+
+	// Whatever they started before (an abandoned sheet, a retry) is closed first, and any credits it took go back.
+	if err := s.repo.CancelUnpaidOrdersForBooking(ctx, o.BookingID); err != nil {
+		return nil, "", err
 	}
 
 	if promoCode != "" {
@@ -78,26 +96,31 @@ func (s *Service) CreateOrder(ctx context.Context, o *Order, callerID, customerP
 	}
 
 	if created.AmountMinor <= 0 {
-		// Fully covered by coupon/credits — nothing to charge, no gateway
-		// call to make.
+		// Fully covered by coupon/credits — nothing to charge: the order is settled and the seat confirmed.
+		if err := s.repo.MarkOrderPaid(ctx, created.ID); err != nil {
+			return nil, "", err
+		}
+		created.Status = "paid"
+		if err := s.bookings.ConfirmPaidBooking(ctx, o.BookingID); err != nil {
+			return nil, "", err
+		}
 		return created, "", nil
 	}
 
 	if s.gateway == nil {
 		s.logger.Warn("payment gateway not configured, order created without a payment session", "order_id", created.ID)
-		return created, "", nil
+		return created, "", ErrGatewayUnavailable
 	}
 
 	userID, email, err := s.repo.GetBookingUser(ctx, o.BookingID)
 	if err != nil {
-		s.logger.Error("resolve booking user for payment order", "error", err, "order_id", created.ID)
-		return created, "", nil
+		return nil, "", err
 	}
-
 	cfOrderID, sessionID, err := s.gateway.CreateOrder(ctx, created.ID, created.AmountMinor, created.Currency, userID, customerPhone, email)
 	if err != nil {
 		s.logger.Error("cashfree create order failed", "error", err, "order_id", created.ID)
-		return created, "", nil
+		_ = s.repo.CancelUnpaidOrdersForBooking(ctx, o.BookingID) // give back credits; the person can try again
+		return nil, "", ErrGatewayUnavailable
 	}
 	if err := s.repo.SetGatewayOrderID(ctx, created.ID, cfOrderID); err != nil {
 		s.logger.Error("store gateway order id", "error", err, "order_id", created.ID)
@@ -106,16 +129,70 @@ func (s *Service) CreateOrder(ctx context.Context, o *Order, callerID, customerP
 	return created, sessionID, nil
 }
 
-// MarkCaptured is called by cmd/api's Cashfree webhook HTTP handler after
-// it has independently verified the webhook signature — not part of
-// GatewayClient since it's driven by an inbound webhook, not an outbound
-// gateway call.
-func (s *Service) MarkCaptured(ctx context.Context, cashfreeOrderID, gatewayPaymentID string, amountMinor int64) (*Payment, error) {
-	order, err := s.repo.FindOrderByCashfreeOrderID(ctx, cashfreeOrderID)
+// MarkCaptured is called by the Cashfree webhook (after it verified the signature) and by VerifyOrder: it records
+// the payment and confirms the booking it paid for. Replays are harmless. If the seat was lost while the hold
+// had expired, the payment is refunded in full.
+func (s *Service) MarkCaptured(ctx context.Context, orderID, gatewayPaymentID string, amountMinor int64) (*Payment, error) {
+	order, err := s.repo.FindOrderByCashfreeOrderID(ctx, orderID)
 	if err != nil {
 		return nil, err
 	}
-	return s.repo.MarkCaptured(ctx, order.ID, gatewayPaymentID, amountMinor, order.Currency)
+	payment, err := s.repo.MarkCaptured(ctx, order.ID, gatewayPaymentID, amountMinor, order.Currency)
+	if err != nil {
+		return nil, err
+	}
+	if s.bookings != nil {
+		if err := s.bookings.ConfirmPaidBooking(ctx, order.BookingID); err != nil {
+			if errors.Is(err, ErrSeatGone) {
+				s.logger.Warn("seat taken before payment arrived — refunding", "booking_id", order.BookingID, "payment_id", payment.ID)
+				if _, rerr := s.refund(ctx, payment.ID, payment.AmountMinor, "seat no longer available"); rerr != nil {
+					return payment, rerr
+				}
+				return payment, ErrPlanFullAfterPay
+			}
+			return payment, err
+		}
+	}
+	return payment, nil
+}
+
+// VerifyOrder asks the gateway what became of an order the caller placed and settles it — the app calls it right
+// after the checkout sheet closes, so the booking is confirmed even if the webhook is slow or unreachable.
+func (s *Service) VerifyOrder(ctx context.Context, orderID, callerID string) (*Order, error) {
+	if orderID == "" || callerID == "" {
+		return nil, ErrInvalidInput
+	}
+	order, err := s.repo.FindOrderByCashfreeOrderID(ctx, orderID)
+	if err != nil {
+		return nil, err
+	}
+	ownerID, _, _, _, err := s.bookings.GetBookingCharge(ctx, order.BookingID)
+	if err != nil {
+		return nil, err
+	}
+	if ownerID != callerID {
+		return nil, ErrPaymentNotFound // don't reveal other people's orders
+	}
+	if order.Status != "paid" && s.gateway != nil {
+		list, err := s.gateway.OrderPayments(ctx, order.ID)
+		if err != nil {
+			return nil, err
+		}
+		for _, gp := range list {
+			if gp.Status == "SUCCESS" {
+				if _, err := s.MarkCaptured(ctx, order.ID, gp.ID, gp.AmountMinor); err != nil && !errors.Is(err, ErrPlanFullAfterPay) {
+					return nil, err
+				}
+				break
+			}
+		}
+	} else if order.Status == "paid" {
+		// already captured: make sure the booking followed (it is idempotent)
+		if err := s.bookings.ConfirmPaidBooking(ctx, order.BookingID); err != nil && !errors.Is(err, ErrSeatGone) {
+			return nil, err
+		}
+	}
+	return s.repo.FindOrderByCashfreeOrderID(ctx, order.ID)
 }
 
 func (s *Service) GetMyCreditBalance(ctx context.Context, userID string) (int64, error) {
@@ -142,16 +219,44 @@ func (s *Service) GetPayment(ctx context.Context, id, callerID string, staff boo
 	return s.repo.GetPayment(ctx, id)
 }
 
+// RefundPayment is the staff refund (RPC is admin-gated).
 func (s *Service) RefundPayment(ctx context.Context, paymentID string, amountMinor int64, reason string) (*Refund, error) {
 	if paymentID == "" || amountMinor <= 0 {
 		return nil, ErrInvalidInput
 	}
-	return s.repo.CreateRefund(ctx, paymentID, amountMinor, reason)
+	return s.refund(ctx, paymentID, amountMinor, reason)
 }
 
-// RefundBookingIfCaptured is called by cmd/worker's BOOKING_CANCELLED
-// handler — a no-op (not an error) when no captured payment exists.
-func (s *Service) RefundBookingIfCaptured(ctx context.Context, bookingID, reason string) error {
+// refund records the attempt, asks the gateway to return the money, then settles the record. A gateway
+// failure marks the attempt failed and is returned (the worker retries with a fresh attempt); the money already
+// returned by earlier attempts is counted, so the total can never exceed what was paid.
+func (s *Service) refund(ctx context.Context, paymentID string, amountMinor int64, reason string) (*Refund, error) {
+	if s.gateway == nil {
+		return nil, ErrGatewayUnavailable
+	}
+	r, orderID, err := s.repo.BeginRefund(ctx, paymentID, amountMinor, reason)
+	if err != nil {
+		return nil, err
+	}
+	cfRefundID, err := s.gateway.Refund(ctx, orderID, r.ID, amountMinor, reason)
+	if err != nil {
+		s.logger.Error("gateway refund failed", "error", err, "refund_id", r.ID, "payment_id", paymentID)
+		_ = s.repo.FailRefund(ctx, r.ID)
+		return nil, err
+	}
+	if err := s.repo.CompleteRefund(ctx, r.ID, cfRefundID, amountMinor); err != nil {
+		return nil, err
+	}
+	r.Status = "processed"
+	return r, nil
+}
+
+// RefundBookingIfCaptured is called by the worker's BOOKING_CANCELLED handler: it returns percent% of what the
+// booking paid, minus anything already refunded. A no-op (not an error) when nothing was paid or nothing is owed.
+func (s *Service) RefundBookingIfCaptured(ctx context.Context, bookingID, reason string, percent int) error {
+	if percent <= 0 {
+		return nil
+	}
 	payment, err := s.repo.FindCapturedPaymentForBooking(ctx, bookingID)
 	if err != nil {
 		if err == ErrPaymentNotFound {
@@ -159,6 +264,20 @@ func (s *Service) RefundBookingIfCaptured(ctx context.Context, bookingID, reason
 		}
 		return err
 	}
-	_, err = s.repo.CreateRefund(ctx, payment.ID, payment.AmountMinor, reason)
-	return err
+	target := payment.AmountMinor * int64(min(percent, 100)) / 100
+	already, err := s.repo.RefundedTotal(ctx, payment.ID)
+	if err != nil {
+		return err
+	}
+	if owed := target - already; owed > 0 {
+		_, err = s.refund(ctx, payment.ID, owed, reason)
+		return err
+	}
+	return nil
+}
+
+// ReleaseAbandonedOrders closes unpaid orders of bookings that no longer wait for payment (the hold expired or
+// was cancelled) and gives their credits back (worker job).
+func (s *Service) ReleaseAbandonedOrders(ctx context.Context, _ time.Time) (int, error) {
+	return s.repo.ReleaseAbandonedOrders(ctx)
 }

@@ -350,55 +350,128 @@ func (r *Repository) GetCreditBalance(ctx context.Context, userID string) (int64
 	return balance, err
 }
 
-// CreateRefund inserts the refund and an append-only reconciliation_entries
-// row (PRD §29) in one transaction — RefundPayment never touches
-// payments.status (a captured payment stays captured; the refund is a
-// separate ledger object, matching real gateway semantics).
-func (r *Repository) CreateRefund(ctx context.Context, paymentID string, amountMinor int64, reason string) (*Refund, error) {
+// BeginRefund records a pending refund attempt after checking the payment is captured and the refunds
+// (attempts that didn't fail) don't add up to more than was paid. It returns the attempt and the order the payment belongs to.
+func (r *Repository) BeginRefund(ctx context.Context, paymentID string, amountMinor int64, reason string) (*Refund, string, error) {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	defer tx.Rollback(ctx)
 
-	var status string
-	if err := tx.QueryRow(ctx,
-		`SELECT status FROM payments WHERE id = $1 FOR UPDATE`, paymentID,
-	).Scan(&status); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrPaymentNotFound
+	var status, orderID string
+	var paid int64
+	if err := tx.QueryRow(ctx, `SELECT status, order_id::text, amount_minor FROM payments WHERE id = $1 FOR UPDATE`, paymentID).Scan(&status, &orderID, &paid); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) || isBadUUID(err) {
+			return nil, "", ErrPaymentNotFound
 		}
-		return nil, err
+		return nil, "", err
 	}
 	if status != "captured" {
-		return nil, ErrPaymentNotRefundable
+		return nil, "", ErrPaymentNotRefundable
 	}
-
-	var refund Refund
-	refund.PaymentID = paymentID
-	refund.AmountMinor = amountMinor
-	refund.Status = "processed"
+	var refunded int64
+	if err := tx.QueryRow(ctx, `SELECT COALESCE(sum(amount_minor),0) FROM refunds WHERE payment_id = $1 AND status <> 'failed'`, paymentID).Scan(&refunded); err != nil {
+		return nil, "", err
+	}
+	if amountMinor <= 0 || refunded+amountMinor > paid {
+		return nil, "", ErrPaymentNotRefundable
+	}
+	refund := Refund{PaymentID: paymentID, AmountMinor: amountMinor, Status: "pending"}
 	if err := tx.QueryRow(ctx, `
-		INSERT INTO refunds (payment_id, amount_minor, reason, status)
-		VALUES ($1, $2, $3, 'processed')
-		RETURNING id`,
-		paymentID, amountMinor, reason,
-	).Scan(&refund.ID); err != nil {
-		return nil, err
+		INSERT INTO refunds (payment_id, amount_minor, reason, status) VALUES ($1, $2, $3, 'pending') RETURNING id`,
+		paymentID, amountMinor, reason).Scan(&refund.ID); err != nil {
+		return nil, "", err
 	}
-
-	if _, err := tx.Exec(ctx,
-		`INSERT INTO reconciliation_entries (entry_type, reference_id, amount_minor) VALUES ('refund', $1, $2)`,
-		refund.ID, amountMinor,
-	); err != nil {
-		return nil, err
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return nil, err
-	}
-	return &refund, nil
+	return &refund, orderID, tx.Commit(ctx)
 }
+
+// FailRefund marks an attempt the gateway rejected (it stops counting toward the refunded total).
+func (r *Repository) FailRefund(ctx context.Context, refundID string) error {
+	_, err := r.pool.Exec(ctx, `UPDATE refunds SET status = 'failed', updated_at = now() WHERE id = $1`, refundID)
+	return err
+}
+
+// CompleteRefund settles an attempt the gateway accepted and writes the append-only reconciliation entry (PRD §29).
+func (r *Repository) CompleteRefund(ctx context.Context, refundID, gatewayRefundID string, amountMinor int64) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	if _, err := tx.Exec(ctx, `UPDATE refunds SET status = 'processed', gateway_refund_id = NULLIF($2,''), updated_at = now() WHERE id = $1`, refundID, gatewayRefundID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(ctx, `INSERT INTO reconciliation_entries (entry_type, reference_id, amount_minor) VALUES ('refund', $1, $2)`, refundID, amountMinor); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
+
+// RefundedTotal is what has been (or is being) returned for a payment.
+func (r *Repository) RefundedTotal(ctx context.Context, paymentID string) (int64, error) {
+	var n int64
+	err := r.pool.QueryRow(ctx, `SELECT COALESCE(sum(amount_minor),0) FROM refunds WHERE payment_id = $1 AND status <> 'failed'`, paymentID).Scan(&n)
+	return n, err
+}
+
+// MarkOrderPaid settles an order that had nothing left to charge (covered by credits / a coupon).
+func (r *Repository) MarkOrderPaid(ctx context.Context, orderID string) error {
+	_, err := r.pool.Exec(ctx, `UPDATE orders SET status = 'paid' WHERE id = $1`, orderID)
+	return err
+}
+
+// CancelUnpaidOrdersForBooking closes every still-unpaid order of a booking and reverses the credits each took.
+func (r *Repository) CancelUnpaidOrdersForBooking(ctx context.Context, bookingID string) error {
+	return r.cancelUnpaid(ctx, `o.booking_id = $1`, bookingID)
+}
+
+// ReleaseAbandonedOrders does the same for bookings that are no longer payment_pending (expired or cancelled).
+func (r *Repository) ReleaseAbandonedOrders(ctx context.Context) (int, error) {
+	var n int
+	err := r.pool.QueryRow(ctx, `
+		SELECT count(*) FROM orders o JOIN bookings b ON b.id = o.booking_id
+		WHERE o.status = 'created' AND b.status <> 'payment_pending'`).Scan(&n)
+	if err != nil || n == 0 {
+		return 0, err
+	}
+	return n, r.cancelUnpaid(ctx, `o.booking_id IN (SELECT id FROM bookings WHERE status <> 'payment_pending') AND $1 = $1`, "")
+}
+
+func (r *Repository) cancelUnpaid(ctx context.Context, where, arg string) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	rows, err := tx.Query(ctx, `UPDATE orders o SET status = 'cancelled' WHERE o.status = 'created' AND `+where+` RETURNING o.id`, arg)
+	if err != nil {
+		return err
+	}
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			rows.Close()
+			return err
+		}
+		ids = append(ids, id)
+	}
+	rows.Close()
+	for _, id := range ids {
+		// credit_ledger is append-only: give the credits back with a new positive entry.
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO credit_ledger (user_id, amount_minor, reason, order_id)
+			SELECT user_id, -sum(amount_minor), 'booking_spend_reversed', order_id FROM credit_ledger
+			WHERE order_id = $1 AND reason = 'booking_spend'
+			GROUP BY user_id, order_id HAVING sum(amount_minor) < 0`, id); err != nil {
+			return err
+		}
+	}
+	return tx.Commit(ctx)
+}
+
+// isBadUUID: a malformed id is "not found", not an internal error.
 
 // isBadUUID: a malformed id is "not found", not an internal error.
 func isBadUUID(err error) bool {

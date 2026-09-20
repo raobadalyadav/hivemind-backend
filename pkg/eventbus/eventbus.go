@@ -7,6 +7,7 @@ package eventbus
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -50,10 +51,17 @@ func (p *Publisher) Publish(ctx context.Context, subject string, data []byte) er
 	return err
 }
 
+// maxDeliveries is how many times an event is tried before it's dead-lettered.
+const maxDeliveries = 6
+
 func (p *Publisher) Consume(ctx context.Context, consumerName string, subject string, handler func(msg jetstream.Msg) error) error {
 	cons, err := p.js.CreateOrUpdateConsumer(ctx, StreamName, jetstream.ConsumerConfig{
 		Durable:       consumerName,
 		FilterSubject: "events." + subject,
+		// A message that keeps failing is retried with growing pauses and then given up on (dead-lettered),
+		// instead of being redelivered forever and blocking everything behind it.
+		MaxDeliver: maxDeliveries,
+		BackOff:    []time.Duration{5 * time.Second, 30 * time.Second, 2 * time.Minute, 10 * time.Minute, time.Hour},
 	})
 	if err != nil {
 		return err
@@ -61,7 +69,12 @@ func (p *Publisher) Consume(ctx context.Context, consumerName string, subject st
 
 	_, err = cons.Consume(func(msg jetstream.Msg) {
 		if err := handler(msg); err != nil {
-			msg.Nak()
+			if md, merr := msg.Metadata(); merr == nil && md.NumDelivered >= maxDeliveries {
+				slog.Error("event dead-lettered after repeated failures", "consumer", consumerName, "subject", msg.Subject(), "error", err, "attempts", md.NumDelivered)
+				_ = msg.Term()
+				return
+			}
+			_ = msg.Nak() // redelivered after the consumer's BackOff
 			return
 		}
 		msg.Ack()

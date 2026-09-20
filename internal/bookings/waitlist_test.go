@@ -63,7 +63,7 @@ func TestWaitlist_CancelOffersToFirstAndBlocksOthers(t *testing.T) {
 	}
 
 	// A cancels: B (head of queue) is offered the seat, C keeps waiting.
-	if _, err := repo.Cancel(ctx, bookA.ID, "test"); err != nil {
+	if _, err := repo.Cancel(ctx, bookA.ID, "test", false); err != nil {
 		t.Fatalf("A cancels: %v", err)
 	}
 	if st := waitState(t, repo, planID, b); st.State != WaitlistOffered || st.OfferExpiresAt == nil {
@@ -88,7 +88,7 @@ func TestWaitlist_CancelOffersToFirstAndBlocksOthers(t *testing.T) {
 	}
 
 	// B leaves too: C gets the offer. E joins behind while C's hold is live.
-	if _, err := repo.Cancel(ctx, bookB.ID, "test"); err != nil {
+	if _, err := repo.Cancel(ctx, bookB.ID, "test", false); err != nil {
 		t.Fatalf("B cancels: %v", err)
 	}
 	if st := waitState(t, repo, planID, c); st.State != WaitlistOffered {
@@ -138,7 +138,7 @@ func TestCancelAndRebook_ReactivatesParticipantRow(t *testing.T) {
 	if err != nil {
 		t.Fatalf("book: %v", err)
 	}
-	if _, err := repo.Cancel(ctx, first.ID, "test"); err != nil {
+	if _, err := repo.Cancel(ctx, first.ID, "test", false); err != nil {
 		t.Fatalf("cancel: %v", err)
 	}
 	if _, err := repo.Create(ctx, &Booking{PlanID: planID, UserID: userID}); err != nil {

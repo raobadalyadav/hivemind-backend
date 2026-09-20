@@ -68,6 +68,10 @@ type bookingCancelledPayload struct {
 	PlanID    string `json:"plan_id"`
 	UserID    string `json:"user_id"`
 	Reason    string `json:"reason"`
+
+	// RefundPercent decided by the cancellation policy when the booking was cancelled. Events written before
+	// the policy existed carry no value and are refunded in full, as they always were.
+	RefundPercent *int `json:"refund_percent"`
 }
 
 // handleBookingCancelled evaluates a refund (no-op if nothing was captured)
@@ -80,7 +84,11 @@ func (d *deps) handleBookingCancelled(ctx context.Context, data []byte) error {
 		return err
 	}
 
-	if err := d.paymentsSvc.RefundBookingIfCaptured(ctx, p.BookingID, "booking cancelled: "+p.Reason); err != nil {
+	percent := 100
+	if p.RefundPercent != nil {
+		percent = *p.RefundPercent
+	}
+	if err := d.paymentsSvc.RefundBookingIfCaptured(ctx, p.BookingID, "booking cancelled: "+p.Reason, percent); err != nil {
 		return err
 	}
 
@@ -92,7 +100,7 @@ func (d *deps) handleBookingCancelled(ctx context.Context, data []byte) error {
 		UserID:   p.UserID,
 		Channel:  "push",
 		Title:    "Booking cancelled",
-		Body:     "Your booking was cancelled. Refund evaluated automatically.",
+		Body:     cancelledBody(percent),
 		DeepLink: "hivemind://bookings/" + p.BookingID,
 	})
 	return err
@@ -160,5 +168,16 @@ func (d *deps) logOnly(eventType string) func(ctx context.Context, data []byte) 
 	return func(ctx context.Context, data []byte) error {
 		d.logger.Info("event received (no consumer wired yet)", "type", eventType, "data", string(data))
 		return nil
+	}
+}
+
+func cancelledBody(refundPercent int) string {
+	switch {
+	case refundPercent >= 100:
+		return "Your booking was cancelled. Any payment is being refunded in full."
+	case refundPercent > 0:
+		return "Your booking was cancelled. Part of your payment is being refunded."
+	default:
+		return "Your booking was cancelled."
 	}
 }

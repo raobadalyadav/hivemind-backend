@@ -6,12 +6,13 @@ package main
 
 import (
 	"context"
+	"github.com/hivemind/backend/pkg/cashfree"
+	"github.com/hivemind/backend/pkg/db"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nats-io/nats.go/jetstream"
 	"github.com/redis/go-redis/v9"
 
@@ -45,7 +46,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
+	pool, err := db.NewPool(ctx, cfg.DatabaseURL, cfg.DBMaxConns)
 	if err != nil {
 		logger.Error("connect postgres", "error", err)
 		os.Exit(1)
@@ -83,6 +84,11 @@ func main() {
 		}
 	}
 
+	var cashfreeClient *cashfree.Client
+	if cfg.CashfreeClientID != "" {
+		cashfreeClient = cashfree.NewClient(cfg.CashfreeClientID, cfg.CashfreeClientSecret, cfg.CashfreeSandbox)
+	}
+
 	// moderationSvc is needed transitively by chat.Service's ReportSubmitter
 	// interface, even though the worker never calls chat.ReportMessage
 	// itself — see internal/chat/service.go.
@@ -92,7 +98,7 @@ func main() {
 		// nil gateway/bookingOwner: the worker only calls
 		// RefundBookingIfCaptured, never CreateOrder — those params exist
 		// for the gRPC-facing Service constructed in cmd/api.
-		paymentsSvc:  payments.NewService(payments.NewRepository(pool), nil, nil, logger),
+		paymentsSvc:  payments.NewService(payments.NewRepository(pool), payments.NewCashfreeGateway(cashfreeClient), nil, logger),
 		plansSvc:     plans.NewService(plans.NewRepository(pool), nil, nil, nil),
 		storiesSvc:   stories.NewService(stories.NewRepository(pool), nil),
 		mediaSvc:     mediaSvc,

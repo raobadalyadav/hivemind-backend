@@ -90,13 +90,13 @@ func TestUserRateLimit_PerUser(t *testing.T) {
 
 func TestActiveUserInterceptor_BlocksInactiveAndCaches(t *testing.T) {
 	calls := 0
-	active := map[string]bool{"good": true, "gone": false}
-	itc := ActiveUserInterceptor(func(_ context.Context, id string) (bool, error) {
+	states := map[string]AccountState{"good": {Active: true, Adult: true}, "gone": {Active: false, Adult: true}, "kid": {Active: true, Adult: false}}
+	itc := ActiveUserInterceptor(func(_ context.Context, id string) (AccountState, error) {
 		calls++
 		if id == "boom" {
-			return false, context.DeadlineExceeded
+			return AccountState{}, context.DeadlineExceeded
 		}
-		return active[id], nil
+		return states[id], nil
 	}, time.Minute)
 	ok := func(context.Context, any) (any, error) { return "ok", nil }
 	info := &grpc.UnaryServerInfo{FullMethod: "/social.v1.PlanService/GetPlan"}
@@ -117,5 +117,23 @@ func TestActiveUserInterceptor_BlocksInactiveAndCaches(t *testing.T) {
 	}
 	if _, err := itc(context.Background(), nil, info, ok); err != nil {
 		t.Fatalf("public calls (no user) pass through: %v", err)
+	}
+}
+
+func TestAgeGate_UnverifiedAccountsCanOnlyFinishTheirBirthday(t *testing.T) {
+	itc := ActiveUserInterceptor(func(context.Context, string) (AccountState, error) {
+		return AccountState{Active: true, Adult: false}, nil
+	}, time.Minute)
+	ok := func(context.Context, any) (any, error) { return "ok", nil }
+	ctx := context.WithValue(context.Background(), userIDContextKey, "kid")
+	for _, m := range []string{"/social.v1.UserService/GetUser", "/social.v1.UserService/UpdateUser", "/social.v1.UserService/DeleteAccount"} {
+		if _, err := itc(ctx, nil, &grpc.UnaryServerInfo{FullMethod: m}, ok); err != nil {
+			t.Errorf("%s must stay open so the birthday can be added: %v", m, err)
+		}
+	}
+	for _, m := range []string{"/social.v1.PlanService/GetPlan", "/social.v1.MeetService/GetDeck", "/social.v1.ChatService/SendMessage", "/social.v1.SocialService/CreatePost"} {
+		if _, err := itc(ctx, nil, &grpc.UnaryServerInfo{FullMethod: m}, ok); status.Code(err) != codes.FailedPrecondition {
+			t.Errorf("%s must be refused until an 18+ birthday is set, got %v", m, err)
+		}
 	}
 }

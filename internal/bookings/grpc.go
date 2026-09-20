@@ -87,10 +87,17 @@ func (h *Handler) QuoteBooking(ctx context.Context, req *socialv1.QuoteBookingRe
 		return nil, status.Error(codes.NotFound, "plan not found")
 	}
 	return &socialv1.BookingQuote{
-		Price:      &socialv1.Money{MinorUnits: q.PriceMinor, Currency: q.Currency},
-		ServiceFee: &socialv1.Money{MinorUnits: q.ServiceFeeMinor, Currency: q.Currency},
-		Total:      &socialv1.Money{MinorUnits: q.TotalMinor, Currency: q.Currency},
-		Eligible:   q.Eligible,
+		Price:           &socialv1.Money{MinorUnits: q.PriceMinor, Currency: q.Currency},
+		ServiceFee:      &socialv1.Money{MinorUnits: q.ServiceFeeMinor, Currency: q.Currency},
+		Total:           &socialv1.Money{MinorUnits: q.TotalMinor, Currency: q.Currency},
+		Eligible:        q.Eligible,
+		RefundFullHours: int32(q.RefundFullHours),
+		RefundFullUntil: func() *timestamppb.Timestamp {
+			if q.RefundFullUntil == nil {
+				return nil
+			}
+			return timestamppb.New(*q.RefundFullUntil)
+		}(),
 	}, nil
 }
 
@@ -135,13 +142,17 @@ func (h *Handler) CheckIn(ctx context.Context, req *socialv1.CheckInRequest) (*s
 }
 
 func toProto(b *Booking) *socialv1.Booking {
-	return &socialv1.Booking{
+	out := &socialv1.Booking{
 		Id:     b.ID,
 		PlanId: b.PlanID,
 		UserId: b.UserID,
 		Status: statusToProto(b.Status),
 		Price:  &socialv1.Money{MinorUnits: b.PriceMinor, Currency: b.Currency},
 	}
+	if b.HoldExpiresAt != nil && b.Status == "payment_pending" {
+		out.HoldExpiresAt = timestamppb.New(*b.HoldExpiresAt)
+	}
+	return out
 }
 
 var statusFromProtoMap = map[string]socialv1.BookingStatus{

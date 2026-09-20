@@ -140,9 +140,10 @@ func TestListCommunities_OnlyMineAndIsMember(t *testing.T) {
 	ctx := context.Background()
 	owner, me := seedUser(t, pool, "cmowner"), seedUser(t, pool, "cmme")
 	svc := NewService(NewRepository(pool))
+	run := time.Now().Format("150405.000000000") // one suffix for the run, so the list can be filtered to this run's rows
 	mk := func(name, typ string) string {
 		var id string
-		if err := pool.QueryRow(ctx, `INSERT INTO communities (name, owner_id, membership_type) VALUES ($1,$2,$3::community_type) RETURNING id`, name+time.Now().Format("150405.000000000"), owner, typ).Scan(&id); err != nil {
+		if err := pool.QueryRow(ctx, `INSERT INTO communities (name, owner_id, membership_type) VALUES ($1,$2,$3::community_type) RETURNING id`, name+run, owner, typ).Scan(&id); err != nil {
 			t.Fatalf("community: %v", err)
 		}
 		return id
@@ -150,7 +151,7 @@ func TestListCommunities_OnlyMineAndIsMember(t *testing.T) {
 	joined, notJoined, private := mk("Joined ", "public"), mk("NotJoined ", "public"), mk("Private ", "private")
 	pool.Exec(ctx, `INSERT INTO community_members (community_id, user_id) VALUES ($1,$2),($3,$2)`, joined, me, private)
 
-	all, err := svc.ListCommunities(ctx, "", "", "", me, false)
+	all, err := svc.ListCommunities(ctx, "", "", run, me, false) // the list is capped, so look only at this run's communities
 	if err != nil {
 		t.Fatalf("list: %v", err)
 	}

@@ -48,8 +48,12 @@ func (h *Handler) UpdateUser(ctx context.Context, req *socialv1.UpdateUserReques
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "auth required")
 	}
-	u, err := h.svc.UpdateUser(ctx, userID, req.GetCityId())
+	u, err := h.svc.UpdateUser(ctx, userID, req.GetCityId(), req.GetDateOfBirth())
 	if err != nil {
+		switch err {
+		case ErrUnderage, ErrBirthdayLocked:
+			return nil, status.Error(codes.FailedPrecondition, err.Error())
+		}
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
@@ -114,5 +118,6 @@ func toProto(u *User) *socialv1.User {
 		Email:       u.Email,
 		CityId:      u.CityID,
 		AgeVerified: u.AgeVerified,
+		DateOfBirth: u.DateOfBirth,
 	}
 }

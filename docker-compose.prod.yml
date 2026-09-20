@@ -1,0 +1,30 @@
+# Reference production-style stack: the two app processes, migrations, and their env file.
+# Postgres/Redis/NATS/S3 are expected to be managed services (see .env.production.example).
+#   cp .env.production.example .env.prod   # fill in real values
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+services:
+  migrate:
+    image: migrate/migrate:v4.18.1
+    command: ["-path", "/migrations", "-database", "${DATABASE_URL}", "up"]
+    volumes: ["./migrations:/migrations:ro"]
+    restart: "no"
+
+  api:
+    build: { context: ., target: api }
+    env_file: .env.prod
+    ports: ["50051:50051", "8080:8080"]
+    depends_on: { migrate: { condition: service_completed_successfully } }
+    healthcheck:
+      # distroless has no shell/curl: the orchestrator's HTTP probe (/healthz, /readyz on :8080) is the real check
+      disable: true
+    restart: unless-stopped
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+
+  worker:
+    build: { context: ., target: worker }
+    env_file: .env.prod
+    depends_on: { migrate: { condition: service_completed_successfully } }
+    restart: unless-stopped
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
