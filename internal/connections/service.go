@@ -31,11 +31,11 @@ func (s *Service) RequestConnection(ctx context.Context, c *Connection) (*Connec
 	return s.repo.Create(ctx, c)
 }
 
-func (s *Service) ListConnections(ctx context.Context, userID string) ([]*Connection, error) {
+func (s *Service) ListConnections(ctx context.Context, userID, status, direction string) ([]*Connection, error) {
 	if userID == "" {
 		return nil, ErrInvalidInput
 	}
-	return s.repo.ListForUser(ctx, userID, defaultPageSize)
+	return s.repo.ListForUser(ctx, userID, status, direction, defaultPageSize)
 }
 
 // RespondConnection requires the caller to be the request's recipient —

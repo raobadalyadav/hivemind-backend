@@ -35,6 +35,8 @@ service ChatService {
 enum ChatTab {
   CHAT_TAB_PRIMARY = 0; // friends' DMs + chats of upcoming plans you're in
   CHAT_TAB_GENERAL = 1; // everything else: event groups, meet-again groups, past plans
+  CHAT_TAB_ALL = 2;    // every chat
+  CHAT_TAB_GROUPS = 3; // plan / event / group chats (not DMs)
 }
 
 enum ChatKind {
@@ -64,6 +66,7 @@ message ListMyChatsResponse {
   repeated ChatSummary chats = 1;
   int32 primary_unread = 2; // totals across both tabs, for the bar badge and tab dots
   int32 general_unread = 3;
+  int32 groups_unread = 4;
 }
 
 message MarkReadRequest { string room_id = 1; }

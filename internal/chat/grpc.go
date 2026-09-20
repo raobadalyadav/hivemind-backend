@@ -211,12 +211,13 @@ func (h *Handler) ListMyChats(ctx context.Context, req *socialv1.ListMyChatsRequ
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "auth required")
 	}
-	chats, pu, gu, err := h.svc.Inbox(ctx, uid, req.GetTab() == socialv1.ChatTab_CHAT_TAB_PRIMARY)
+	tab := map[socialv1.ChatTab]string{socialv1.ChatTab_CHAT_TAB_PRIMARY: "primary", socialv1.ChatTab_CHAT_TAB_GENERAL: "general", socialv1.ChatTab_CHAT_TAB_ALL: "all", socialv1.ChatTab_CHAT_TAB_GROUPS: "groups"}[req.GetTab()]
+	res, err := h.svc.InboxFor(ctx, uid, tab)
 	if err != nil {
 		return nil, chatErr(err, "failed to load chats")
 	}
-	out := &socialv1.ListMyChatsResponse{PrimaryUnread: pu, GeneralUnread: gu}
-	for _, c := range chats {
+	out := &socialv1.ListMyChatsResponse{PrimaryUnread: res.PrimaryUnread, GeneralUnread: res.GeneralUnread, GroupsUnread: res.GroupsUnread}
+	for _, c := range res.Chats {
 		pc := &socialv1.ChatSummary{
 			RoomId: c.RoomID, Kind: kindToProto[c.Kind], Title: c.Title, OtherUserId: c.OtherUserID, PlanId: c.PlanID,
 			AvatarUrl: c.AvatarURL, OtherVerified: c.OtherVerified, LastMessage: c.LastMessage,

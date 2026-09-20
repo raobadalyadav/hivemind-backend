@@ -32,6 +32,7 @@ type Community struct {
 	RequiredEntitlement string
 	MemberCount         int32
 	PlanCount           int32
+	IsMember            bool // set by MarkMembership for a known viewer
 }
 
 type Repository struct {
@@ -290,16 +291,17 @@ func (r *Repository) Leave(ctx context.Context, communityID, userID string) erro
 }
 
 // List excludes private communities (they never appear in discovery).
-func (r *Repository) List(ctx context.Context, cityID, categoryID, query string, limit int) ([]*Community, error) {
+func (r *Repository) List(ctx context.Context, cityID, categoryID, query, viewerID string, onlyMine bool, limit int) ([]*Community, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT `+communityColumns+`
 		FROM communities c
-		WHERE c.membership_type <> 'private'
+		WHERE (c.membership_type <> 'private' OR ($6 AND EXISTS (SELECT 1 FROM community_members mm WHERE mm.community_id = c.id AND mm.user_id = NULLIF($5,'')::uuid)))
+		  AND (NOT $6 OR EXISTS (SELECT 1 FROM community_members mm WHERE mm.community_id = c.id AND mm.user_id = NULLIF($5,'')::uuid))
 		  AND (c.city_id = NULLIF($1,'')::uuid OR $1 = '')
 		  AND (c.category_id = NULLIF($2,'')::uuid OR $2 = '')
 		  AND ($3 = '' OR c.name ILIKE '%' || $3 || '%')
 		ORDER BY (SELECT count(*) FROM community_members m WHERE m.community_id = c.id) DESC, c.name
-		LIMIT $4`, cityID, categoryID, query, limit)
+		LIMIT $4`, cityID, categoryID, query, limit, viewerID, onlyMine)
 	if err != nil {
 		return nil, err
 	}
@@ -341,4 +343,32 @@ func (r *Repository) ListPlanIDs(ctx context.Context, communityID string, isMemb
 		ids = append(ids, id)
 	}
 	return ids, rows.Err()
+}
+
+// MarkMembership sets IsMember on each community for viewerID with one query.
+func (r *Repository) MarkMembership(ctx context.Context, list []*Community, viewerID string) error {
+	if viewerID == "" || len(list) == 0 {
+		return nil
+	}
+	ids := make([]string, len(list))
+	for i, c := range list {
+		ids[i] = c.ID
+	}
+	rows, err := r.pool.Query(ctx, `SELECT community_id::text FROM community_members WHERE user_id = $1 AND community_id = ANY($2::uuid[])`, viewerID, ids)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	mine := map[string]bool{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return err
+		}
+		mine[id] = true
+	}
+	for _, c := range list {
+		c.IsMember = mine[c.ID]
+	}
+	return rows.Err()
 }

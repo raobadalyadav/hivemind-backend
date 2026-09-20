@@ -386,25 +386,51 @@ func (s *Service) AddRoomMember(ctx context.Context, roomID, userID string) erro
 
 // Inbox splits the user's chats into Primary / General and totals unread for
 // each (the bar badge shows both regardless of which tab is open).
-func (s *Service) Inbox(ctx context.Context, userID string, primary bool) (chats []Summary, primaryUnread, generalUnread int32, err error) {
+// InboxResult is one inbox tab plus the unread totals for every tab, so the
+// app can badge the bar and tabs from a single call.
+type InboxResult struct {
+	Chats                                      []Summary
+	PrimaryUnread, GeneralUnread, GroupsUnread int32
+}
+
+// InboxFor returns the chats of a tab: "primary", "general", "all", or
+// "groups" (plan / event / group rooms — everything that isn't a 1:1 DM).
+func (s *Service) InboxFor(ctx context.Context, userID, tab string) (*InboxResult, error) {
 	if userID == "" {
-		return nil, 0, 0, ErrInvalidInput
+		return nil, ErrInvalidInput
 	}
 	all, err := s.repo.Inbox(ctx, userID, time.Now())
 	if err != nil {
-		return nil, 0, 0, err
+		return nil, err
 	}
+	out := &InboxResult{}
 	for _, c := range all {
 		if c.Primary {
-			primaryUnread += c.Unread
+			out.PrimaryUnread += c.Unread
 		} else {
-			generalUnread += c.Unread
+			out.GeneralUnread += c.Unread
 		}
-		if c.Primary == primary {
-			chats = append(chats, c)
+		if c.Kind != "dm" {
+			out.GroupsUnread += c.Unread
+		}
+		if match := map[string]bool{"primary": c.Primary, "general": !c.Primary, "all": true, "groups": c.Kind != "dm"}[tab]; match {
+			out.Chats = append(out.Chats, c)
 		}
 	}
-	return chats, primaryUnread, generalUnread, nil
+	return out, nil
+}
+
+// Inbox is the two-tab form (Primary / General) kept for older callers.
+func (s *Service) Inbox(ctx context.Context, userID string, primary bool) (chats []Summary, primaryUnread, generalUnread int32, err error) {
+	tab := "general"
+	if primary {
+		tab = "primary"
+	}
+	r, err := s.InboxFor(ctx, userID, tab)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	return r.Chats, r.PrimaryUnread, r.GeneralUnread, nil
 }
 
 func (s *Service) MarkRead(ctx context.Context, roomID, userID string) error {

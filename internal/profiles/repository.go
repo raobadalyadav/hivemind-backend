@@ -122,3 +122,20 @@ func (r *Repository) SetPrivacy(ctx context.Context, userID string, showInPrevie
 	}
 	return &p, nil
 }
+
+// Stats are the Me tab's counts, straight from the tables (no client-side capping).
+type Stats struct {
+	PlansAttended, PlansUpcoming, Connections, Communities int32
+}
+
+func (r *Repository) Stats(ctx context.Context, userID string) (*Stats, error) {
+	var s Stats
+	err := r.pool.QueryRow(ctx, `
+		SELECT
+		  (SELECT count(*) FROM bookings WHERE user_id = $1 AND status = 'attended')::int,
+		  (SELECT count(*) FROM bookings b JOIN plans p ON p.id = b.plan_id
+		     WHERE b.user_id = $1 AND b.status = 'confirmed' AND p.starts_at > now())::int,
+		  (SELECT count(*) FROM connections WHERE status = 'accepted'::connection_status AND (requester_id = $1 OR recipient_id = $1))::int,
+		  (SELECT count(*) FROM community_members WHERE user_id = $1)::int`, userID).Scan(&s.PlansAttended, &s.PlansUpcoming, &s.Connections, &s.Communities)
+	return &s, err
+}

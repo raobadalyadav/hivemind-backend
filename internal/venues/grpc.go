@@ -136,3 +136,22 @@ func toProto(v *Venue) *socialv1.Venue {
 	}
 	return out
 }
+
+func (h *Handler) ListVenues(ctx context.Context, req *socialv1.ListVenuesRequest) (*socialv1.ListVenuesResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	list, err := h.svc.ListVenues(ctx, userID, req.GetCityId(), req.GetQuery(), int(req.GetLimit()))
+	if err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, status.Error(codes.Internal, "failed to list venues")
+	}
+	out := make([]*socialv1.Venue, 0, len(list))
+	for _, v := range list {
+		out = append(out, toProto(v))
+	}
+	return &socialv1.ListVenuesResponse{Venues: out}, nil
+}

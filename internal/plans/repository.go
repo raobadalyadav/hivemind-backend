@@ -49,6 +49,11 @@ type Plan struct {
 	CoverMediaID        string // input on create (an upload id)
 	CoverURL            string
 	CoverThumbURL       string
+
+	// Filled by Decorate (not part of planColumns).
+	SavedByMe       bool
+	HostRatingAvg   float64
+	HostRatingCount int32
 }
 
 // planColumns is the single column list every plan read shares — six call
@@ -476,4 +481,105 @@ func (r *Repository) Upcoming(ctx context.Context, callerID string, f UpcomingFi
 func isBadUUID(err error) bool {
 	var pgErr *pgconn.PgError
 	return errors.As(err, &pgErr) && pgErr.Code == "22P02"
+}
+
+// Save hearts a plan (idempotent). A malformed id is "not found".
+func (r *Repository) Save(ctx context.Context, userID, planID string) error {
+	_, err := r.pool.Exec(ctx, `INSERT INTO plan_saves (user_id, plan_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, userID, planID)
+	if isBadUUID(err) {
+		return ErrPlanNotFound
+	}
+	return err
+}
+
+func (r *Repository) Unsave(ctx context.Context, userID, planID string) error {
+	_, err := r.pool.Exec(ctx, `DELETE FROM plan_saves WHERE user_id = $1 AND plan_id = $2`, userID, planID)
+	if isBadUUID(err) {
+		return nil
+	}
+	return err
+}
+
+// ListSaved returns the caller's saved plans, newest save first — only ones
+// still visible to them (public, or their own).
+func (r *Repository) ListSaved(ctx context.Context, userID string, limit int) ([]*Plan, error) {
+	rows, err := r.pool.Query(ctx, `SELECT `+planColumns+` FROM plans WHERE id IN (
+			SELECT s.plan_id FROM plan_saves s JOIN plans p ON p.id = s.plan_id
+			WHERE s.user_id = $1 AND p.status <> 'draft' AND (p.visibility = 'public' OR p.host_id = $1)
+			ORDER BY s.created_at DESC LIMIT $2)`, userID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []*Plan
+	for rows.Next() {
+		var p Plan
+		if err := scanPlan(rows, &p); err != nil {
+			return nil, err
+		}
+		out = append(out, &p)
+	}
+	return out, rows.Err()
+}
+
+// Decorate fills the per-viewer / aggregate fields of a batch of plans with two
+// queries (host ratings, viewer's saves) — never one query per plan.
+func (r *Repository) Decorate(ctx context.Context, plans []*Plan, viewerID string) error {
+	if len(plans) == 0 {
+		return nil
+	}
+	hostSet, ids := map[string]struct{}{}, make([]string, 0, len(plans))
+	for _, p := range plans {
+		hostSet[p.HostID] = struct{}{}
+		ids = append(ids, p.ID)
+	}
+	hosts := make([]string, 0, len(hostSet))
+	for h := range hostSet {
+		hosts = append(hosts, h)
+	}
+	type rating struct {
+		avg   float64
+		count int32
+	}
+	ratings := map[string]rating{}
+	rows, err := r.pool.Query(ctx, `
+		SELECT p.host_id::text, AVG(rv.rating)::float8, COUNT(rv.id)::int
+		FROM plans p JOIN reviews rv ON rv.plan_id = p.id
+		WHERE p.host_id = ANY($1::uuid[]) GROUP BY p.host_id`, hosts)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var h string
+		var rt rating
+		if err := rows.Scan(&h, &rt.avg, &rt.count); err != nil {
+			rows.Close()
+			return err
+		}
+		ratings[h] = rt
+	}
+	rows.Close()
+	saved := map[string]bool{}
+	if viewerID != "" {
+		srows, err := r.pool.Query(ctx, `SELECT plan_id::text FROM plan_saves WHERE user_id = $1 AND plan_id = ANY($2::uuid[])`, viewerID, ids)
+		if err != nil && !isBadUUID(err) {
+			return err
+		}
+		if err == nil {
+			for srows.Next() {
+				var id string
+				if err := srows.Scan(&id); err != nil {
+					srows.Close()
+					return err
+				}
+				saved[id] = true
+			}
+			srows.Close()
+		}
+	}
+	for _, p := range plans {
+		rt := ratings[p.HostID]
+		p.HostRatingAvg, p.HostRatingCount, p.SavedByMe = rt.avg, rt.count, saved[p.ID]
+	}
+	return nil
 }

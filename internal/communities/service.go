@@ -87,6 +87,9 @@ func (s *Service) GetCommunity(ctx context.Context, id, callerID string) (*Commu
 	if !ok {
 		return nil, ErrCommunityNotFound
 	}
+	if err := s.repo.MarkMembership(ctx, []*Community{c}, callerID); err != nil {
+		return nil, err
+	}
 	return c, nil
 }
 
@@ -156,8 +159,15 @@ func (s *Service) LeaveCommunity(ctx context.Context, communityID, userID string
 	return s.repo.Leave(ctx, communityID, userID)
 }
 
-func (s *Service) ListCommunities(ctx context.Context, cityID, categoryID, query string) ([]*Community, error) {
-	return s.repo.List(ctx, cityID, categoryID, query, 50)
+func (s *Service) ListCommunities(ctx context.Context, cityID, categoryID, query, viewerID string, onlyMine bool) ([]*Community, error) {
+	if onlyMine && viewerID == "" {
+		return nil, ErrInvalidInput
+	}
+	list, err := s.repo.List(ctx, cityID, categoryID, query, viewerID, onlyMine, 50)
+	if err != nil {
+		return nil, err
+	}
+	return list, s.repo.MarkMembership(ctx, list, viewerID)
 }
 
 func (s *Service) ListCommunityPlans(ctx context.Context, communityID, callerID string) ([]string, error) {

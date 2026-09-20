@@ -170,3 +170,28 @@ func (r *Repository) RepeatVisitors(ctx context.Context, venueID string, limit i
 	}
 	return out, rows.Err()
 }
+
+// Search lists venues of a city (default: the caller's) whose name or address
+// matches query — the plan creator's location picker.
+func (r *Repository) Search(ctx context.Context, callerID, cityID, query string, limit int) ([]*Venue, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT id, COALESCE(owner_host_id::text,''), city_id::text, name, address, capacity,
+			ST_Y(location::geometry), ST_X(location::geometry)
+		FROM venues
+		WHERE city_id = COALESCE(NULLIF($2,'')::uuid, (SELECT city_id FROM users WHERE id = $1))
+		  AND ($3 = '' OR name ILIKE '%' || $3 || '%' OR address ILIKE '%' || $3 || '%')
+		ORDER BY name LIMIT $4`, callerID, cityID, query, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []*Venue
+	for rows.Next() {
+		var v Venue
+		if err := rows.Scan(&v.ID, &v.OwnerHostID, &v.CityID, &v.Name, &v.Address, &v.Capacity, &v.Latitude, &v.Longitude); err != nil {
+			return nil, err
+		}
+		out = append(out, &v)
+	}
+	return out, rows.Err()
+}

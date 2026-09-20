@@ -183,17 +183,58 @@ func (s *Service) GetPlanAsUser(ctx context.Context, id, callerID, callerRole st
 	if err != nil {
 		return nil, err
 	}
-	if p.Visibility == "public" || p.HostID == callerID || isAdminRole(callerRole) {
-		return p, nil
+	if !(p.Visibility == "public" || p.HostID == callerID || isAdminRole(callerRole)) {
+		ok, err := s.repo.CanView(ctx, p, callerID)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, ErrPlanNotFound
+		}
 	}
-	ok, err := s.repo.CanView(ctx, p, callerID)
+	if err := s.repo.Decorate(ctx, []*Plan{p}, callerID); err != nil {
+		return nil, err
+	}
+	return p, nil
+}
+
+// Decorate fills saved_by_me and the host rating on a batch of plans (2 queries total).
+func (s *Service) Decorate(ctx context.Context, plans []*Plan, viewerID string) error {
+	return s.repo.Decorate(ctx, plans, viewerID)
+}
+
+// SavePlan hearts a plan the caller can see. Idempotent.
+func (s *Service) SavePlan(ctx context.Context, planID, userID string) error {
+	if planID == "" || userID == "" {
+		return ErrInvalidInput
+	}
+	if _, err := s.GetPlanAsUser(ctx, planID, userID, ""); err != nil {
+		if isBadUUID(err) {
+			return ErrPlanNotFound
+		}
+		return err
+	}
+	return s.repo.Save(ctx, userID, planID)
+}
+
+func (s *Service) UnsavePlan(ctx context.Context, planID, userID string) error {
+	if planID == "" || userID == "" {
+		return ErrInvalidInput
+	}
+	return s.repo.Unsave(ctx, userID, planID)
+}
+
+// ListSavedPlans: the caller's wishlist, newest first.
+// ponytail: newest 50 in one page; cursor paging when wishlists get long.
+func (s *Service) ListSavedPlans(ctx context.Context, userID string) ([]*Plan, error) {
+	if userID == "" {
+		return nil, ErrInvalidInput
+	}
+	plans, err := s.repo.ListSaved(ctx, userID, 50)
 	if err != nil {
 		return nil, err
 	}
-	if !ok {
-		return nil, ErrPlanNotFound
-	}
-	return p, nil
+	return plans, s.repo.Decorate(ctx, plans, userID)
 }
 
 func (s *Service) requireHost(p *Plan, callerID, callerRole string) error {

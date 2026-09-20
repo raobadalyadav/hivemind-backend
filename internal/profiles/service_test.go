@@ -190,3 +190,43 @@ func TestInterestCatalog_HasSeededNames(t *testing.T) {
 		t.Fatalf("catalog should include the 15 flow.md interests: %d/%d err=%v", len(in), len(cat), err)
 	}
 }
+
+func TestGetMyStats_CountsAreReal(t *testing.T) {
+	pool := testPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	me, a, b := seedUser(t, pool, "stme"), seedUser(t, pool, "sta"), seedUser(t, pool, "stb")
+	var host string
+	pool.QueryRow(ctx, `INSERT INTO users (email) VALUES ($1) RETURNING id`, "st-host-"+time.Now().Format("150405.000000000")+"@example.com").Scan(&host)
+	plan := func(title string, startOffset string) string {
+		var id string
+		if err := pool.QueryRow(ctx, `INSERT INTO plans (title, host_id, starts_at, ends_at, capacity, status) VALUES ($1,$2, now() + $3::interval, now() + $3::interval + interval '2 hours', 9, 'published') RETURNING id`, title, host, startOffset).Scan(&id); err != nil {
+			t.Fatalf("plan: %v", err)
+		}
+		return id
+	}
+	book := func(p, st string) {
+		if _, err := pool.Exec(ctx, `INSERT INTO bookings (plan_id, user_id, status, price_minor, currency, idempotency_key) VALUES ($1,$2,$3::booking_status,0,'INR',$4)`, p, me, st, "st-"+p); err != nil {
+			t.Fatalf("booking: %v", err)
+		}
+	}
+	book(plan("past 1", "-3 days"), "attended")
+	book(plan("past 2", "-2 days"), "attended")
+	book(plan("soon", "2 days"), "confirmed")
+	book(plan("cancelled", "3 days"), "cancelled")
+	pool.Exec(ctx, `INSERT INTO connections (requester_id, recipient_id, status) VALUES ($1,$2,'accepted'), ($3,$1,'accepted'), ($1,$3,'pending') ON CONFLICT DO NOTHING`, me, a, b)
+	var comm string
+	pool.QueryRow(ctx, `INSERT INTO communities (name, owner_id) VALUES ($1,$2) RETURNING id`, "Stats Club "+time.Now().Format("150405.000000000"), host).Scan(&comm)
+	pool.Exec(ctx, `INSERT INTO community_members (community_id, user_id) VALUES ($1,$2)`, comm, me)
+
+	st, err := NewService(NewRepository(pool)).GetMyStats(ctx, me)
+	if err != nil {
+		t.Fatalf("GetMyStats: %v", err)
+	}
+	if st.PlansAttended != 2 || st.PlansUpcoming != 1 || st.Communities != 1 {
+		t.Errorf("plans/communities: %+v", st)
+	}
+	if st.Connections != 2 { // two accepted rows; the pending one is excluded
+		t.Errorf("connections: %+v", st)
+	}
+}

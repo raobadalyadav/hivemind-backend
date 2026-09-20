@@ -187,3 +187,42 @@ func TestMeetAgainGroup_ConsentAndIdempotency(t *testing.T) {
 		t.Fatalf("a replay must be a duplicate, got %v", err)
 	}
 }
+
+func TestListConnections_StatusAndDirectionFiltersInSQL(t *testing.T) {
+	pool := testPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	me, a, b, c := seedUser(t, pool, "fme"), seedUser(t, pool, "fa"), seedUser(t, pool, "fb"), seedUser(t, pool, "fc")
+	add := func(req, rec, st string) {
+		if _, err := pool.Exec(ctx, `INSERT INTO connections (requester_id, recipient_id, status) VALUES ($1,$2,$3::connection_status)`, req, rec, st); err != nil {
+			t.Fatalf("insert: %v", err)
+		}
+	}
+	add(a, me, "pending")  // incoming request
+	add(me, b, "pending")  // my outgoing request
+	add(c, me, "accepted") // a friend
+	repo := NewRepository(pool)
+	kinds := func(status, dir string) map[string]bool {
+		list, err := repo.ListForUser(ctx, me, status, dir, 50)
+		if err != nil {
+			t.Fatalf("list: %v", err)
+		}
+		m := map[string]bool{}
+		for _, x := range list {
+			m[x.RequesterID+">"+x.RecipientID] = true
+		}
+		return m
+	}
+	if got := kinds("pending", "incoming"); len(got) != 1 || !got[a+">"+me] {
+		t.Errorf("incoming pending = only a's request: %v", got)
+	}
+	if got := kinds("pending", "outgoing"); len(got) != 1 || !got[me+">"+b] {
+		t.Errorf("outgoing pending: %v", got)
+	}
+	if got := kinds("accepted", ""); len(got) != 1 || !got[c+">"+me] {
+		t.Errorf("accepted either way: %v", got)
+	}
+	if got := kinds("", ""); len(got) != 3 {
+		t.Errorf("no filter = all three: %v", got)
+	}
+}

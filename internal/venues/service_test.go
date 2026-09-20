@@ -137,3 +137,38 @@ func TestService_GetVenueDashboard_GatesRepeatVisitorsOnEntitlement(t *testing.T
 		t.Fatalf("GetVenueDashboard (with entitlement): %v", err)
 	}
 }
+
+func TestListVenues_CityDefaultQueryAndLimit(t *testing.T) {
+	pool := testPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	host := seedHostUser(t, pool)
+	city, other := seedCity(t, pool), seedCity(t, pool)
+	pool.Exec(ctx, `UPDATE users SET city_id = $2 WHERE id = $1`, host, city)
+	add := func(c, name, addr string) {
+		if _, err := pool.Exec(ctx, `INSERT INTO venues (city_id, name, address, capacity) VALUES ($1,$2,$3,20)`, c, name, addr); err != nil {
+			t.Fatalf("venue: %v", err)
+		}
+	}
+	add(city, "Blue Tokai Coffee", "Indiranagar")
+	add(city, "Toit Brewpub", "Indiranagar 100ft Rd")
+	add(other, "Elsewhere Cafe", "Far away")
+
+	svc := NewService(NewRepository(pool), nil)
+	all, err := svc.ListVenues(ctx, host, "", "", 0)
+	if err != nil || len(all) != 2 {
+		t.Fatalf("default = the caller's city only: %d %v", len(all), err)
+	}
+	if got, _ := svc.ListVenues(ctx, host, "", "toit", 0); len(got) != 1 || got[0].Name != "Toit Brewpub" {
+		t.Errorf("name search: %+v", got)
+	}
+	if got, _ := svc.ListVenues(ctx, host, "", "INDIRANAGAR", 1); len(got) != 1 {
+		t.Errorf("address search is case-insensitive and honours the limit: %d", len(got))
+	}
+	if got, _ := svc.ListVenues(ctx, host, other, "", 0); len(got) != 1 || got[0].Name != "Elsewhere Cafe" {
+		t.Errorf("explicit city: %+v", got)
+	}
+	if _, err := svc.ListVenues(ctx, "", "", "", 0); err != ErrInvalidInput {
+		t.Errorf("anonymous: %v", err)
+	}
+}

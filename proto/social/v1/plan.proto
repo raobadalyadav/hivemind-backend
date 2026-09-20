@@ -22,6 +22,12 @@ service PlanService {
   // CreatePlan with whatever they choose.
   rpc SuggestPlanDraft(SuggestPlanDraftRequest) returns (PlanDraft);
 
+  // Wishlist: heart a plan. Save/Unsave are idempotent; ListSavedPlans returns the
+  // caller's saved plans (newest first) that they can still see.
+  rpc SavePlan(SavePlanRequest) returns (SavePlanResponse);
+  rpc UnsavePlan(UnsavePlanRequest) returns (UnsavePlanResponse);
+  rpc ListSavedPlans(ListSavedPlansRequest) returns (ListSavedPlansResponse);
+
   // Plan types (flow.md §14): approval-mode join requests and invites. All
   // host-side RPCs verify request → plan → host against the caller.
   rpc RequestToJoinPlan(RequestToJoinPlanRequest) returns (PlanJoinRequest);
@@ -136,6 +142,10 @@ message Plan {
   string series_id = 20;            // set on recurring-plan occurrences
   string cover_url = 21;
   string cover_thumb_url = 22;
+  // Filled on every plan read (batched, no N+1):
+  bool saved_by_me = 23;
+  double host_rating_avg = 24;   // average review rating over all of the host's plans (0 if none)
+  int32 host_rating_count = 25;  // number of those reviews
 }
 
 message CreatePlanRequest {
@@ -250,3 +260,10 @@ message RevokePlanInviteRequest {
 }
 
 message RevokePlanInviteResponse {}
+
+message SavePlanRequest { string plan_id = 1; }
+message SavePlanResponse {}
+message UnsavePlanRequest { string plan_id = 1; }
+message UnsavePlanResponse {}
+message ListSavedPlansRequest {}
+message ListSavedPlansResponse { repeated Plan plans = 1; }

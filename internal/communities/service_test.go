@@ -133,3 +133,49 @@ func TestPrivateCommunity_HiddenUntilInvited(t *testing.T) {
 		t.Fatalf("invitee joins: %+v err=%v", m, err)
 	}
 }
+
+func TestListCommunities_OnlyMineAndIsMember(t *testing.T) {
+	pool := testPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	owner, me := seedUser(t, pool, "cmowner"), seedUser(t, pool, "cmme")
+	svc := NewService(NewRepository(pool))
+	mk := func(name, typ string) string {
+		var id string
+		if err := pool.QueryRow(ctx, `INSERT INTO communities (name, owner_id, membership_type) VALUES ($1,$2,$3::community_type) RETURNING id`, name+time.Now().Format("150405.000000000"), owner, typ).Scan(&id); err != nil {
+			t.Fatalf("community: %v", err)
+		}
+		return id
+	}
+	joined, notJoined, private := mk("Joined ", "public"), mk("NotJoined ", "public"), mk("Private ", "private")
+	pool.Exec(ctx, `INSERT INTO community_members (community_id, user_id) VALUES ($1,$2),($3,$2)`, joined, me, private)
+
+	all, err := svc.ListCommunities(ctx, "", "", "", me, false)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	member := map[string]bool{}
+	for _, c := range all {
+		member[c.ID] = c.IsMember
+	}
+	if !member[joined] || member[notJoined] {
+		t.Errorf("is_member flags: joined=%v notJoined=%v", member[joined], member[notJoined])
+	}
+	if _, seen := member[private]; seen {
+		t.Error("a private community stays out of the public list")
+	}
+	mine, _ := svc.ListCommunities(ctx, "", "", "", me, true)
+	ids := map[string]bool{}
+	for _, c := range mine {
+		ids[c.ID] = true
+		if !c.IsMember {
+			t.Errorf("only_mine returns members: %s", c.Name)
+		}
+	}
+	if !ids[joined] || !ids[private] || ids[notJoined] {
+		t.Errorf("only_mine = my communities incl. my private one: %v", ids)
+	}
+	if _, err := svc.ListCommunities(ctx, "", "", "", "", true); err != ErrInvalidInput {
+		t.Errorf("only_mine needs a caller: %v", err)
+	}
+}

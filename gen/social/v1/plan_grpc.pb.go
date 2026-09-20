@@ -26,6 +26,9 @@ const (
 	PlanService_LeavePlan_FullMethodName                = "/social.v1.PlanService/LeavePlan"
 	PlanService_CancelPlan_FullMethodName               = "/social.v1.PlanService/CancelPlan"
 	PlanService_SuggestPlanDraft_FullMethodName         = "/social.v1.PlanService/SuggestPlanDraft"
+	PlanService_SavePlan_FullMethodName                 = "/social.v1.PlanService/SavePlan"
+	PlanService_UnsavePlan_FullMethodName               = "/social.v1.PlanService/UnsavePlan"
+	PlanService_ListSavedPlans_FullMethodName           = "/social.v1.PlanService/ListSavedPlans"
 	PlanService_RequestToJoinPlan_FullMethodName        = "/social.v1.PlanService/RequestToJoinPlan"
 	PlanService_ListPlanJoinRequests_FullMethodName     = "/social.v1.PlanService/ListPlanJoinRequests"
 	PlanService_RespondPlanJoinRequest_FullMethodName   = "/social.v1.PlanService/RespondPlanJoinRequest"
@@ -54,6 +57,11 @@ type PlanServiceClient interface {
 	// call, per the PRD's non-goal). Purely advisory: the host still calls
 	// CreatePlan with whatever they choose.
 	SuggestPlanDraft(ctx context.Context, in *SuggestPlanDraftRequest, opts ...grpc.CallOption) (*PlanDraft, error)
+	// Wishlist: heart a plan. Save/Unsave are idempotent; ListSavedPlans returns the
+	// caller's saved plans (newest first) that they can still see.
+	SavePlan(ctx context.Context, in *SavePlanRequest, opts ...grpc.CallOption) (*SavePlanResponse, error)
+	UnsavePlan(ctx context.Context, in *UnsavePlanRequest, opts ...grpc.CallOption) (*UnsavePlanResponse, error)
+	ListSavedPlans(ctx context.Context, in *ListSavedPlansRequest, opts ...grpc.CallOption) (*ListSavedPlansResponse, error)
 	// Plan types (flow.md §14): approval-mode join requests and invites. All
 	// host-side RPCs verify request → plan → host against the caller.
 	RequestToJoinPlan(ctx context.Context, in *RequestToJoinPlanRequest, opts ...grpc.CallOption) (*PlanJoinRequest, error)
@@ -142,6 +150,36 @@ func (c *planServiceClient) SuggestPlanDraft(ctx context.Context, in *SuggestPla
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PlanDraft)
 	err := c.cc.Invoke(ctx, PlanService_SuggestPlanDraft_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *planServiceClient) SavePlan(ctx context.Context, in *SavePlanRequest, opts ...grpc.CallOption) (*SavePlanResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SavePlanResponse)
+	err := c.cc.Invoke(ctx, PlanService_SavePlan_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *planServiceClient) UnsavePlan(ctx context.Context, in *UnsavePlanRequest, opts ...grpc.CallOption) (*UnsavePlanResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UnsavePlanResponse)
+	err := c.cc.Invoke(ctx, PlanService_UnsavePlan_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *planServiceClient) ListSavedPlans(ctx context.Context, in *ListSavedPlansRequest, opts ...grpc.CallOption) (*ListSavedPlansResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListSavedPlansResponse)
+	err := c.cc.Invoke(ctx, PlanService_ListSavedPlans_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -246,6 +284,11 @@ type PlanServiceServer interface {
 	// call, per the PRD's non-goal). Purely advisory: the host still calls
 	// CreatePlan with whatever they choose.
 	SuggestPlanDraft(context.Context, *SuggestPlanDraftRequest) (*PlanDraft, error)
+	// Wishlist: heart a plan. Save/Unsave are idempotent; ListSavedPlans returns the
+	// caller's saved plans (newest first) that they can still see.
+	SavePlan(context.Context, *SavePlanRequest) (*SavePlanResponse, error)
+	UnsavePlan(context.Context, *UnsavePlanRequest) (*UnsavePlanResponse, error)
+	ListSavedPlans(context.Context, *ListSavedPlansRequest) (*ListSavedPlansResponse, error)
 	// Plan types (flow.md §14): approval-mode join requests and invites. All
 	// host-side RPCs verify request → plan → host against the caller.
 	RequestToJoinPlan(context.Context, *RequestToJoinPlanRequest) (*PlanJoinRequest, error)
@@ -290,6 +333,15 @@ func (UnimplementedPlanServiceServer) CancelPlan(context.Context, *CancelPlanReq
 }
 func (UnimplementedPlanServiceServer) SuggestPlanDraft(context.Context, *SuggestPlanDraftRequest) (*PlanDraft, error) {
 	return nil, status.Error(codes.Unimplemented, "method SuggestPlanDraft not implemented")
+}
+func (UnimplementedPlanServiceServer) SavePlan(context.Context, *SavePlanRequest) (*SavePlanResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SavePlan not implemented")
+}
+func (UnimplementedPlanServiceServer) UnsavePlan(context.Context, *UnsavePlanRequest) (*UnsavePlanResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UnsavePlan not implemented")
+}
+func (UnimplementedPlanServiceServer) ListSavedPlans(context.Context, *ListSavedPlansRequest) (*ListSavedPlansResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListSavedPlans not implemented")
 }
 func (UnimplementedPlanServiceServer) RequestToJoinPlan(context.Context, *RequestToJoinPlanRequest) (*PlanJoinRequest, error) {
 	return nil, status.Error(codes.Unimplemented, "method RequestToJoinPlan not implemented")
@@ -458,6 +510,60 @@ func _PlanService_SuggestPlanDraft_Handler(srv interface{}, ctx context.Context,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PlanServiceServer).SuggestPlanDraft(ctx, req.(*SuggestPlanDraftRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlanService_SavePlan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SavePlanRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlanServiceServer).SavePlan(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlanService_SavePlan_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlanServiceServer).SavePlan(ctx, req.(*SavePlanRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlanService_UnsavePlan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnsavePlanRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlanServiceServer).UnsavePlan(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlanService_UnsavePlan_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlanServiceServer).UnsavePlan(ctx, req.(*UnsavePlanRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PlanService_ListSavedPlans_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSavedPlansRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlanServiceServer).ListSavedPlans(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PlanService_ListSavedPlans_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlanServiceServer).ListSavedPlans(ctx, req.(*ListSavedPlansRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -640,6 +746,18 @@ var PlanService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SuggestPlanDraft",
 			Handler:    _PlanService_SuggestPlanDraft_Handler,
+		},
+		{
+			MethodName: "SavePlan",
+			Handler:    _PlanService_SavePlan_Handler,
+		},
+		{
+			MethodName: "UnsavePlan",
+			Handler:    _PlanService_UnsavePlan_Handler,
+		},
+		{
+			MethodName: "ListSavedPlans",
+			Handler:    _PlanService_ListSavedPlans_Handler,
 		},
 		{
 			MethodName: "RequestToJoinPlan",

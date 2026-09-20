@@ -91,6 +91,7 @@ type Community struct {
 	RequiredEntitlement string                 `protobuf:"bytes,11,opt,name=required_entitlement,json=requiredEntitlement,proto3" json:"required_entitlement,omitempty"`
 	MemberCount         int32                  `protobuf:"varint,12,opt,name=member_count,json=memberCount,proto3" json:"member_count,omitempty"` // live count
 	PlanCount           int32                  `protobuf:"varint,13,opt,name=plan_count,json=planCount,proto3" json:"plan_count,omitempty"`       // live count of published plans
+	IsMember            bool                   `protobuf:"varint,14,opt,name=is_member,json=isMember,proto3" json:"is_member,omitempty"`          // the caller belongs to it (when the caller is known)
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -214,6 +215,13 @@ func (x *Community) GetPlanCount() int32 {
 		return x.PlanCount
 	}
 	return 0
+}
+
+func (x *Community) GetIsMember() bool {
+	if x != nil {
+		return x.IsMember
+	}
+	return false
 }
 
 type Membership struct {
@@ -597,6 +605,7 @@ type ListCommunitiesRequest struct {
 	CityId        string                 `protobuf:"bytes,1,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"`
 	CategoryId    string                 `protobuf:"bytes,2,opt,name=category_id,json=categoryId,proto3" json:"category_id,omitempty"`
 	Query         string                 `protobuf:"bytes,3,opt,name=query,proto3" json:"query,omitempty"`
+	OnlyMine      bool                   `protobuf:"varint,4,opt,name=only_mine,json=onlyMine,proto3" json:"only_mine,omitempty"` // only communities the caller belongs to
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -650,6 +659,13 @@ func (x *ListCommunitiesRequest) GetQuery() string {
 		return x.Query
 	}
 	return ""
+}
+
+func (x *ListCommunitiesRequest) GetOnlyMine() bool {
+	if x != nil {
+		return x.OnlyMine
+	}
+	return false
 }
 
 type ListCommunitiesResponse struct {
@@ -1084,7 +1100,7 @@ var File_social_v1_community_proto protoreflect.FileDescriptor
 
 const file_social_v1_community_proto_rawDesc = "" +
 	"\n" +
-	"\x19social/v1/community.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\x1a\x14social/v1/plan.proto\"\xc4\x03\n" +
+	"\x19social/v1/community.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\x1a\x14social/v1/plan.proto\"\xe1\x03\n" +
 	"\tCommunity\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -1101,7 +1117,8 @@ const file_social_v1_community_proto_rawDesc = "" +
 	"\x14required_entitlement\x18\v \x01(\tR\x13requiredEntitlement\x12!\n" +
 	"\fmember_count\x18\f \x01(\x05R\vmemberCount\x12\x1d\n" +
 	"\n" +
-	"plan_count\x18\r \x01(\x05R\tplanCount\"t\n" +
+	"plan_count\x18\r \x01(\x05R\tplanCount\x12\x1b\n" +
+	"\tis_member\x18\x0e \x01(\bR\bisMember\"t\n" +
 	"\n" +
 	"Membership\x12!\n" +
 	"\fcommunity_id\x18\x01 \x01(\tR\vcommunityId\x12\x17\n" +
@@ -1129,12 +1146,13 @@ const file_social_v1_community_proto_rawDesc = "" +
 	"\x04page\x18\x02 \x01(\v2\x16.social.v1.PageRequestR\x04page\"[\n" +
 	"\x11ListPlansResponse\x12\x19\n" +
 	"\bplan_ids\x18\x01 \x03(\tR\aplanIds\x12+\n" +
-	"\x04page\x18\x02 \x01(\v2\x17.social.v1.PageResponseR\x04page\"h\n" +
+	"\x04page\x18\x02 \x01(\v2\x17.social.v1.PageResponseR\x04page\"\x85\x01\n" +
 	"\x16ListCommunitiesRequest\x12\x17\n" +
 	"\acity_id\x18\x01 \x01(\tR\x06cityId\x12\x1f\n" +
 	"\vcategory_id\x18\x02 \x01(\tR\n" +
 	"categoryId\x12\x14\n" +
-	"\x05query\x18\x03 \x01(\tR\x05query\"Q\n" +
+	"\x05query\x18\x03 \x01(\tR\x05query\x12\x1b\n" +
+	"\tonly_mine\x18\x04 \x01(\bR\bonlyMine\"Q\n" +
 	"\x17ListCommunitiesResponse\x126\n" +
 	"\vcommunities\x18\x01 \x03(\v2\x14.social.v1.CommunityR\vcommunities\":\n" +
 	"\x15LeaveCommunityRequest\x12!\n" +

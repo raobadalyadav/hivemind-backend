@@ -159,11 +159,17 @@ func (r *Repository) Respond(ctx context.Context, id string, accept bool) (*Conn
 	return &c, nil
 }
 
-func (r *Repository) ListForUser(ctx context.Context, userID string, limit int) ([]*Connection, error) {
+// ListForUser lists the caller's connections newest-first. status ("" = any) and
+// direction ("incoming" = caller is the recipient, "outgoing" = requester, "" = both)
+// filter in SQL, so a busy account can't push pending requests past the page limit.
+func (r *Repository) ListForUser(ctx context.Context, userID, status, direction string, limit int) ([]*Connection, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT id, requester_id, recipient_id, COALESCE(origin_plan_id::text,''), status
-		FROM connections WHERE requester_id = $1 OR recipient_id = $1
-		ORDER BY created_at DESC LIMIT $2`, userID, limit)
+		FROM connections
+		WHERE (($3 = 'incoming' AND recipient_id = $1) OR ($3 = 'outgoing' AND requester_id = $1)
+		       OR ($3 NOT IN ('incoming','outgoing') AND (requester_id = $1 OR recipient_id = $1)))
+		  AND ($4 = '' OR status::text = $4)
+		ORDER BY created_at DESC LIMIT $2`, userID, limit, direction, status)
 	if err != nil {
 		return nil, err
 	}

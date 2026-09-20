@@ -1075,6 +1075,110 @@ func (x *SetPrivacyRequest) GetShowInParticipantPreviews() bool {
 	return false
 }
 
+type GetMyStatsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetMyStatsRequest) Reset() {
+	*x = GetMyStatsRequest{}
+	mi := &file_social_v1_profile_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetMyStatsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMyStatsRequest) ProtoMessage() {}
+
+func (x *GetMyStatsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_profile_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMyStatsRequest.ProtoReflect.Descriptor instead.
+func (*GetMyStatsRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_profile_proto_rawDescGZIP(), []int{17}
+}
+
+type MyStats struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PlansAttended int32                  `protobuf:"varint,1,opt,name=plans_attended,json=plansAttended,proto3" json:"plans_attended,omitempty"`
+	PlansUpcoming int32                  `protobuf:"varint,2,opt,name=plans_upcoming,json=plansUpcoming,proto3" json:"plans_upcoming,omitempty"`
+	Connections   int32                  `protobuf:"varint,3,opt,name=connections,proto3" json:"connections,omitempty"` // accepted connections
+	Communities   int32                  `protobuf:"varint,4,opt,name=communities,proto3" json:"communities,omitempty"` // communities the caller belongs to
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MyStats) Reset() {
+	*x = MyStats{}
+	mi := &file_social_v1_profile_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MyStats) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MyStats) ProtoMessage() {}
+
+func (x *MyStats) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_profile_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MyStats.ProtoReflect.Descriptor instead.
+func (*MyStats) Descriptor() ([]byte, []int) {
+	return file_social_v1_profile_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *MyStats) GetPlansAttended() int32 {
+	if x != nil {
+		return x.PlansAttended
+	}
+	return 0
+}
+
+func (x *MyStats) GetPlansUpcoming() int32 {
+	if x != nil {
+		return x.PlansUpcoming
+	}
+	return 0
+}
+
+func (x *MyStats) GetConnections() int32 {
+	if x != nil {
+		return x.Connections
+	}
+	return 0
+}
+
+func (x *MyStats) GetCommunities() int32 {
+	if x != nil {
+		return x.Communities
+	}
+	return 0
+}
+
 var File_social_v1_profile_proto protoreflect.FileDescriptor
 
 const file_social_v1_profile_proto_rawDesc = "" +
@@ -1166,7 +1270,13 @@ const file_social_v1_profile_proto_rawDesc = "" +
 	"\x17GetMyPreferencesRequest\"m\n" +
 	"\x11SetPrivacyRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12?\n" +
-	"\x1cshow_in_participant_previews\x18\x02 \x01(\bR\x19showInParticipantPreviews2\x93\a\n" +
+	"\x1cshow_in_participant_previews\x18\x02 \x01(\bR\x19showInParticipantPreviews\"\x13\n" +
+	"\x11GetMyStatsRequest\"\x9b\x01\n" +
+	"\aMyStats\x12%\n" +
+	"\x0eplans_attended\x18\x01 \x01(\x05R\rplansAttended\x12%\n" +
+	"\x0eplans_upcoming\x18\x02 \x01(\x05R\rplansUpcoming\x12 \n" +
+	"\vconnections\x18\x03 \x01(\x05R\vconnections\x12 \n" +
+	"\vcommunities\x18\x04 \x01(\x05R\vcommunities2\xd3\a\n" +
 	"\x0eProfileService\x12D\n" +
 	"\rCreateProfile\x12\x1f.social.v1.CreateProfileRequest\x1a\x12.social.v1.Profile\x12>\n" +
 	"\n" +
@@ -1180,7 +1290,9 @@ const file_social_v1_profile_proto_rawDesc = "" +
 	"\x13ListInterestCatalog\x12%.social.v1.ListInterestCatalogRequest\x1a&.social.v1.ListInterestCatalogResponse\x12P\n" +
 	"\x0fSetSocialIntent\x12!.social.v1.SetSocialIntentRequest\x1a\x1a.social.v1.UserPreferences\x12N\n" +
 	"\x0eSetPersonality\x12 .social.v1.SetPersonalityRequest\x1a\x1a.social.v1.UserPreferences\x12R\n" +
-	"\x10GetMyPreferences\x12\".social.v1.GetMyPreferencesRequest\x1a\x1a.social.v1.UserPreferencesB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
+	"\x10GetMyPreferences\x12\".social.v1.GetMyPreferencesRequest\x1a\x1a.social.v1.UserPreferences\x12>\n" +
+	"\n" +
+	"GetMyStats\x12\x1c.social.v1.GetMyStatsRequest\x1a\x12.social.v1.MyStatsB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
 var (
 	file_social_v1_profile_proto_rawDescOnce sync.Once
@@ -1194,7 +1306,7 @@ func file_social_v1_profile_proto_rawDescGZIP() []byte {
 	return file_social_v1_profile_proto_rawDescData
 }
 
-var file_social_v1_profile_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_social_v1_profile_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_social_v1_profile_proto_goTypes = []any{
 	(*Profile)(nil),                      // 0: social.v1.Profile
 	(*ProfilePhoto)(nil),                 // 1: social.v1.ProfilePhoto
@@ -1213,10 +1325,12 @@ var file_social_v1_profile_proto_goTypes = []any{
 	(*SetPersonalityRequest)(nil),        // 14: social.v1.SetPersonalityRequest
 	(*GetMyPreferencesRequest)(nil),      // 15: social.v1.GetMyPreferencesRequest
 	(*SetPrivacyRequest)(nil),            // 16: social.v1.SetPrivacyRequest
-	(*Audit)(nil),                        // 17: social.v1.Audit
+	(*GetMyStatsRequest)(nil),            // 17: social.v1.GetMyStatsRequest
+	(*MyStats)(nil),                      // 18: social.v1.MyStats
+	(*Audit)(nil),                        // 19: social.v1.Audit
 }
 var file_social_v1_profile_proto_depIdxs = []int32{
-	17, // 0: social.v1.Profile.audit:type_name -> social.v1.Audit
+	19, // 0: social.v1.Profile.audit:type_name -> social.v1.Audit
 	1,  // 1: social.v1.Profile.photos:type_name -> social.v1.ProfilePhoto
 	1,  // 2: social.v1.ReorderProfilePhotosResponse.photos:type_name -> social.v1.ProfilePhoto
 	2,  // 3: social.v1.ProfileService.CreateProfile:input_type -> social.v1.CreateProfileRequest
@@ -1230,19 +1344,21 @@ var file_social_v1_profile_proto_depIdxs = []int32{
 	13, // 11: social.v1.ProfileService.SetSocialIntent:input_type -> social.v1.SetSocialIntentRequest
 	14, // 12: social.v1.ProfileService.SetPersonality:input_type -> social.v1.SetPersonalityRequest
 	15, // 13: social.v1.ProfileService.GetMyPreferences:input_type -> social.v1.GetMyPreferencesRequest
-	0,  // 14: social.v1.ProfileService.CreateProfile:output_type -> social.v1.Profile
-	0,  // 15: social.v1.ProfileService.GetProfile:output_type -> social.v1.Profile
-	0,  // 16: social.v1.ProfileService.UpdateProfile:output_type -> social.v1.Profile
-	0,  // 17: social.v1.ProfileService.SetPrivacy:output_type -> social.v1.Profile
-	1,  // 18: social.v1.ProfileService.AddProfilePhoto:output_type -> social.v1.ProfilePhoto
-	7,  // 19: social.v1.ProfileService.DeleteProfilePhoto:output_type -> social.v1.DeleteProfilePhotoResponse
-	9,  // 20: social.v1.ProfileService.ReorderProfilePhotos:output_type -> social.v1.ReorderProfilePhotosResponse
-	11, // 21: social.v1.ProfileService.ListInterestCatalog:output_type -> social.v1.ListInterestCatalogResponse
-	12, // 22: social.v1.ProfileService.SetSocialIntent:output_type -> social.v1.UserPreferences
-	12, // 23: social.v1.ProfileService.SetPersonality:output_type -> social.v1.UserPreferences
-	12, // 24: social.v1.ProfileService.GetMyPreferences:output_type -> social.v1.UserPreferences
-	14, // [14:25] is the sub-list for method output_type
-	3,  // [3:14] is the sub-list for method input_type
+	17, // 14: social.v1.ProfileService.GetMyStats:input_type -> social.v1.GetMyStatsRequest
+	0,  // 15: social.v1.ProfileService.CreateProfile:output_type -> social.v1.Profile
+	0,  // 16: social.v1.ProfileService.GetProfile:output_type -> social.v1.Profile
+	0,  // 17: social.v1.ProfileService.UpdateProfile:output_type -> social.v1.Profile
+	0,  // 18: social.v1.ProfileService.SetPrivacy:output_type -> social.v1.Profile
+	1,  // 19: social.v1.ProfileService.AddProfilePhoto:output_type -> social.v1.ProfilePhoto
+	7,  // 20: social.v1.ProfileService.DeleteProfilePhoto:output_type -> social.v1.DeleteProfilePhotoResponse
+	9,  // 21: social.v1.ProfileService.ReorderProfilePhotos:output_type -> social.v1.ReorderProfilePhotosResponse
+	11, // 22: social.v1.ProfileService.ListInterestCatalog:output_type -> social.v1.ListInterestCatalogResponse
+	12, // 23: social.v1.ProfileService.SetSocialIntent:output_type -> social.v1.UserPreferences
+	12, // 24: social.v1.ProfileService.SetPersonality:output_type -> social.v1.UserPreferences
+	12, // 25: social.v1.ProfileService.GetMyPreferences:output_type -> social.v1.UserPreferences
+	18, // 26: social.v1.ProfileService.GetMyStats:output_type -> social.v1.MyStats
+	15, // [15:27] is the sub-list for method output_type
+	3,  // [3:15] is the sub-list for method input_type
 	3,  // [3:3] is the sub-list for extension type_name
 	3,  // [3:3] is the sub-list for extension extendee
 	0,  // [0:3] is the sub-list for field type_name
@@ -1261,7 +1377,7 @@ func file_social_v1_profile_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_profile_proto_rawDesc), len(file_social_v1_profile_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

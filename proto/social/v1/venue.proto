@@ -12,6 +12,8 @@ service VenueService {
   rpc CreateVenue(CreateVenueRequest) returns (Venue);
   rpc GetVenue(GetVenueRequest) returns (Venue);
   rpc ListMyVenues(ListMyVenuesRequest) returns (ListMyVenuesResponse);
+  // ListVenues: public venue search for the plan creator's location picker.
+  rpc ListVenues(ListVenuesRequest) returns (ListVenuesResponse);
   rpc UpdateVenue(UpdateVenueRequest) returns (Venue);
   rpc GetVenueDashboard(GetVenueDashboardRequest) returns (VenueDashboard);
 }
@@ -72,3 +74,10 @@ message RepeatVisitor {
   string user_id = 1;
   int64 visit_count = 2;
 }
+
+message ListVenuesRequest {
+  string city_id = 1; // default: the caller's city
+  string query = 2;   // matches name or address
+  int32 limit = 3;    // default 20, max 50
+}
+message ListVenuesResponse { repeated Venue venues = 1; }

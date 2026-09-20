@@ -170,3 +170,10 @@ func (s *Service) SetPersonality(ctx context.Context, userID string, p *Prefs) (
 	}
 	return s.repo.GetPrefs(ctx, userID)
 }
+
+func (s *Service) GetMyStats(ctx context.Context, userID string) (*Stats, error) {
+	if userID == "" {
+		return nil, ErrInvalidInput
+	}
+	return s.repo.Stats(ctx, userID)
+}

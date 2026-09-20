@@ -25,6 +25,8 @@ service ProfileService {
   rpc SetSocialIntent(SetSocialIntentRequest) returns (UserPreferences);
   rpc SetPersonality(SetPersonalityRequest) returns (UserPreferences);
   rpc GetMyPreferences(GetMyPreferencesRequest) returns (UserPreferences);
+  // GetMyStats: real counts for the Me tab.
+  rpc GetMyStats(GetMyStatsRequest) returns (MyStats);
 }
 
 message Profile {
@@ -132,4 +134,12 @@ message GetMyPreferencesRequest {}
 message SetPrivacyRequest {
   string user_id = 1;
   bool show_in_participant_previews = 2;
+}
+
+message GetMyStatsRequest {}
+message MyStats {
+  int32 plans_attended = 1;
+  int32 plans_upcoming = 2;
+  int32 connections = 3;   // accepted connections
+  int32 communities = 4;   // communities the caller belongs to
 }

@@ -91,6 +91,7 @@ func toProto(c *Community) *socialv1.Community {
 		RequiredEntitlement: c.RequiredEntitlement,
 		MemberCount:         c.MemberCount,
 		PlanCount:           c.PlanCount,
+		IsMember:            c.IsMember,
 	}
 }
 
@@ -158,7 +159,8 @@ func requestToProto(j *JoinRequest) *socialv1.CommunityJoinRequest {
 }
 
 func (h *Handler) ListCommunities(ctx context.Context, req *socialv1.ListCommunitiesRequest) (*socialv1.ListCommunitiesResponse, error) {
-	list, err := h.svc.ListCommunities(ctx, req.GetCityId(), req.GetCategoryId(), req.GetQuery())
+	viewer, _ := grpcmiddleware.UserIDFromContext(ctx)
+	list, err := h.svc.ListCommunities(ctx, req.GetCityId(), req.GetCategoryId(), req.GetQuery(), viewer, req.GetOnlyMine())
 	if err != nil {
 		return nil, communityErr(err, "failed to list communities")
 	}

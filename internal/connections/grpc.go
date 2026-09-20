@@ -44,7 +44,9 @@ func (h *Handler) ListConnections(ctx context.Context, req *socialv1.ListConnect
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "auth required")
 	}
-	list, err := h.svc.ListConnections(ctx, userID)
+	st := map[socialv1.ConnectionStatus]string{socialv1.ConnectionStatus_PENDING: "pending", socialv1.ConnectionStatus_ACCEPTED: "accepted", socialv1.ConnectionStatus_REJECTED: "rejected"}[req.GetStatus()]
+	dir := map[socialv1.ConnectionDirection]string{socialv1.ConnectionDirection_CONNECTION_DIRECTION_INCOMING: "incoming", socialv1.ConnectionDirection_CONNECTION_DIRECTION_OUTGOING: "outgoing"}[req.GetDirection()]
+	list, err := h.svc.ListConnections(ctx, userID, st, dir)
 	if err != nil {
 		if err == ErrInvalidInput {
 			return nil, status.Error(codes.InvalidArgument, err.Error())

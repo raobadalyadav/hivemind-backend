@@ -218,3 +218,15 @@ func (h *Handler) GetMyPreferences(ctx context.Context, _ *socialv1.GetMyPrefere
 	}
 	return prefsToProto(p), nil
 }
+
+func (h *Handler) GetMyStats(ctx context.Context, _ *socialv1.GetMyStatsRequest) (*socialv1.MyStats, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	st, err := h.svc.GetMyStats(ctx, userID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to load stats")
+	}
+	return &socialv1.MyStats{PlansAttended: st.PlansAttended, PlansUpcoming: st.PlansUpcoming, Connections: st.Connections, Communities: st.Communities}, nil
+}

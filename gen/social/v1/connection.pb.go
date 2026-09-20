@@ -122,6 +122,55 @@ func (ConnectionStatus) EnumDescriptor() ([]byte, []int) {
 	return file_social_v1_connection_proto_rawDescGZIP(), []int{1}
 }
 
+type ConnectionDirection int32
+
+const (
+	ConnectionDirection_CONNECTION_DIRECTION_ANY      ConnectionDirection = 0
+	ConnectionDirection_CONNECTION_DIRECTION_INCOMING ConnectionDirection = 1 // the caller is the recipient
+	ConnectionDirection_CONNECTION_DIRECTION_OUTGOING ConnectionDirection = 2 // the caller is the requester
+)
+
+// Enum value maps for ConnectionDirection.
+var (
+	ConnectionDirection_name = map[int32]string{
+		0: "CONNECTION_DIRECTION_ANY",
+		1: "CONNECTION_DIRECTION_INCOMING",
+		2: "CONNECTION_DIRECTION_OUTGOING",
+	}
+	ConnectionDirection_value = map[string]int32{
+		"CONNECTION_DIRECTION_ANY":      0,
+		"CONNECTION_DIRECTION_INCOMING": 1,
+		"CONNECTION_DIRECTION_OUTGOING": 2,
+	}
+)
+
+func (x ConnectionDirection) Enum() *ConnectionDirection {
+	p := new(ConnectionDirection)
+	*p = x
+	return p
+}
+
+func (x ConnectionDirection) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ConnectionDirection) Descriptor() protoreflect.EnumDescriptor {
+	return file_social_v1_connection_proto_enumTypes[2].Descriptor()
+}
+
+func (ConnectionDirection) Type() protoreflect.EnumType {
+	return &file_social_v1_connection_proto_enumTypes[2]
+}
+
+func (x ConnectionDirection) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ConnectionDirection.Descriptor instead.
+func (ConnectionDirection) EnumDescriptor() ([]byte, []int) {
+	return file_social_v1_connection_proto_rawDescGZIP(), []int{2}
+}
+
 type PersonMet struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -593,6 +642,8 @@ type ListConnectionsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Page          *PageRequest           `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
+	Status        ConnectionStatus       `protobuf:"varint,3,opt,name=status,proto3,enum=social.v1.ConnectionStatus" json:"status,omitempty"`          // unspecified = any
+	Direction     ConnectionDirection    `protobuf:"varint,4,opt,name=direction,proto3,enum=social.v1.ConnectionDirection" json:"direction,omitempty"` // any = both
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -639,6 +690,20 @@ func (x *ListConnectionsRequest) GetPage() *PageRequest {
 		return x.Page
 	}
 	return nil
+}
+
+func (x *ListConnectionsRequest) GetStatus() ConnectionStatus {
+	if x != nil {
+		return x.Status
+	}
+	return ConnectionStatus_CONNECTION_STATUS_UNSPECIFIED
+}
+
+func (x *ListConnectionsRequest) GetDirection() ConnectionDirection {
+	if x != nil {
+		return x.Direction
+	}
+	return ConnectionDirection_CONNECTION_DIRECTION_ANY
 }
 
 type ListConnectionsResponse struct {
@@ -731,10 +796,12 @@ const file_social_v1_connection_proto_rawDesc = "" +
 	"\x0eorigin_plan_id\x18\x03 \x01(\tR\foriginPlanId\"W\n" +
 	"\x18RespondConnectionRequest\x12#\n" +
 	"\rconnection_id\x18\x01 \x01(\tR\fconnectionId\x12\x16\n" +
-	"\x06accept\x18\x02 \x01(\bR\x06accept\"]\n" +
+	"\x06accept\x18\x02 \x01(\bR\x06accept\"\xd0\x01\n" +
 	"\x16ListConnectionsRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12*\n" +
-	"\x04page\x18\x02 \x01(\v2\x16.social.v1.PageRequestR\x04page\"\x7f\n" +
+	"\x04page\x18\x02 \x01(\v2\x16.social.v1.PageRequestR\x04page\x123\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x1b.social.v1.ConnectionStatusR\x06status\x12<\n" +
+	"\tdirection\x18\x04 \x01(\x0e2\x1e.social.v1.ConnectionDirectionR\tdirection\"\x7f\n" +
 	"\x17ListConnectionsResponse\x127\n" +
 	"\vconnections\x18\x01 \x03(\v2\x15.social.v1.ConnectionR\vconnections\x12+\n" +
 	"\x04page\x18\x02 \x01(\v2\x17.social.v1.PageResponseR\x04page*j\n" +
@@ -746,7 +813,11 @@ const file_social_v1_connection_proto_rawDesc = "" +
 	"\x1dCONNECTION_STATUS_UNSPECIFIED\x10\x00\x12\v\n" +
 	"\aPENDING\x10\x01\x12\f\n" +
 	"\bACCEPTED\x10\x02\x12\f\n" +
-	"\bREJECTED\x10\x032\xcc\x03\n" +
+	"\bREJECTED\x10\x03*y\n" +
+	"\x13ConnectionDirection\x12\x1c\n" +
+	"\x18CONNECTION_DIRECTION_ANY\x10\x00\x12!\n" +
+	"\x1dCONNECTION_DIRECTION_INCOMING\x10\x01\x12!\n" +
+	"\x1dCONNECTION_DIRECTION_OUTGOING\x10\x022\xcc\x03\n" +
 	"\x11ConnectionService\x12O\n" +
 	"\x11RequestConnection\x12#.social.v1.RequestConnectionRequest\x1a\x15.social.v1.Connection\x12O\n" +
 	"\x11RespondConnection\x12#.social.v1.RespondConnectionRequest\x1a\x15.social.v1.Connection\x12X\n" +
@@ -766,48 +837,51 @@ func file_social_v1_connection_proto_rawDescGZIP() []byte {
 	return file_social_v1_connection_proto_rawDescData
 }
 
-var file_social_v1_connection_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_social_v1_connection_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
 var file_social_v1_connection_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_social_v1_connection_proto_goTypes = []any{
 	(ConnectionState)(0),                 // 0: social.v1.ConnectionState
 	(ConnectionStatus)(0),                // 1: social.v1.ConnectionStatus
-	(*PersonMet)(nil),                    // 2: social.v1.PersonMet
-	(*ListPeopleMetRequest)(nil),         // 3: social.v1.ListPeopleMetRequest
-	(*ListPeopleMetResponse)(nil),        // 4: social.v1.ListPeopleMetResponse
-	(*CreateMeetAgainGroupRequest)(nil),  // 5: social.v1.CreateMeetAgainGroupRequest
-	(*CreateMeetAgainGroupResponse)(nil), // 6: social.v1.CreateMeetAgainGroupResponse
-	(*Connection)(nil),                   // 7: social.v1.Connection
-	(*RequestConnectionRequest)(nil),     // 8: social.v1.RequestConnectionRequest
-	(*RespondConnectionRequest)(nil),     // 9: social.v1.RespondConnectionRequest
-	(*ListConnectionsRequest)(nil),       // 10: social.v1.ListConnectionsRequest
-	(*ListConnectionsResponse)(nil),      // 11: social.v1.ListConnectionsResponse
-	(*Audit)(nil),                        // 12: social.v1.Audit
-	(*PageRequest)(nil),                  // 13: social.v1.PageRequest
-	(*PageResponse)(nil),                 // 14: social.v1.PageResponse
+	(ConnectionDirection)(0),             // 2: social.v1.ConnectionDirection
+	(*PersonMet)(nil),                    // 3: social.v1.PersonMet
+	(*ListPeopleMetRequest)(nil),         // 4: social.v1.ListPeopleMetRequest
+	(*ListPeopleMetResponse)(nil),        // 5: social.v1.ListPeopleMetResponse
+	(*CreateMeetAgainGroupRequest)(nil),  // 6: social.v1.CreateMeetAgainGroupRequest
+	(*CreateMeetAgainGroupResponse)(nil), // 7: social.v1.CreateMeetAgainGroupResponse
+	(*Connection)(nil),                   // 8: social.v1.Connection
+	(*RequestConnectionRequest)(nil),     // 9: social.v1.RequestConnectionRequest
+	(*RespondConnectionRequest)(nil),     // 10: social.v1.RespondConnectionRequest
+	(*ListConnectionsRequest)(nil),       // 11: social.v1.ListConnectionsRequest
+	(*ListConnectionsResponse)(nil),      // 12: social.v1.ListConnectionsResponse
+	(*Audit)(nil),                        // 13: social.v1.Audit
+	(*PageRequest)(nil),                  // 14: social.v1.PageRequest
+	(*PageResponse)(nil),                 // 15: social.v1.PageResponse
 }
 var file_social_v1_connection_proto_depIdxs = []int32{
 	0,  // 0: social.v1.PersonMet.state:type_name -> social.v1.ConnectionState
-	2,  // 1: social.v1.ListPeopleMetResponse.people:type_name -> social.v1.PersonMet
+	3,  // 1: social.v1.ListPeopleMetResponse.people:type_name -> social.v1.PersonMet
 	1,  // 2: social.v1.Connection.status:type_name -> social.v1.ConnectionStatus
-	12, // 3: social.v1.Connection.audit:type_name -> social.v1.Audit
-	13, // 4: social.v1.ListConnectionsRequest.page:type_name -> social.v1.PageRequest
-	7,  // 5: social.v1.ListConnectionsResponse.connections:type_name -> social.v1.Connection
-	14, // 6: social.v1.ListConnectionsResponse.page:type_name -> social.v1.PageResponse
-	8,  // 7: social.v1.ConnectionService.RequestConnection:input_type -> social.v1.RequestConnectionRequest
-	9,  // 8: social.v1.ConnectionService.RespondConnection:input_type -> social.v1.RespondConnectionRequest
-	10, // 9: social.v1.ConnectionService.ListConnections:input_type -> social.v1.ListConnectionsRequest
-	3,  // 10: social.v1.ConnectionService.ListPeopleMet:input_type -> social.v1.ListPeopleMetRequest
-	5,  // 11: social.v1.ConnectionService.CreateMeetAgainGroup:input_type -> social.v1.CreateMeetAgainGroupRequest
-	7,  // 12: social.v1.ConnectionService.RequestConnection:output_type -> social.v1.Connection
-	7,  // 13: social.v1.ConnectionService.RespondConnection:output_type -> social.v1.Connection
-	11, // 14: social.v1.ConnectionService.ListConnections:output_type -> social.v1.ListConnectionsResponse
-	4,  // 15: social.v1.ConnectionService.ListPeopleMet:output_type -> social.v1.ListPeopleMetResponse
-	6,  // 16: social.v1.ConnectionService.CreateMeetAgainGroup:output_type -> social.v1.CreateMeetAgainGroupResponse
-	12, // [12:17] is the sub-list for method output_type
-	7,  // [7:12] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	13, // 3: social.v1.Connection.audit:type_name -> social.v1.Audit
+	14, // 4: social.v1.ListConnectionsRequest.page:type_name -> social.v1.PageRequest
+	1,  // 5: social.v1.ListConnectionsRequest.status:type_name -> social.v1.ConnectionStatus
+	2,  // 6: social.v1.ListConnectionsRequest.direction:type_name -> social.v1.ConnectionDirection
+	8,  // 7: social.v1.ListConnectionsResponse.connections:type_name -> social.v1.Connection
+	15, // 8: social.v1.ListConnectionsResponse.page:type_name -> social.v1.PageResponse
+	9,  // 9: social.v1.ConnectionService.RequestConnection:input_type -> social.v1.RequestConnectionRequest
+	10, // 10: social.v1.ConnectionService.RespondConnection:input_type -> social.v1.RespondConnectionRequest
+	11, // 11: social.v1.ConnectionService.ListConnections:input_type -> social.v1.ListConnectionsRequest
+	4,  // 12: social.v1.ConnectionService.ListPeopleMet:input_type -> social.v1.ListPeopleMetRequest
+	6,  // 13: social.v1.ConnectionService.CreateMeetAgainGroup:input_type -> social.v1.CreateMeetAgainGroupRequest
+	8,  // 14: social.v1.ConnectionService.RequestConnection:output_type -> social.v1.Connection
+	8,  // 15: social.v1.ConnectionService.RespondConnection:output_type -> social.v1.Connection
+	12, // 16: social.v1.ConnectionService.ListConnections:output_type -> social.v1.ListConnectionsResponse
+	5,  // 17: social.v1.ConnectionService.ListPeopleMet:output_type -> social.v1.ListPeopleMetResponse
+	7,  // 18: social.v1.ConnectionService.CreateMeetAgainGroup:output_type -> social.v1.CreateMeetAgainGroupResponse
+	14, // [14:19] is the sub-list for method output_type
+	9,  // [9:14] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_connection_proto_init() }
@@ -821,7 +895,7 @@ func file_social_v1_connection_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_connection_proto_rawDesc), len(file_social_v1_connection_proto_rawDesc)),
-			NumEnums:      2,
+			NumEnums:      3,
 			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,

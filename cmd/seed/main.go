@@ -191,6 +191,7 @@ func main() {
 		{"cities & categories", func() error { return s.reference(*cityName) }},
 		{"people", s.seedPeople},
 		{"venues & plans", s.seedPlans},
+		{"past plans & reviews", s.seedHistory},
 		{"social graph", s.seedGraph},
 		{"posts & stories", s.seedFeed},
 		{"chats", s.seedChats},
@@ -443,6 +444,51 @@ func (s *seeder) seedPlans() error {
 		}
 		if err := s.exec(`UPDATE plans SET confirmed_count = (SELECT count(*) FROM bookings WHERE plan_id = $1 AND status = 'confirmed') WHERE id = $1`, id); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+var reviewComments = []string{"Great crowd and very well organised!", "Met some lovely people. Will come again.", "Good vibes, a bit crowded.", "Host was warm and welcoming.", "Loved the venue and the conversations.", "Fun evening — thanks for hosting!", "Well planned, started on time."}
+
+// seedHistory gives most hosts a couple of finished plans with attended
+// bookings and real reviews, so the host ratings the app shows are computed
+// from actual rows. Every sixth person hosts nothing yet (no rating shown).
+func (s *seeder) seedHistory() error {
+	ratings := []int{5, 5, 4, 4, 5, 3, 4, 5}
+	for hostIdx := range s.users {
+		if hostIdx%6 == 5 {
+			continue
+		}
+		for k := 0; k < 1+hostIdx%2; k++ {
+			t := plans[(hostIdx*3+k)%len(plans)]
+			start := time.Date(s.now.Year(), s.now.Month(), s.now.Day(), t.hour, 0, 0, 0, time.Local).AddDate(0, 0, -(4 + hostIdx*2 + k*9))
+			vi := s.rng.Intn(len(venues))
+			id, err := s.one(`INSERT INTO plans (city_id, host_id, venue_id, title, description, category_id, starts_at, ends_at, capacity, price_minor, currency, status, location, join_mode, visibility)
+				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'INR','completed',ST_SetSRID(ST_MakePoint($11,$12),4326)::geography,'open','public') RETURNING id::text`,
+				s.city, s.users[hostIdx], s.venues[vi], t.title, t.desc, s.cats[t.cat], start, start.Add(time.Duration(t.dur)*time.Hour), t.cap, t.price*100, venues[vi].lng, venues[vi].lat)
+			if err != nil {
+				return err
+			}
+			n := 0
+			for _, j := range s.rng.Perm(len(s.users)) {
+				if j == hostIdx || n >= 3+s.rng.Intn(5) {
+					continue
+				}
+				bid, err := s.one(`INSERT INTO bookings (plan_id, user_id, status, price_minor, currency, idempotency_key) VALUES ($1,$2,'attended',$3,'INR',$4) RETURNING id::text`,
+					id, s.users[j], t.price*100, "seed-past-"+id+"-"+s.users[j])
+				if err != nil {
+					return err
+				}
+				if err := s.exec(`INSERT INTO reviews (plan_id, user_id, booking_id, rating, comment) VALUES ($1,$2,$3,$4,$5)`,
+					id, s.users[j], bid, ratings[s.rng.Intn(len(ratings))], reviewComments[s.rng.Intn(len(reviewComments))]); err != nil {
+					return err
+				}
+				n++
+			}
+			if err := s.exec(`UPDATE plans SET confirmed_count = $2 WHERE id = $1`, id, n); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

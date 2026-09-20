@@ -71,6 +71,10 @@ make lan-ip              # the API_HOST a phone on the same Wi-Fi should use
 
 `make` loads `.env` automatically. `cmd/devtoken` refuses to run unless `APP_ENV` is empty or `dev`.
 
+## Wishlist, ratings and Me-tab stats
+
+`PlanService.SavePlan / UnsavePlan / ListSavedPlans` (table `plan_saves`); every plan read is decorated in batch (no N+1) with `saved_by_me` and the **host rating** (average/count over reviews of all the host's plans). `ProfileService.GetMyStats` returns real counts (attended, upcoming, connections, communities). `ListConnections` filters by `status` + `direction` in SQL, `ListMyChats` has `ALL` / `GROUPS` tabs, `ListCommunities` has `only_mine` and `is_member`, and `VenueService.ListVenues` powers the plan creator's location search.
+
 ## Demo data
 
 `go run ./cmd/seed -keeper <your-user-uuid>` fills a **local dev** database with realistic data in your city: 24 people (photos, bios, some blue-ticked), 32 plans over the next four weeks with venues and bookings, posts with comments/likes, live stories, communities, friends / pending requests / incoming waves for the keeper, three DMs and two plan chats, and six external events. It also gives the keeper's city a real name and drops unused test cities/categories. Everything it creates uses the e-mail domain `@seed.hivemind.local`, so re-running replaces only its own rows; the keeper's own rows are never modified. Refuses to run unless `APP_ENV` is empty or `dev`. Photos are hot-linked (randomuser.me, picsum.photos), so the phone needs internet.

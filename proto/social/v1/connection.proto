@@ -77,9 +77,17 @@ message RespondConnectionRequest {
   bool accept = 2;
 }
 
+enum ConnectionDirection {
+  CONNECTION_DIRECTION_ANY = 0;
+  CONNECTION_DIRECTION_INCOMING = 1; // the caller is the recipient
+  CONNECTION_DIRECTION_OUTGOING = 2; // the caller is the requester
+}
+
 message ListConnectionsRequest {
   string user_id = 1;
   PageRequest page = 2;
+  ConnectionStatus status = 3;        // unspecified = any
+  ConnectionDirection direction = 4;  // any = both
 }
 
 message ListConnectionsResponse {

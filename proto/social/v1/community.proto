@@ -44,6 +44,7 @@ message Community {
   string required_entitlement = 11;
   int32 member_count = 12; // live count
   int32 plan_count = 13;   // live count of published plans
+  bool is_member = 14;     // the caller belongs to it (when the caller is known)
 }
 
 message Membership {
@@ -88,6 +89,7 @@ message ListCommunitiesRequest {
   string city_id = 1;
   string category_id = 2;
   string query = 3;
+  bool only_mine = 4; // only communities the caller belongs to
 }
 
 message ListCommunitiesResponse {

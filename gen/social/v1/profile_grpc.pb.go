@@ -30,6 +30,7 @@ const (
 	ProfileService_SetSocialIntent_FullMethodName      = "/social.v1.ProfileService/SetSocialIntent"
 	ProfileService_SetPersonality_FullMethodName       = "/social.v1.ProfileService/SetPersonality"
 	ProfileService_GetMyPreferences_FullMethodName     = "/social.v1.ProfileService/GetMyPreferences"
+	ProfileService_GetMyStats_FullMethodName           = "/social.v1.ProfileService/GetMyStats"
 )
 
 // ProfileServiceClient is the client API for ProfileService service.
@@ -52,6 +53,8 @@ type ProfileServiceClient interface {
 	SetSocialIntent(ctx context.Context, in *SetSocialIntentRequest, opts ...grpc.CallOption) (*UserPreferences, error)
 	SetPersonality(ctx context.Context, in *SetPersonalityRequest, opts ...grpc.CallOption) (*UserPreferences, error)
 	GetMyPreferences(ctx context.Context, in *GetMyPreferencesRequest, opts ...grpc.CallOption) (*UserPreferences, error)
+	// GetMyStats: real counts for the Me tab.
+	GetMyStats(ctx context.Context, in *GetMyStatsRequest, opts ...grpc.CallOption) (*MyStats, error)
 }
 
 type profileServiceClient struct {
@@ -172,6 +175,16 @@ func (c *profileServiceClient) GetMyPreferences(ctx context.Context, in *GetMyPr
 	return out, nil
 }
 
+func (c *profileServiceClient) GetMyStats(ctx context.Context, in *GetMyStatsRequest, opts ...grpc.CallOption) (*MyStats, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MyStats)
+	err := c.cc.Invoke(ctx, ProfileService_GetMyStats_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProfileServiceServer is the server API for ProfileService service.
 // All implementations must embed UnimplementedProfileServiceServer
 // for forward compatibility.
@@ -192,6 +205,8 @@ type ProfileServiceServer interface {
 	SetSocialIntent(context.Context, *SetSocialIntentRequest) (*UserPreferences, error)
 	SetPersonality(context.Context, *SetPersonalityRequest) (*UserPreferences, error)
 	GetMyPreferences(context.Context, *GetMyPreferencesRequest) (*UserPreferences, error)
+	// GetMyStats: real counts for the Me tab.
+	GetMyStats(context.Context, *GetMyStatsRequest) (*MyStats, error)
 	mustEmbedUnimplementedProfileServiceServer()
 }
 
@@ -234,6 +249,9 @@ func (UnimplementedProfileServiceServer) SetPersonality(context.Context, *SetPer
 }
 func (UnimplementedProfileServiceServer) GetMyPreferences(context.Context, *GetMyPreferencesRequest) (*UserPreferences, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetMyPreferences not implemented")
+}
+func (UnimplementedProfileServiceServer) GetMyStats(context.Context, *GetMyStatsRequest) (*MyStats, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetMyStats not implemented")
 }
 func (UnimplementedProfileServiceServer) mustEmbedUnimplementedProfileServiceServer() {}
 func (UnimplementedProfileServiceServer) testEmbeddedByValue()                        {}
@@ -454,6 +472,24 @@ func _ProfileService_GetMyPreferences_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProfileService_GetMyStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMyStatsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).GetMyStats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_GetMyStats_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).GetMyStats(ctx, req.(*GetMyStatsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProfileService_ServiceDesc is the grpc.ServiceDesc for ProfileService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -504,6 +540,10 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetMyPreferences",
 			Handler:    _ProfileService_GetMyPreferences_Handler,
+		},
+		{
+			MethodName: "GetMyStats",
+			Handler:    _ProfileService_GetMyStats_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

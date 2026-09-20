@@ -27,6 +27,8 @@ type ChatTab int32
 const (
 	ChatTab_CHAT_TAB_PRIMARY ChatTab = 0 // friends' DMs + chats of upcoming plans you're in
 	ChatTab_CHAT_TAB_GENERAL ChatTab = 1 // everything else: event groups, meet-again groups, past plans
+	ChatTab_CHAT_TAB_ALL     ChatTab = 2 // every chat
+	ChatTab_CHAT_TAB_GROUPS  ChatTab = 3 // plan / event / group chats (not DMs)
 )
 
 // Enum value maps for ChatTab.
@@ -34,10 +36,14 @@ var (
 	ChatTab_name = map[int32]string{
 		0: "CHAT_TAB_PRIMARY",
 		1: "CHAT_TAB_GENERAL",
+		2: "CHAT_TAB_ALL",
+		3: "CHAT_TAB_GROUPS",
 	}
 	ChatTab_value = map[string]int32{
 		"CHAT_TAB_PRIMARY": 0,
 		"CHAT_TAB_GENERAL": 1,
+		"CHAT_TAB_ALL":     2,
+		"CHAT_TAB_GROUPS":  3,
 	}
 )
 
@@ -348,6 +354,7 @@ type ListMyChatsResponse struct {
 	Chats         []*ChatSummary         `protobuf:"bytes,1,rep,name=chats,proto3" json:"chats,omitempty"`
 	PrimaryUnread int32                  `protobuf:"varint,2,opt,name=primary_unread,json=primaryUnread,proto3" json:"primary_unread,omitempty"` // totals across both tabs, for the bar badge and tab dots
 	GeneralUnread int32                  `protobuf:"varint,3,opt,name=general_unread,json=generalUnread,proto3" json:"general_unread,omitempty"`
+	GroupsUnread  int32                  `protobuf:"varint,4,opt,name=groups_unread,json=groupsUnread,proto3" json:"groups_unread,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -399,6 +406,13 @@ func (x *ListMyChatsResponse) GetPrimaryUnread() int32 {
 func (x *ListMyChatsResponse) GetGeneralUnread() int32 {
 	if x != nil {
 		return x.GeneralUnread
+	}
+	return 0
+}
+
+func (x *ListMyChatsResponse) GetGroupsUnread() int32 {
+	if x != nil {
+		return x.GroupsUnread
 	}
 	return 0
 }
@@ -1605,11 +1619,12 @@ const file_social_v1_chat_proto_rawDesc = "" +
 	" \x01(\x05R\vunreadCount\x12\x14\n" +
 	"\x05muted\x18\v \x01(\bR\x05muted\":\n" +
 	"\x12ListMyChatsRequest\x12$\n" +
-	"\x03tab\x18\x01 \x01(\x0e2\x12.social.v1.ChatTabR\x03tab\"\x91\x01\n" +
+	"\x03tab\x18\x01 \x01(\x0e2\x12.social.v1.ChatTabR\x03tab\"\xb6\x01\n" +
 	"\x13ListMyChatsResponse\x12,\n" +
 	"\x05chats\x18\x01 \x03(\v2\x16.social.v1.ChatSummaryR\x05chats\x12%\n" +
 	"\x0eprimary_unread\x18\x02 \x01(\x05R\rprimaryUnread\x12%\n" +
-	"\x0egeneral_unread\x18\x03 \x01(\x05R\rgeneralUnread\"*\n" +
+	"\x0egeneral_unread\x18\x03 \x01(\x05R\rgeneralUnread\x12#\n" +
+	"\rgroups_unread\x18\x04 \x01(\x05R\fgroupsUnread\"*\n" +
 	"\x0fMarkReadRequest\x12\x17\n" +
 	"\aroom_id\x18\x01 \x01(\tR\x06roomId\"\x12\n" +
 	"\x10MarkReadResponse\"0\n" +
@@ -1695,10 +1710,12 @@ const file_social_v1_chat_proto_rawDesc = "" +
 	"\x19GenerateIcebreakerRequest\x12\x17\n" +
 	"\aroom_id\x18\x01 \x01(\tR\x06roomId\"0\n" +
 	"\x1aGenerateIcebreakerResponse\x12\x12\n" +
-	"\x04text\x18\x01 \x01(\tR\x04text*5\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text*\\\n" +
 	"\aChatTab\x12\x14\n" +
 	"\x10CHAT_TAB_PRIMARY\x10\x00\x12\x14\n" +
-	"\x10CHAT_TAB_GENERAL\x10\x01*E\n" +
+	"\x10CHAT_TAB_GENERAL\x10\x01\x12\x10\n" +
+	"\fCHAT_TAB_ALL\x10\x02\x12\x13\n" +
+	"\x0fCHAT_TAB_GROUPS\x10\x03*E\n" +
 	"\bChatKind\x12\x13\n" +
 	"\x0fCHAT_KIND_GROUP\x10\x00\x12\x12\n" +
 	"\x0eCHAT_KIND_PLAN\x10\x01\x12\x10\n" +

@@ -96,6 +96,10 @@ func (h *Handler) SearchPlans(ctx context.Context, req *socialv1.SearchPlansRequ
 	if err != nil {
 		return nil, status.Error(codes.Internal, "search failed")
 	}
+	viewer, _ := grpcmiddleware.UserIDFromContext(ctx)
+	if err := h.svc.Decorate(ctx, results, viewer); err != nil {
+		return nil, status.Error(codes.Internal, "search failed")
+	}
 	out := make([]*socialv1.Plan, 0, len(results))
 	for _, p := range results {
 		out = append(out, toProto(p))
@@ -198,6 +202,9 @@ func toProto(p *Plan) *socialv1.Plan {
 		SeriesId:            p.SeriesID,
 		CoverUrl:            p.CoverURL,
 		CoverThumbUrl:       p.CoverThumbURL,
+		SavedByMe:           p.SavedByMe,
+		HostRatingAvg:       p.HostRatingAvg,
+		HostRatingCount:     p.HostRatingCount,
 	}
 	if p.Latitude != nil && p.Longitude != nil {
 		out.Location = &socialv1.GeoPoint{Latitude: *p.Latitude, Longitude: *p.Longitude}
@@ -422,9 +429,60 @@ func (h *Handler) ListUpcomingPlans(ctx context.Context, req *socialv1.ListUpcom
 	if err != nil {
 		return nil, planErr(err, "failed to list plans")
 	}
+	if err := h.svc.Decorate(ctx, plans, userID); err != nil {
+		return nil, planErr(err, "failed to list plans")
+	}
 	out := &socialv1.ListUpcomingPlansResponse{}
 	for _, p := range plans {
 		out.Plans = append(out.Plans, toProto(p))
 	}
 	return out, nil
+}
+
+func (h *Handler) SavePlan(ctx context.Context, req *socialv1.SavePlanRequest) (*socialv1.SavePlanResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	if err := h.svc.SavePlan(ctx, req.GetPlanId(), userID); err != nil {
+		return nil, planNotFoundOrErr(err, "failed to save plan")
+	}
+	return &socialv1.SavePlanResponse{}, nil
+}
+
+func (h *Handler) UnsavePlan(ctx context.Context, req *socialv1.UnsavePlanRequest) (*socialv1.UnsavePlanResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	if err := h.svc.UnsavePlan(ctx, req.GetPlanId(), userID); err != nil {
+		return nil, planNotFoundOrErr(err, "failed to unsave plan")
+	}
+	return &socialv1.UnsavePlanResponse{}, nil
+}
+
+func (h *Handler) ListSavedPlans(ctx context.Context, _ *socialv1.ListSavedPlansRequest) (*socialv1.ListSavedPlansResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	plans, err := h.svc.ListSavedPlans(ctx, userID)
+	if err != nil {
+		return nil, planNotFoundOrErr(err, "failed to list saved plans")
+	}
+	out := &socialv1.ListSavedPlansResponse{}
+	for _, p := range plans {
+		out.Plans = append(out.Plans, toProto(p))
+	}
+	return out, nil
+}
+
+func planNotFoundOrErr(err error, msg string) error {
+	switch err {
+	case ErrPlanNotFound:
+		return status.Error(codes.NotFound, "plan not found")
+	case ErrInvalidInput:
+		return status.Error(codes.InvalidArgument, err.Error())
+	}
+	return status.Error(codes.Internal, msg)
 }

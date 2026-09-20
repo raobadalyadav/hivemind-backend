@@ -22,6 +22,7 @@ const (
 	VenueService_CreateVenue_FullMethodName       = "/social.v1.VenueService/CreateVenue"
 	VenueService_GetVenue_FullMethodName          = "/social.v1.VenueService/GetVenue"
 	VenueService_ListMyVenues_FullMethodName      = "/social.v1.VenueService/ListMyVenues"
+	VenueService_ListVenues_FullMethodName        = "/social.v1.VenueService/ListVenues"
 	VenueService_UpdateVenue_FullMethodName       = "/social.v1.VenueService/UpdateVenue"
 	VenueService_GetVenueDashboard_FullMethodName = "/social.v1.VenueService/GetVenueDashboard"
 )
@@ -36,6 +37,8 @@ type VenueServiceClient interface {
 	CreateVenue(ctx context.Context, in *CreateVenueRequest, opts ...grpc.CallOption) (*Venue, error)
 	GetVenue(ctx context.Context, in *GetVenueRequest, opts ...grpc.CallOption) (*Venue, error)
 	ListMyVenues(ctx context.Context, in *ListMyVenuesRequest, opts ...grpc.CallOption) (*ListMyVenuesResponse, error)
+	// ListVenues: public venue search for the plan creator's location picker.
+	ListVenues(ctx context.Context, in *ListVenuesRequest, opts ...grpc.CallOption) (*ListVenuesResponse, error)
 	UpdateVenue(ctx context.Context, in *UpdateVenueRequest, opts ...grpc.CallOption) (*Venue, error)
 	GetVenueDashboard(ctx context.Context, in *GetVenueDashboardRequest, opts ...grpc.CallOption) (*VenueDashboard, error)
 }
@@ -78,6 +81,16 @@ func (c *venueServiceClient) ListMyVenues(ctx context.Context, in *ListMyVenuesR
 	return out, nil
 }
 
+func (c *venueServiceClient) ListVenues(ctx context.Context, in *ListVenuesRequest, opts ...grpc.CallOption) (*ListVenuesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListVenuesResponse)
+	err := c.cc.Invoke(ctx, VenueService_ListVenues_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *venueServiceClient) UpdateVenue(ctx context.Context, in *UpdateVenueRequest, opts ...grpc.CallOption) (*Venue, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Venue)
@@ -108,6 +121,8 @@ type VenueServiceServer interface {
 	CreateVenue(context.Context, *CreateVenueRequest) (*Venue, error)
 	GetVenue(context.Context, *GetVenueRequest) (*Venue, error)
 	ListMyVenues(context.Context, *ListMyVenuesRequest) (*ListMyVenuesResponse, error)
+	// ListVenues: public venue search for the plan creator's location picker.
+	ListVenues(context.Context, *ListVenuesRequest) (*ListVenuesResponse, error)
 	UpdateVenue(context.Context, *UpdateVenueRequest) (*Venue, error)
 	GetVenueDashboard(context.Context, *GetVenueDashboardRequest) (*VenueDashboard, error)
 	mustEmbedUnimplementedVenueServiceServer()
@@ -128,6 +143,9 @@ func (UnimplementedVenueServiceServer) GetVenue(context.Context, *GetVenueReques
 }
 func (UnimplementedVenueServiceServer) ListMyVenues(context.Context, *ListMyVenuesRequest) (*ListMyVenuesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListMyVenues not implemented")
+}
+func (UnimplementedVenueServiceServer) ListVenues(context.Context, *ListVenuesRequest) (*ListVenuesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListVenues not implemented")
 }
 func (UnimplementedVenueServiceServer) UpdateVenue(context.Context, *UpdateVenueRequest) (*Venue, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateVenue not implemented")
@@ -210,6 +228,24 @@ func _VenueService_ListMyVenues_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _VenueService_ListVenues_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListVenuesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VenueServiceServer).ListVenues(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: VenueService_ListVenues_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VenueServiceServer).ListVenues(ctx, req.(*ListVenuesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _VenueService_UpdateVenue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateVenueRequest)
 	if err := dec(in); err != nil {
@@ -264,6 +300,10 @@ var VenueService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListMyVenues",
 			Handler:    _VenueService_ListMyVenues_Handler,
+		},
+		{
+			MethodName: "ListVenues",
+			Handler:    _VenueService_ListVenues_Handler,
 		},
 		{
 			MethodName: "UpdateVenue",

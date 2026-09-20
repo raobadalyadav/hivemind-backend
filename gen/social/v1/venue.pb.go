@@ -571,6 +571,110 @@ func (x *RepeatVisitor) GetVisitCount() int64 {
 	return 0
 }
 
+type ListVenuesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CityId        string                 `protobuf:"bytes,1,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"` // default: the caller's city
+	Query         string                 `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`                 // matches name or address
+	Limit         int32                  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`                // default 20, max 50
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListVenuesRequest) Reset() {
+	*x = ListVenuesRequest{}
+	mi := &file_social_v1_venue_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListVenuesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListVenuesRequest) ProtoMessage() {}
+
+func (x *ListVenuesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_venue_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListVenuesRequest.ProtoReflect.Descriptor instead.
+func (*ListVenuesRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_venue_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ListVenuesRequest) GetCityId() string {
+	if x != nil {
+		return x.CityId
+	}
+	return ""
+}
+
+func (x *ListVenuesRequest) GetQuery() string {
+	if x != nil {
+		return x.Query
+	}
+	return ""
+}
+
+func (x *ListVenuesRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+type ListVenuesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Venues        []*Venue               `protobuf:"bytes,1,rep,name=venues,proto3" json:"venues,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListVenuesResponse) Reset() {
+	*x = ListVenuesResponse{}
+	mi := &file_social_v1_venue_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListVenuesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListVenuesResponse) ProtoMessage() {}
+
+func (x *ListVenuesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_venue_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListVenuesResponse.ProtoReflect.Descriptor instead.
+func (*ListVenuesResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_venue_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ListVenuesResponse) GetVenues() []*Venue {
+	if x != nil {
+		return x.Venues
+	}
+	return nil
+}
+
 var File_social_v1_venue_proto protoreflect.FileDescriptor
 
 const file_social_v1_venue_proto_rawDesc = "" +
@@ -614,11 +718,19 @@ const file_social_v1_venue_proto_rawDesc = "" +
 	"\rRepeatVisitor\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1f\n" +
 	"\vvisit_count\x18\x02 \x01(\x03R\n" +
-	"visitCount2\xee\x02\n" +
+	"visitCount\"X\n" +
+	"\x11ListVenuesRequest\x12\x17\n" +
+	"\acity_id\x18\x01 \x01(\tR\x06cityId\x12\x14\n" +
+	"\x05query\x18\x02 \x01(\tR\x05query\x12\x14\n" +
+	"\x05limit\x18\x03 \x01(\x05R\x05limit\">\n" +
+	"\x12ListVenuesResponse\x12(\n" +
+	"\x06venues\x18\x01 \x03(\v2\x10.social.v1.VenueR\x06venues2\xb9\x03\n" +
 	"\fVenueService\x12>\n" +
 	"\vCreateVenue\x12\x1d.social.v1.CreateVenueRequest\x1a\x10.social.v1.Venue\x128\n" +
 	"\bGetVenue\x12\x1a.social.v1.GetVenueRequest\x1a\x10.social.v1.Venue\x12O\n" +
-	"\fListMyVenues\x12\x1e.social.v1.ListMyVenuesRequest\x1a\x1f.social.v1.ListMyVenuesResponse\x12>\n" +
+	"\fListMyVenues\x12\x1e.social.v1.ListMyVenuesRequest\x1a\x1f.social.v1.ListMyVenuesResponse\x12I\n" +
+	"\n" +
+	"ListVenues\x12\x1c.social.v1.ListVenuesRequest\x1a\x1d.social.v1.ListVenuesResponse\x12>\n" +
 	"\vUpdateVenue\x12\x1d.social.v1.UpdateVenueRequest\x1a\x10.social.v1.Venue\x12S\n" +
 	"\x11GetVenueDashboard\x12#.social.v1.GetVenueDashboardRequest\x1a\x19.social.v1.VenueDashboardB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
@@ -634,7 +746,7 @@ func file_social_v1_venue_proto_rawDescGZIP() []byte {
 	return file_social_v1_venue_proto_rawDescData
 }
 
-var file_social_v1_venue_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_social_v1_venue_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_social_v1_venue_proto_goTypes = []any{
 	(*Venue)(nil),                    // 0: social.v1.Venue
 	(*CreateVenueRequest)(nil),       // 1: social.v1.CreateVenueRequest
@@ -645,34 +757,39 @@ var file_social_v1_venue_proto_goTypes = []any{
 	(*GetVenueDashboardRequest)(nil), // 6: social.v1.GetVenueDashboardRequest
 	(*VenueDashboard)(nil),           // 7: social.v1.VenueDashboard
 	(*RepeatVisitor)(nil),            // 8: social.v1.RepeatVisitor
-	(*GeoPoint)(nil),                 // 9: social.v1.GeoPoint
-	(*PageRequest)(nil),              // 10: social.v1.PageRequest
-	(*PageResponse)(nil),             // 11: social.v1.PageResponse
-	(*Money)(nil),                    // 12: social.v1.Money
+	(*ListVenuesRequest)(nil),        // 9: social.v1.ListVenuesRequest
+	(*ListVenuesResponse)(nil),       // 10: social.v1.ListVenuesResponse
+	(*GeoPoint)(nil),                 // 11: social.v1.GeoPoint
+	(*PageRequest)(nil),              // 12: social.v1.PageRequest
+	(*PageResponse)(nil),             // 13: social.v1.PageResponse
+	(*Money)(nil),                    // 14: social.v1.Money
 }
 var file_social_v1_venue_proto_depIdxs = []int32{
-	9,  // 0: social.v1.Venue.location:type_name -> social.v1.GeoPoint
-	9,  // 1: social.v1.CreateVenueRequest.location:type_name -> social.v1.GeoPoint
-	10, // 2: social.v1.ListMyVenuesRequest.page:type_name -> social.v1.PageRequest
+	11, // 0: social.v1.Venue.location:type_name -> social.v1.GeoPoint
+	11, // 1: social.v1.CreateVenueRequest.location:type_name -> social.v1.GeoPoint
+	12, // 2: social.v1.ListMyVenuesRequest.page:type_name -> social.v1.PageRequest
 	0,  // 3: social.v1.ListMyVenuesResponse.venues:type_name -> social.v1.Venue
-	11, // 4: social.v1.ListMyVenuesResponse.page:type_name -> social.v1.PageResponse
-	12, // 5: social.v1.VenueDashboard.gross_revenue:type_name -> social.v1.Money
+	13, // 4: social.v1.ListMyVenuesResponse.page:type_name -> social.v1.PageResponse
+	14, // 5: social.v1.VenueDashboard.gross_revenue:type_name -> social.v1.Money
 	8,  // 6: social.v1.VenueDashboard.repeat_visitors:type_name -> social.v1.RepeatVisitor
-	1,  // 7: social.v1.VenueService.CreateVenue:input_type -> social.v1.CreateVenueRequest
-	2,  // 8: social.v1.VenueService.GetVenue:input_type -> social.v1.GetVenueRequest
-	3,  // 9: social.v1.VenueService.ListMyVenues:input_type -> social.v1.ListMyVenuesRequest
-	5,  // 10: social.v1.VenueService.UpdateVenue:input_type -> social.v1.UpdateVenueRequest
-	6,  // 11: social.v1.VenueService.GetVenueDashboard:input_type -> social.v1.GetVenueDashboardRequest
-	0,  // 12: social.v1.VenueService.CreateVenue:output_type -> social.v1.Venue
-	0,  // 13: social.v1.VenueService.GetVenue:output_type -> social.v1.Venue
-	4,  // 14: social.v1.VenueService.ListMyVenues:output_type -> social.v1.ListMyVenuesResponse
-	0,  // 15: social.v1.VenueService.UpdateVenue:output_type -> social.v1.Venue
-	7,  // 16: social.v1.VenueService.GetVenueDashboard:output_type -> social.v1.VenueDashboard
-	12, // [12:17] is the sub-list for method output_type
-	7,  // [7:12] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	0,  // 7: social.v1.ListVenuesResponse.venues:type_name -> social.v1.Venue
+	1,  // 8: social.v1.VenueService.CreateVenue:input_type -> social.v1.CreateVenueRequest
+	2,  // 9: social.v1.VenueService.GetVenue:input_type -> social.v1.GetVenueRequest
+	3,  // 10: social.v1.VenueService.ListMyVenues:input_type -> social.v1.ListMyVenuesRequest
+	9,  // 11: social.v1.VenueService.ListVenues:input_type -> social.v1.ListVenuesRequest
+	5,  // 12: social.v1.VenueService.UpdateVenue:input_type -> social.v1.UpdateVenueRequest
+	6,  // 13: social.v1.VenueService.GetVenueDashboard:input_type -> social.v1.GetVenueDashboardRequest
+	0,  // 14: social.v1.VenueService.CreateVenue:output_type -> social.v1.Venue
+	0,  // 15: social.v1.VenueService.GetVenue:output_type -> social.v1.Venue
+	4,  // 16: social.v1.VenueService.ListMyVenues:output_type -> social.v1.ListMyVenuesResponse
+	10, // 17: social.v1.VenueService.ListVenues:output_type -> social.v1.ListVenuesResponse
+	0,  // 18: social.v1.VenueService.UpdateVenue:output_type -> social.v1.Venue
+	7,  // 19: social.v1.VenueService.GetVenueDashboard:output_type -> social.v1.VenueDashboard
+	14, // [14:20] is the sub-list for method output_type
+	8,  // [8:14] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_venue_proto_init() }
@@ -687,7 +804,7 @@ func file_social_v1_venue_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_venue_proto_rawDesc), len(file_social_v1_venue_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

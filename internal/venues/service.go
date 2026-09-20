@@ -3,6 +3,7 @@ package venues
 import (
 	"context"
 	"errors"
+	"strings"
 )
 
 var (
@@ -91,4 +92,18 @@ func (s *Service) GetVenueDashboard(ctx context.Context, venueID, callerID strin
 		}
 	}
 	return d, nil
+}
+
+// ListVenues: public venue search for the location picker (limit default 20, max 50).
+func (s *Service) ListVenues(ctx context.Context, callerID, cityID, query string, limit int) ([]*Venue, error) {
+	if callerID == "" {
+		return nil, ErrInvalidInput
+	}
+	if limit <= 0 {
+		limit = 20
+	}
+	if limit > 50 {
+		limit = 50
+	}
+	return s.repo.Search(ctx, callerID, cityID, strings.TrimSpace(query), limit)
 }

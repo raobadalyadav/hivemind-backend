@@ -154,3 +154,28 @@ func TestOpenDirectChat_ConnectedOnlyAndIdempotent(t *testing.T) {
 		t.Fatalf("a block ends the ability to (re)open a chat, got %v", err)
 	}
 }
+
+func TestInboxFor_AllAndGroupsTabs(t *testing.T) {
+	e := setup(t)
+	me, friend, other := e.user("m2"), e.user("f2"), e.user("o2")
+	e.connect(me, friend)
+	dm, err := e.svc.OpenDirectChat(e.ctx, me, friend)
+	if err != nil {
+		t.Fatalf("OpenDirectChat: %v", err)
+	}
+	group, _ := e.svc.CreateAdHocRoomWithMembers(e.ctx, []string{me, friend, other})
+	e.pool.Exec(e.ctx, `INSERT INTO messages (room_id, sender_id, body) VALUES ($1,$2,'hey group')`, group, friend)
+	e.pool.Exec(e.ctx, `INSERT INTO messages (room_id, sender_id, body) VALUES ($1,$2,'hey you')`, dm, friend)
+
+	all, err := e.svc.InboxFor(e.ctx, me, "all")
+	if err != nil || find(all.Chats, dm) == nil || find(all.Chats, group) == nil {
+		t.Fatalf("All has every chat: %+v err=%v", all, err)
+	}
+	groups, _ := e.svc.InboxFor(e.ctx, me, "groups")
+	if find(groups.Chats, group) == nil || find(groups.Chats, dm) != nil {
+		t.Fatalf("Groups = non-DM chats only: %+v", groups.Chats)
+	}
+	if groups.GroupsUnread != 1 || groups.PrimaryUnread != 1 || groups.GeneralUnread != 1 {
+		t.Errorf("unread totals across tabs: primary=%d general=%d groups=%d", groups.PrimaryUnread, groups.GeneralUnread, groups.GroupsUnread)
+	}
+}
