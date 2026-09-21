@@ -78,3 +78,22 @@ func (s *Service) UpdateLocation(ctx context.Context, userID string, lat, lng fl
 	}
 	return s.repo.UpdateLocation(ctx, userID, lat, lng)
 }
+
+// AcceptTerms records that the caller agreed to the current Terms + Privacy Policy. Any other version is refused,
+// so a stale client can't record consent to text the person never saw.
+func (s *Service) AcceptTerms(ctx context.Context, id, version string) (*User, error) {
+	if id == "" || version != CurrentTermsVersion {
+		return nil, ErrInvalidInput
+	}
+	if err := s.repo.AcceptTerms(ctx, id, version); err != nil {
+		return nil, err
+	}
+	return s.repo.Get(ctx, id)
+}
+
+func (s *Service) ExportData(ctx context.Context, id string) ([]byte, error) {
+	if id == "" {
+		return nil, ErrInvalidInput
+	}
+	return s.repo.ExportData(ctx, id)
+}

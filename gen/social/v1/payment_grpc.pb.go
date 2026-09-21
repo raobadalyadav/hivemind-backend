@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	PaymentService_CreateOrder_FullMethodName        = "/social.v1.PaymentService/CreateOrder"
 	PaymentService_VerifyOrder_FullMethodName        = "/social.v1.PaymentService/VerifyOrder"
+	PaymentService_GetReceipt_FullMethodName         = "/social.v1.PaymentService/GetReceipt"
 	PaymentService_GetPayment_FullMethodName         = "/social.v1.PaymentService/GetPayment"
 	PaymentService_RefundPayment_FullMethodName      = "/social.v1.PaymentService/RefundPayment"
 	PaymentService_GetMyCreditBalance_FullMethodName = "/social.v1.PaymentService/GetMyCreditBalance"
@@ -41,6 +42,8 @@ type PaymentServiceClient interface {
 	// the app calls it right after the checkout sheet closes, so a booking is confirmed even when the
 	// webhook is slow or can't reach the server.
 	VerifyOrder(ctx context.Context, in *VerifyOrderRequest, opts ...grpc.CallOption) (*Order, error)
+	// GetReceipt: the receipt for a booking the caller paid for (issued on first request, then stable).
+	GetReceipt(ctx context.Context, in *GetReceiptRequest, opts ...grpc.CallOption) (*Receipt, error)
 	GetPayment(ctx context.Context, in *GetPaymentRequest, opts ...grpc.CallOption) (*Payment, error)
 	RefundPayment(ctx context.Context, in *RefundPaymentRequest, opts ...grpc.CallOption) (*Refund, error)
 	GetMyCreditBalance(ctx context.Context, in *GetMyCreditBalanceRequest, opts ...grpc.CallOption) (*CreditBalance, error)
@@ -68,6 +71,16 @@ func (c *paymentServiceClient) VerifyOrder(ctx context.Context, in *VerifyOrderR
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Order)
 	err := c.cc.Invoke(ctx, PaymentService_VerifyOrder_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *paymentServiceClient) GetReceipt(ctx context.Context, in *GetReceiptRequest, opts ...grpc.CallOption) (*Receipt, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Receipt)
+	err := c.cc.Invoke(ctx, PaymentService_GetReceipt_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -119,6 +132,8 @@ type PaymentServiceServer interface {
 	// the app calls it right after the checkout sheet closes, so a booking is confirmed even when the
 	// webhook is slow or can't reach the server.
 	VerifyOrder(context.Context, *VerifyOrderRequest) (*Order, error)
+	// GetReceipt: the receipt for a booking the caller paid for (issued on first request, then stable).
+	GetReceipt(context.Context, *GetReceiptRequest) (*Receipt, error)
 	GetPayment(context.Context, *GetPaymentRequest) (*Payment, error)
 	RefundPayment(context.Context, *RefundPaymentRequest) (*Refund, error)
 	GetMyCreditBalance(context.Context, *GetMyCreditBalanceRequest) (*CreditBalance, error)
@@ -137,6 +152,9 @@ func (UnimplementedPaymentServiceServer) CreateOrder(context.Context, *CreateOrd
 }
 func (UnimplementedPaymentServiceServer) VerifyOrder(context.Context, *VerifyOrderRequest) (*Order, error) {
 	return nil, status.Error(codes.Unimplemented, "method VerifyOrder not implemented")
+}
+func (UnimplementedPaymentServiceServer) GetReceipt(context.Context, *GetReceiptRequest) (*Receipt, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetReceipt not implemented")
 }
 func (UnimplementedPaymentServiceServer) GetPayment(context.Context, *GetPaymentRequest) (*Payment, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetPayment not implemented")
@@ -200,6 +218,24 @@ func _PaymentService_VerifyOrder_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PaymentServiceServer).VerifyOrder(ctx, req.(*VerifyOrderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PaymentService_GetReceipt_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetReceiptRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServiceServer).GetReceipt(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PaymentService_GetReceipt_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServiceServer).GetReceipt(ctx, req.(*GetReceiptRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -272,6 +308,10 @@ var PaymentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "VerifyOrder",
 			Handler:    _PaymentService_VerifyOrder_Handler,
+		},
+		{
+			MethodName: "GetReceipt",
+			Handler:    _PaymentService_GetReceipt_Handler,
 		},
 		{
 			MethodName: "GetPayment",

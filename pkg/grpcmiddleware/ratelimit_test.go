@@ -90,7 +90,7 @@ func TestUserRateLimit_PerUser(t *testing.T) {
 
 func TestActiveUserInterceptor_BlocksInactiveAndCaches(t *testing.T) {
 	calls := 0
-	states := map[string]AccountState{"good": {Active: true, Adult: true}, "gone": {Active: false, Adult: true}, "kid": {Active: true, Adult: false}}
+	states := map[string]AccountState{"good": {Active: true, Adult: true, Agreed: true}, "gone": {Active: false, Adult: true, Agreed: true}, "kid": {Active: true, Adult: false}}
 	itc := ActiveUserInterceptor(func(_ context.Context, id string) (AccountState, error) {
 		calls++
 		if id == "boom" {
@@ -135,5 +135,35 @@ func TestAgeGate_UnverifiedAccountsCanOnlyFinishTheirBirthday(t *testing.T) {
 		if _, err := itc(ctx, nil, &grpc.UnaryServerInfo{FullMethod: m}, ok); status.Code(err) != codes.FailedPrecondition {
 			t.Errorf("%s must be refused until an 18+ birthday is set, got %v", m, err)
 		}
+	}
+}
+
+func TestTermsGate_AdultsWhoHaveNotAgreedCanOnlyAcceptTheTerms(t *testing.T) {
+	itc := ActiveUserInterceptor(func(context.Context, string) (AccountState, error) {
+		return AccountState{Active: true, Adult: true, Agreed: false}, nil
+	}, time.Minute)
+	ok := func(context.Context, any) (any, error) { return "ok", nil }
+	ctx := context.WithValue(context.Background(), userIDContextKey, "u")
+	if _, err := itc(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/social.v1.UserService/AcceptTerms"}, ok); err != nil {
+		t.Fatalf("accepting the terms must stay open: %v", err)
+	}
+	if _, err := itc(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/social.v1.PlanService/GetPlan"}, ok); status.Code(err) != codes.FailedPrecondition {
+		t.Fatalf("everything else waits for the terms: %v", err)
+	}
+}
+
+func TestAgeGate_FinishingTheBirthdayOpensTheNextCallImmediately(t *testing.T) {
+	adult := false
+	itc := ActiveUserInterceptor(func(context.Context, string) (AccountState, error) {
+		return AccountState{Active: true, Adult: adult, Agreed: adult}, nil
+	}, time.Minute)
+	ctx := context.WithValue(context.Background(), userIDContextKey, "u")
+	save := func(context.Context, any) (any, error) { adult = true; return "ok", nil }
+	if _, err := itc(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/social.v1.UserService/UpdateUser"}, save); err != nil {
+		t.Fatal(err)
+	}
+	ok := func(context.Context, any) (any, error) { return "ok", nil }
+	if _, err := itc(ctx, nil, &grpc.UnaryServerInfo{FullMethod: "/social.v1.DiscoveryService/ListCities"}, ok); err != nil {
+		t.Fatalf("the gate must not keep answering with the pre-birthday state: %v", err)
 	}
 }

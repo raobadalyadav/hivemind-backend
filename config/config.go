@@ -35,6 +35,12 @@ type Config struct {
 	// stricter cap for sign-in / refresh / recovery, keyed by client IP.
 	RateLimitPerMinute     int
 	AuthRateLimitPerMinute int
+	// Who issues receipts (shown on them) and the GST rate that applies to the platform fee. Have an accountant
+	// confirm the rate and registration before launch.
+	SellerName, SellerGSTIN, SellerAddress string
+	PlatformFeeGSTPercent                  int
+	// Deep-link verification (served under /.well-known/) and the legal pages the API can host.
+	AndroidPackage, AndroidCertSHA256, AppleTeamID, LegalDir string
 	// DBMaxConns bounds the Postgres pool (DB_MAX_CONNS).
 	DBMaxConns int
 	// TrustProxyHeaders: read the client IP from X-Forwarded-For (only behind a proxy that sets it).
@@ -89,6 +95,14 @@ func Load() Config {
 		TLSKeyFile:             getEnv("TLS_KEY_FILE", ""),
 		RateLimitPerMinute:     getEnvIntAllowZero("RATE_LIMIT_PER_MINUTE", 600),
 		AuthRateLimitPerMinute: getEnvIntAllowZero("AUTH_RATE_LIMIT_PER_MINUTE", 20),
+		SellerName:             getEnv("SELLER_NAME", "HiveMind"),
+		SellerGSTIN:            getEnv("SELLER_GSTIN", ""),
+		SellerAddress:          getEnv("SELLER_ADDRESS", ""),
+		PlatformFeeGSTPercent:  getEnvIntAllowZero("PLATFORM_FEE_GST_PERCENT", 18),
+		AndroidPackage:         getEnv("ANDROID_PACKAGE", "app.hivemind.hivemind"),
+		AndroidCertSHA256:      getEnv("ANDROID_CERT_SHA256", ""),
+		AppleTeamID:            getEnv("APPLE_TEAM_ID", ""),
+		LegalDir:               getEnv("LEGAL_DIR", ""),
 		DBMaxConns:             getEnvInt("DB_MAX_CONNS", 20),
 		TrustProxyHeaders:      getEnvBool("TRUST_PROXY_HEADERS", false),
 		PassSecretSet:          os.Getenv("PASS_SECRET") != "",
@@ -204,6 +218,9 @@ func (c Config) Validate() error {
 		}
 		if !strings.HasPrefix(c.MediaPublicBaseURL, "https://") {
 			problems = append(problems, "MEDIA_PUBLIC_BASE_URL must be https")
+		}
+		if c.SellerGSTIN == "" {
+			problems = append(problems, "SELLER_GSTIN must be set: receipts are issued in your name")
 		}
 		if c.CashfreeSandbox {
 			problems = append(problems, "CASHFREE_SANDBOX must be false in production")

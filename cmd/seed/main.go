@@ -22,6 +22,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/hivemind/backend/internal/users"
 	"math/rand"
 	"os"
 	"strings"
@@ -351,6 +352,9 @@ func (s *seeder) seedPeople() error {
 		dob := fmt.Sprintf("%d-%02d-%02d", p.born, 1+s.rng.Intn(12), 1+s.rng.Intn(28))
 		id, err := s.one(`INSERT INTO users (email, city_id, date_of_birth, age_verified, status) VALUES ($1,$2,$3::date,true,'active') RETURNING id::text`, email, s.city, dob)
 		if err != nil {
+			return err
+		}
+		if err := s.exec(`INSERT INTO consents (user_id, consent_type) VALUES ($1, 'terms:' || $2::text) ON CONFLICT DO NOTHING`, id, users.CurrentTermsVersion); err != nil {
 			return err
 		}
 		s.users = append(s.users, id)

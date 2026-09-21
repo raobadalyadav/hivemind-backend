@@ -38,23 +38,10 @@ func (h *Handler) GetCatalog(ctx context.Context, req *socialv1.GetCatalogReques
 	return &socialv1.GetCatalogResponse{Products: out}, nil
 }
 
+// Subscribe is closed until store receipts are verified with Apple/Google: today the receipt string
+// would be trusted as-is, which hands out paid entitlements to anyone who calls it.
 func (h *Handler) Subscribe(ctx context.Context, req *socialv1.SubscribeRequest) (*socialv1.Subscription, error) {
-	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
-	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "auth required")
-	}
-	sub, err := h.svc.Subscribe(ctx, userID, req.GetProductId(), req.GetStoreReceipt())
-	if err != nil {
-		switch err {
-		case ErrInvalidInput:
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		case ErrSubscriptionNotFound:
-			return nil, status.Error(codes.NotFound, "product not found")
-		default:
-			return nil, status.Error(codes.Internal, "failed to subscribe")
-		}
-	}
-	return toProto(sub), nil
+	return nil, status.Error(codes.Unimplemented, "subscriptions are not available yet")
 }
 
 func (h *Handler) CancelSubscription(ctx context.Context, req *socialv1.CancelSubscriptionRequest) (*socialv1.Subscription, error) {

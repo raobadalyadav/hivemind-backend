@@ -264,3 +264,72 @@ func TestAbandonedOrders_GiveCreditsBack(t *testing.T) {
 		t.Fatalf("credits returned after abandonment: %d", bal)
 	}
 }
+
+func TestReceipt_IssuedOnceWithTheGSTSplit(t *testing.T) {
+	e := newMoneyEnv(t, 5)
+	e.svc.WithSeller(Seller{Name: "HiveMind Pvt Ltd", GSTIN: "29ABCDE1234F1Z5", Address: "Bengaluru", FeeGSTPercent: 18})
+	ctx := context.Background()
+	b := e.book(t, e.guest)
+	order, _, _ := e.svc.CreateOrder(ctx, &Order{BookingID: b.ID}, e.guest, "9999999999", "", false)
+
+	if _, err := e.svc.GetReceipt(ctx, b.ID, e.guest); err != ErrPaymentNotFound {
+		t.Fatalf("no receipt before a payment exists: %v", err)
+	}
+	e.svc.MarkCaptured(ctx, order.ID, "pay_rc_"+order.ID, order.AmountMinor)
+
+	r, err := e.svc.GetReceipt(ctx, b.ID, e.guest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// price ₹500 + fee ₹25 (5%) = ₹525; the fee is GST-inclusive: 2500 = 2119 + 381 at 18%
+	if r.PriceMinor != 50000 || r.FeeMinor != 2500 || r.FeeBaseMinor+r.FeeGSTMinor != r.FeeMinor || r.FeeGSTMinor != 381 || r.PaidMinor != 52500 {
+		t.Fatalf("amounts: %+v", r)
+	}
+	if r.SellerGSTIN != "29ABCDE1234F1Z5" || r.Number == "" || r.BuyerEmail == "" {
+		t.Fatalf("seller and number: %+v", r)
+	}
+	again, _ := e.svc.GetReceipt(ctx, b.ID, e.guest)
+	if again.Number != r.Number || !again.IssuedAt.Equal(r.IssuedAt) {
+		t.Fatalf("a receipt is issued once and stays the same: %s vs %s", again.Number, r.Number)
+	}
+	if _, err := e.svc.GetReceipt(ctx, b.ID, e.oth); err != ErrPaymentNotFound {
+		t.Fatalf("other people can't read my receipt: %v", err)
+	}
+}
+
+func TestReceiptHelpers(t *testing.T) {
+	if financialYear(time.Date(2026, 9, 21, 0, 0, 0, 0, time.UTC)) != "2026-27" || financialYear(time.Date(2027, 2, 1, 0, 0, 0, 0, time.UTC)) != "2026-27" || financialYear(time.Date(2027, 4, 1, 0, 0, 0, 0, time.UTC)) != "2027-28" {
+		t.Fatal("Indian financial year runs April to March")
+	}
+	if b, g := splitGST(11800, 18); b != 10000 || g != 1800 {
+		t.Fatalf("clean split: %d %d", b, g)
+	}
+	if b, g := splitGST(2500, 0); b != 2500 || g != 0 {
+		t.Fatalf("no GST: %d %d", b, g)
+	}
+}
+
+func TestRefundWebhook_AFailedRefundIsRetriedForTheDifference(t *testing.T) {
+	e := newMoneyEnv(t, 5)
+	ctx := context.Background()
+	b := e.book(t, e.guest)
+	order, _, _ := e.svc.CreateOrder(ctx, &Order{BookingID: b.ID}, e.guest, "9999999999", "", false)
+	e.svc.MarkCaptured(ctx, order.ID, "pay_w_"+order.ID, order.AmountMinor)
+	e.svc.RefundBookingIfCaptured(ctx, b.ID, "cancel", 100)
+	if len(e.gw.refunds) != 1 {
+		t.Fatalf("first attempt: %v", e.gw.refunds)
+	}
+	var refundID string
+	e.pool.QueryRow(ctx, `SELECT r.id::text FROM refunds r JOIN payments p ON p.id=r.payment_id JOIN orders o ON o.id=p.order_id WHERE o.booking_id=$1`, b.ID).Scan(&refundID)
+
+	if err := e.svc.RecordRefundResult(ctx, "not-ours", "FAILED"); err != nil {
+		t.Fatalf("foreign ids are ignored: %v", err)
+	}
+	if err := e.svc.RecordRefundResult(ctx, refundID, "FAILED"); err != nil {
+		t.Fatal(err)
+	}
+	// the gateway said it failed: it no longer counts, so a retry sends the money again
+	if err := e.svc.RefundBookingIfCaptured(ctx, b.ID, "cancel", 100); err != nil || len(e.gw.refunds) != 2 || e.gw.refunds[1] != order.AmountMinor {
+		t.Fatalf("retry after a failed refund: %v %v", err, e.gw.refunds)
+	}
+}

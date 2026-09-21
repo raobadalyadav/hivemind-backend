@@ -48,6 +48,7 @@ type Service struct {
 	gateway  GatewayClient
 	bookings BookingPort
 	logger   *slog.Logger
+	seller   Seller
 }
 
 func NewService(repo *Repository, gateway GatewayClient, bookings BookingPort, logger *slog.Logger) *Service {
@@ -280,4 +281,21 @@ func (s *Service) RefundBookingIfCaptured(ctx context.Context, bookingID, reason
 // was cancelled) and gives their credits back (worker job).
 func (s *Service) ReleaseAbandonedOrders(ctx context.Context, _ time.Time) (int, error) {
 	return s.repo.ReleaseAbandonedOrders(ctx)
+}
+
+// RecordRefundResult applies the gateway's final word on a refund (Cashfree's refund webhook). A refund that
+// failed or was cancelled no longer counts as returned, so the worker's next attempt refunds the difference;
+// staff are told through the log line and the failed row.
+func (s *Service) RecordRefundResult(ctx context.Context, refundID, status string) error {
+	if refundID == "" {
+		return nil // not one of ours
+	}
+	switch status {
+	case "SUCCESS":
+		return s.repo.SetRefundStatus(ctx, refundID, "processed")
+	case "FAILED", "CANCELLED":
+		s.logger.Error("refund did not go through at the gateway", "refund_id", refundID, "status", status)
+		return s.repo.SetRefundStatus(ctx, refundID, "failed")
+	}
+	return nil
 }

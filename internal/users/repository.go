@@ -4,19 +4,22 @@ package users
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type User struct {
-	ID          string
-	Email       string
-	CityID      string
-	AgeVerified bool
-	Status      string
-	DateOfBirth string // YYYY-MM-DD, empty until the person sets it
+	ID            string
+	Email         string
+	CityID        string
+	AgeVerified   bool
+	Status        string
+	DateOfBirth   string // YYYY-MM-DD, empty until the person sets it
+	TermsAccepted bool   // agreed to CurrentTermsVersion
 }
 
 type Repository struct {
@@ -30,8 +33,10 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 func (r *Repository) Get(ctx context.Context, id string) (*User, error) {
 	var u User
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, email, COALESCE(city_id::text,''), age_verified, status, COALESCE(to_char(date_of_birth,'YYYY-MM-DD'),'') FROM users WHERE id = $1`, id,
-	).Scan(&u.ID, &u.Email, &u.CityID, &u.AgeVerified, &u.Status, &u.DateOfBirth)
+		`SELECT id, email, COALESCE(city_id::text,''), age_verified, status, COALESCE(to_char(date_of_birth,'YYYY-MM-DD'),''),
+		        EXISTS (SELECT 1 FROM consents c WHERE c.user_id = users.id AND c.consent_type = 'terms:' || $2::text)
+		 FROM users WHERE id = $1`, id, CurrentTermsVersion,
+	).Scan(&u.ID, &u.Email, &u.CityID, &u.AgeVerified, &u.Status, &u.DateOfBirth, &u.TermsAccepted)
 	if err != nil {
 		return nil, err
 	}
@@ -162,4 +167,51 @@ func (r *Repository) SetBirthday(ctx context.Context, userID string, dob time.Ti
 		return ErrBirthdayLocked
 	}
 	return nil
+}
+
+// CurrentTermsVersion identifies the Terms of Service + Privacy Policy text people must have accepted.
+// Bump it when the documents change materially: everyone is asked again on their next launch.
+const CurrentTermsVersion = "2026-09"
+
+// AcceptTerms records the acceptance (idempotent).
+func (r *Repository) AcceptTerms(ctx context.Context, userID, version string) error {
+	_, err := r.pool.Exec(ctx, `INSERT INTO consents (user_id, consent_type) VALUES ($1, 'terms:' || $2::text) ON CONFLICT DO NOTHING`, userID, version)
+	return err
+}
+
+// exportQueries: each section of the personal-data export, run with $1 = the user id. They select whole
+// rows (as JSON) so a column added later is exported too; secrets (push tokens, token hashes) are left out.
+var exportQueries = []struct{ name, query string }{
+	{"account", `SELECT id, email, recovery_email, date_of_birth, role, status, city_id, created_at FROM users WHERE id = $1`},
+	{"profile", `SELECT * FROM user_profiles WHERE user_id = $1`},
+	{"preferences", `SELECT * FROM user_preferences WHERE user_id = $1`},
+	{"photos", `SELECT id, url, position, created_at FROM profile_photos WHERE user_id = $1`},
+	{"emergency_contacts", `SELECT * FROM emergency_contacts WHERE user_id = $1`},
+	{"sign_in_methods", `SELECT provider, email, created_at FROM oauth_identities WHERE user_id = $1`},
+	{"devices", `SELECT platform, created_at FROM devices WHERE user_id = $1`},
+	{"consents", `SELECT consent_type, granted_at FROM consents WHERE user_id = $1`},
+	{"posts", `SELECT * FROM posts WHERE author_id = $1`},
+	{"comments", `SELECT * FROM comments WHERE author_id = $1`},
+	{"stories", `SELECT id, caption, media_type, created_at, expires_at FROM stories WHERE author_id = $1`},
+	{"connections", `SELECT * FROM connections WHERE requester_id = $1 OR recipient_id = $1`},
+	{"bookings", `SELECT * FROM bookings WHERE user_id = $1`},
+	{"orders", `SELECT o.* FROM orders o JOIN bookings b ON b.id = o.booking_id WHERE b.user_id = $1`},
+	{"credit_ledger", `SELECT * FROM credit_ledger WHERE user_id = $1`},
+	{"reviews", `SELECT * FROM reviews WHERE user_id = $1`},
+	{"saved_plans", `SELECT plan_id, created_at FROM plan_saves WHERE user_id = $1`},
+	{"reports_filed", `SELECT id, subject_type, reason, created_at FROM reports WHERE reporter_id = $1`},
+}
+
+// ExportData returns everything the app holds about the person, as one JSON object (DPDP / GDPR access request).
+func (r *Repository) ExportData(ctx context.Context, userID string) ([]byte, error) {
+	out := make(map[string]json.RawMessage, len(exportQueries)+1)
+	for _, e := range exportQueries {
+		var rows []byte
+		if err := r.pool.QueryRow(ctx, `SELECT COALESCE(jsonb_agg(to_jsonb(t)), '[]'::jsonb) FROM (`+e.query+`) t`, userID).Scan(&rows); err != nil {
+			return nil, fmt.Errorf("export %s: %w", e.name, err)
+		}
+		out[e.name] = rows
+	}
+	out["exported_at"], _ = json.Marshal(time.Now().UTC())
+	return json.MarshalIndent(out, "", "  ")
 }

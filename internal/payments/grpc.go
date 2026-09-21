@@ -3,6 +3,8 @@ package payments
 import (
 	"context"
 
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -139,4 +141,28 @@ func (h *Handler) VerifyOrder(ctx context.Context, req *socialv1.VerifyOrderRequ
 		return nil, status.Error(codes.Unavailable, "couldn't check the payment yet — try again in a moment")
 	}
 	return orderToProto(o), nil
+}
+
+func (h *Handler) GetReceipt(ctx context.Context, req *socialv1.GetReceiptRequest) (*socialv1.Receipt, error) {
+	callerID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	r, err := h.svc.GetReceipt(ctx, req.GetBookingId(), callerID)
+	if err != nil {
+		switch err {
+		case ErrInvalidInput:
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		case ErrPaymentNotFound:
+			return nil, status.Error(codes.NotFound, "no receipt for this booking")
+		}
+		return nil, status.Error(codes.Internal, "failed to load receipt")
+	}
+	money := func(m int64) *socialv1.Money { return &socialv1.Money{MinorUnits: m, Currency: r.Currency} }
+	return &socialv1.Receipt{
+		Number: r.Number, IssuedAt: timestamppb.New(r.IssuedAt), PlanTitle: r.PlanTitle,
+		Price: money(r.PriceMinor), ServiceFee: money(r.FeeMinor), FeeBase: money(r.FeeBaseMinor), FeeGst: money(r.FeeGSTMinor),
+		GstPercent: r.GSTPercent, Paid: money(r.PaidMinor),
+		SellerName: r.SellerName, SellerGstin: r.SellerGSTIN, SellerAddress: r.SellerAddress, BuyerEmail: r.BuyerEmail,
+	}, nil
 }

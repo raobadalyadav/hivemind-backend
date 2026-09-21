@@ -11,7 +11,7 @@ func cleanEnv(t *testing.T) {
 	for _, k := range []string{"APP_ENV", "GRPC_PORT", "DATABASE_URL", "REDIS_ADDR", "NATS_URL", "MINIO_ENDPOINT", "MINIO_ACCESS_KEY", "MINIO_SECRET_KEY",
 		"MINIO_BUCKET", "MINIO_USE_SSL", "JWT_SECRET", "JWT_TTL", "PASS_SECRET", "PUBLIC_WEB_BASE_URL", "MEDIA_PUBLIC_BASE_URL", "WEBHOOK_PORT",
 		"CASHFREE_SANDBOX", "TLS_CERT_FILE", "TLS_KEY_FILE", "RATE_LIMIT_PER_MINUTE", "AUTH_RATE_LIMIT_PER_MINUTE", "TRUST_PROXY_HEADERS",
-		"DB_MAX_CONNS", "MEDIA_MAX_IMAGE_MB", "MEDIA_MAX_VIDEO_MB"} {
+		"DB_MAX_CONNS", "ANDROID_PACKAGE", "ANDROID_CERT_SHA256", "APPLE_TEAM_ID", "LEGAL_DIR", "SELLER_GSTIN", "SELLER_NAME", "SELLER_ADDRESS", "PLATFORM_FEE_GST_PERCENT", "MEDIA_MAX_IMAGE_MB", "MEDIA_MAX_VIDEO_MB"} {
 		t.Setenv(k, "")
 	}
 }
@@ -28,6 +28,7 @@ func setProdEnv(t *testing.T) {
 	t.Setenv("PUBLIC_WEB_BASE_URL", "https://hivemind.app")
 	t.Setenv("MEDIA_PUBLIC_BASE_URL", "https://media.hivemind.app")
 	t.Setenv("CASHFREE_SANDBOX", "false")
+	t.Setenv("SELLER_GSTIN", "29ABCDE1234F1Z5")
 }
 
 func TestValidate_DevAcceptsDefaults(t *testing.T) {
@@ -44,7 +45,7 @@ func TestValidate_ProductionRefusesDevDefaults(t *testing.T) {
 	if err == nil {
 		t.Fatal("production with default secrets must refuse to start")
 	}
-	for _, want := range []string{"JWT_SECRET", "PASS_SECRET", "DATABASE_URL", "MINIO_SECRET_KEY", "MEDIA_PUBLIC_BASE_URL", "CASHFREE_SANDBOX"} {
+	for _, want := range []string{"JWT_SECRET", "PASS_SECRET", "DATABASE_URL", "MINIO_SECRET_KEY", "MEDIA_PUBLIC_BASE_URL", "CASHFREE_SANDBOX", "SELLER_GSTIN"} {
 		if !strings.Contains(err.Error(), want) {
 			t.Errorf("error should mention %s: %v", want, err)
 		}

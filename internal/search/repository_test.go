@@ -43,11 +43,17 @@ func TestSearch_WildcardsAreLiteral(t *testing.T) {
 	if count("100% fun_night "+sfx) != 1 {
 		t.Fatal("a literal % and _ in the query still find the plan")
 	}
-	if count("%") > 3 { // only titles that really contain a percent sign
-		t.Fatalf("%% must not match every plan, got %d", count("%"))
+	// only plans that really contain the character may match it (the count is taken from the data itself, so the
+	// test doesn't depend on how many rows earlier runs left behind)
+	literal := func(ch string) int {
+		var n int
+		pool.QueryRow(ctx, `SELECT count(*) FROM plans_discoverable WHERE status = 'published' AND (position($1 in title) > 0 OR position($1 in description) > 0)`, ch).Scan(&n)
+		return n
 	}
-	if count("_") > 5 {
-		t.Fatalf("_ must not match every character, got %d", count("_"))
+	for _, ch := range []string{"%", "_"} {
+		if got, want := count(ch), literal(ch); got != min(want, 50) {
+			t.Fatalf("%q must match only plans containing it: got %d want %d", ch, got, min(want, 50))
+		}
 	}
 	if count(`\`) != 0 {
 		t.Fatal("a lone backslash is literal, not an escape error")

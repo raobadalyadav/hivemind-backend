@@ -408,6 +408,12 @@ func (r *Repository) CompleteRefund(ctx context.Context, refundID, gatewayRefund
 	return tx.Commit(ctx)
 }
 
+// SetRefundStatus records the gateway's final result for a refund attempt (ignores ids that aren't ours).
+func (r *Repository) SetRefundStatus(ctx context.Context, refundID, status string) error {
+	_, err := r.pool.Exec(ctx, `UPDATE refunds SET status = $2::refund_status, updated_at = now() WHERE id::text = $1`, refundID, status)
+	return err
+}
+
 // RefundedTotal is what has been (or is being) returned for a payment.
 func (r *Repository) RefundedTotal(ctx context.Context, paymentID string) (int64, error) {
 	var n int64

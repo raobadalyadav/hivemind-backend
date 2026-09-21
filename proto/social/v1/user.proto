@@ -10,7 +10,11 @@ option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
 service UserService {
   rpc GetUser(GetUserRequest) returns (User);
   rpc UpdateUser(UpdateUserRequest) returns (User);
+  // AcceptTerms records that the caller agreed to the current Terms of Service and Privacy Policy version.
+  rpc AcceptTerms(AcceptTermsRequest) returns (User);
   rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
+  // ExportMyData returns everything held about the caller as JSON (data-access request under DPDP / GDPR).
+  rpc ExportMyData(ExportMyDataRequest) returns (ExportMyDataResponse);
   rpc RegisterDevice(RegisterDeviceRequest) returns (RegisterDeviceResponse);
   // UpdateLocation — flow.md §2.3/§9: the client pushes live GPS coordinates,
   // stored as the user's last known location for NEAR_YOU discovery.
@@ -24,6 +28,8 @@ message User {
   bool age_verified = 4;
   Audit audit = 5;
   string date_of_birth = 6; // YYYY-MM-DD; only ever returned to the person themself (or staff)
+  bool terms_accepted = 7;  // agreed to the CURRENT Terms + Privacy Policy version
+  string current_terms_version = 8; // what the app must ask them to accept
 }
 
 message GetUserRequest {
@@ -58,3 +64,12 @@ message UpdateLocationRequest {
 }
 
 message UpdateLocationResponse {}
+
+message AcceptTermsRequest { string version = 1; } // must equal User.current_terms_version
+
+message ExportMyDataRequest {}
+
+message ExportMyDataResponse {
+  string json = 1;
+  string filename = 2;
+}

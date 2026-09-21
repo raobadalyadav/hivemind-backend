@@ -14,6 +14,7 @@ import (
 type AccountState struct {
 	Active bool // exists and isn't suspended or deleted
 	Adult  bool // has set an 18+ date of birth (age_verified)
+	Agreed bool // accepted the current Terms + Privacy Policy
 }
 
 // ActiveChecker looks up the caller's AccountState.
@@ -24,7 +25,9 @@ type ActiveChecker func(ctx context.Context, userID string) (AccountState, error
 var ageGateOpen = map[string]bool{
 	"/social.v1.UserService/GetUser":                true,
 	"/social.v1.UserService/UpdateUser":             true,
+	"/social.v1.UserService/AcceptTerms":            true,
 	"/social.v1.UserService/DeleteAccount":          true,
+	"/social.v1.UserService/ExportMyData":           true,
 	"/social.v1.UserService/RegisterDevice":         true,
 	"/social.v1.ProfileService/GetProfile":          true,
 	"/social.v1.NotificationService/GetUnreadCount": true,
@@ -56,7 +59,7 @@ func ActiveUserInterceptor(check ActiveChecker, ttl time.Duration) grpc.UnarySer
 				return handler(ctx, req)
 			}
 			e = entry{state: active, expires: time.Now().Add(ttl)}
-			if !active.Adult {
+			if !active.Adult || !active.Agreed {
 				e.expires = time.Now().Add(2 * time.Second) // it flips the moment they set a birthday: re-check soon
 			}
 			mu.Lock()
@@ -69,9 +72,20 @@ func ActiveUserInterceptor(check ActiveChecker, ttl time.Duration) grpc.UnarySer
 		if !e.state.Active {
 			return nil, status.Error(codes.Unauthenticated, "this account is not active")
 		}
-		if !e.state.Adult && !ageGateOpen[info.FullMethod] {
-			return nil, status.Error(codes.FailedPrecondition, "add your date of birth (18+) to continue")
+		if !ageGateOpen[info.FullMethod] {
+			if !e.state.Adult {
+				return nil, status.Error(codes.FailedPrecondition, "add your date of birth (18+) to continue")
+			}
+			if !e.state.Agreed {
+				return nil, status.Error(codes.FailedPrecondition, "accept the Terms of Service and Privacy Policy to continue")
+			}
 		}
-		return handler(ctx, req)
+		resp, err := handler(ctx, req)
+		if ageGateOpen[info.FullMethod] && (!e.state.Adult || !e.state.Agreed) {
+			mu.Lock()
+			delete(cache, uid) // the call may have just set the birthday or accepted the terms: re-check on the next one
+			mu.Unlock()
+		}
+		return resp, err
 	}
 }

@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package social.v1;
 
+import "google/protobuf/timestamp.proto";
 import "social/v1/common.proto";
 
 option go_package = "github.com/hivemind/backend/gen/social/v1;socialv1";
@@ -17,6 +18,8 @@ service PaymentService {
   // the app calls it right after the checkout sheet closes, so a booking is confirmed even when the
   // webhook is slow or can't reach the server.
   rpc VerifyOrder(VerifyOrderRequest) returns (Order);
+  // GetReceipt: the receipt for a booking the caller paid for (issued on first request, then stable).
+  rpc GetReceipt(GetReceiptRequest) returns (Receipt);
   rpc GetPayment(GetPaymentRequest) returns (Payment);
   rpc RefundPayment(RefundPaymentRequest) returns (Refund);
   rpc GetMyCreditBalance(GetMyCreditBalanceRequest) returns (CreditBalance);
@@ -79,3 +82,21 @@ message CreditBalance {
 }
 
 message VerifyOrderRequest { string order_id = 1; }
+
+message GetReceiptRequest { string booking_id = 1; }
+
+message Receipt {
+  string number = 1;
+  google.protobuf.Timestamp issued_at = 2;
+  string plan_title = 3;
+  Money price = 4;          // charged by the host
+  Money service_fee = 5;    // platform fee, GST included
+  Money fee_base = 6;       // fee before GST
+  Money fee_gst = 7;
+  double gst_percent = 8;
+  Money paid = 9;           // what was actually charged (after credits / coupon)
+  string seller_name = 10;
+  string seller_gstin = 11;
+  string seller_address = 12;
+  string buyer_email = 13;
+}

@@ -147,3 +147,30 @@ func TestBirthday_SetOnceAndOnlyFor18Plus(t *testing.T) {
 		t.Fatalf("the birthday is locked once set: %v", err)
 	}
 }
+
+func TestAcceptTerms_OnlyTheCurrentVersionAndIdempotent(t *testing.T) {
+	pool := testPool(t)
+	defer pool.Close()
+	ctx := context.Background()
+	svc := NewService(NewRepository(pool))
+	var id string
+	pool.QueryRow(ctx, `INSERT INTO users (email) VALUES ($1) RETURNING id`, "terms-"+time.Now().Format("150405.000000000")+"@example.com").Scan(&id)
+
+	if u, _ := svc.GetUser(ctx, id); u.TermsAccepted {
+		t.Fatal("nobody has accepted anything yet")
+	}
+	if _, err := svc.AcceptTerms(ctx, id, "1999-01"); err != ErrInvalidInput {
+		t.Fatalf("a stale/unknown version is refused: %v", err)
+	}
+	for i := 0; i < 2; i++ { // twice: harmless
+		u, err := svc.AcceptTerms(ctx, id, CurrentTermsVersion)
+		if err != nil || !u.TermsAccepted {
+			t.Fatalf("accept: %+v %v", u, err)
+		}
+	}
+	var n int
+	pool.QueryRow(ctx, `SELECT count(*) FROM consents WHERE user_id=$1`, id).Scan(&n)
+	if n != 1 {
+		t.Fatalf("one consent row, got %d", n)
+	}
+}

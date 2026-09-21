@@ -84,3 +84,14 @@ func TestParseWebhookEvent(t *testing.T) {
 		t.Errorf("expected amount_minor 59900 (paise), got %d", event.AmountMinor)
 	}
 }
+
+func TestParseWebhookEvent_RefundAndRounding(t *testing.T) {
+	ev, err := ParseWebhookEvent([]byte(`{"type":"REFUND_STATUS_WEBHOOK","data":{"refund":{"refund_id":"r-1","refund_status":"SUCCESS"},"order":{"order_id":"o-1"}}}`))
+	if err != nil || ev.Type != EventRefundStatus || ev.RefundID != "r-1" || ev.RefundStatus != "SUCCESS" {
+		t.Fatalf("refund event: %+v %v", ev, err)
+	}
+	ev, _ = ParseWebhookEvent([]byte(`{"type":"PAYMENT_SUCCESS_WEBHOOK","data":{"order":{"order_id":"o"},"payment":{"cf_payment_id":"1","payment_amount":0.29}}}`))
+	if ev.AmountMinor != 29 {
+		t.Fatalf("0.29 rupees is 29 paise, got %d", ev.AmountMinor)
+	}
+}

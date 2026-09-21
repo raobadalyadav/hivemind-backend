@@ -9,6 +9,7 @@ package socialv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -554,11 +555,195 @@ func (x *VerifyOrderRequest) GetOrderId() string {
 	return ""
 }
 
+type GetReceiptRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BookingId     string                 `protobuf:"bytes,1,opt,name=booking_id,json=bookingId,proto3" json:"booking_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetReceiptRequest) Reset() {
+	*x = GetReceiptRequest{}
+	mi := &file_social_v1_payment_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetReceiptRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetReceiptRequest) ProtoMessage() {}
+
+func (x *GetReceiptRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_payment_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetReceiptRequest.ProtoReflect.Descriptor instead.
+func (*GetReceiptRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_payment_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *GetReceiptRequest) GetBookingId() string {
+	if x != nil {
+		return x.BookingId
+	}
+	return ""
+}
+
+type Receipt struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Number        string                 `protobuf:"bytes,1,opt,name=number,proto3" json:"number,omitempty"`
+	IssuedAt      *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=issued_at,json=issuedAt,proto3" json:"issued_at,omitempty"`
+	PlanTitle     string                 `protobuf:"bytes,3,opt,name=plan_title,json=planTitle,proto3" json:"plan_title,omitempty"`
+	Price         *Money                 `protobuf:"bytes,4,opt,name=price,proto3" json:"price,omitempty"`                             // charged by the host
+	ServiceFee    *Money                 `protobuf:"bytes,5,opt,name=service_fee,json=serviceFee,proto3" json:"service_fee,omitempty"` // platform fee, GST included
+	FeeBase       *Money                 `protobuf:"bytes,6,opt,name=fee_base,json=feeBase,proto3" json:"fee_base,omitempty"`          // fee before GST
+	FeeGst        *Money                 `protobuf:"bytes,7,opt,name=fee_gst,json=feeGst,proto3" json:"fee_gst,omitempty"`
+	GstPercent    float64                `protobuf:"fixed64,8,opt,name=gst_percent,json=gstPercent,proto3" json:"gst_percent,omitempty"`
+	Paid          *Money                 `protobuf:"bytes,9,opt,name=paid,proto3" json:"paid,omitempty"` // what was actually charged (after credits / coupon)
+	SellerName    string                 `protobuf:"bytes,10,opt,name=seller_name,json=sellerName,proto3" json:"seller_name,omitempty"`
+	SellerGstin   string                 `protobuf:"bytes,11,opt,name=seller_gstin,json=sellerGstin,proto3" json:"seller_gstin,omitempty"`
+	SellerAddress string                 `protobuf:"bytes,12,opt,name=seller_address,json=sellerAddress,proto3" json:"seller_address,omitempty"`
+	BuyerEmail    string                 `protobuf:"bytes,13,opt,name=buyer_email,json=buyerEmail,proto3" json:"buyer_email,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Receipt) Reset() {
+	*x = Receipt{}
+	mi := &file_social_v1_payment_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Receipt) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Receipt) ProtoMessage() {}
+
+func (x *Receipt) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_payment_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Receipt.ProtoReflect.Descriptor instead.
+func (*Receipt) Descriptor() ([]byte, []int) {
+	return file_social_v1_payment_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *Receipt) GetNumber() string {
+	if x != nil {
+		return x.Number
+	}
+	return ""
+}
+
+func (x *Receipt) GetIssuedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.IssuedAt
+	}
+	return nil
+}
+
+func (x *Receipt) GetPlanTitle() string {
+	if x != nil {
+		return x.PlanTitle
+	}
+	return ""
+}
+
+func (x *Receipt) GetPrice() *Money {
+	if x != nil {
+		return x.Price
+	}
+	return nil
+}
+
+func (x *Receipt) GetServiceFee() *Money {
+	if x != nil {
+		return x.ServiceFee
+	}
+	return nil
+}
+
+func (x *Receipt) GetFeeBase() *Money {
+	if x != nil {
+		return x.FeeBase
+	}
+	return nil
+}
+
+func (x *Receipt) GetFeeGst() *Money {
+	if x != nil {
+		return x.FeeGst
+	}
+	return nil
+}
+
+func (x *Receipt) GetGstPercent() float64 {
+	if x != nil {
+		return x.GstPercent
+	}
+	return 0
+}
+
+func (x *Receipt) GetPaid() *Money {
+	if x != nil {
+		return x.Paid
+	}
+	return nil
+}
+
+func (x *Receipt) GetSellerName() string {
+	if x != nil {
+		return x.SellerName
+	}
+	return ""
+}
+
+func (x *Receipt) GetSellerGstin() string {
+	if x != nil {
+		return x.SellerGstin
+	}
+	return ""
+}
+
+func (x *Receipt) GetSellerAddress() string {
+	if x != nil {
+		return x.SellerAddress
+	}
+	return ""
+}
+
+func (x *Receipt) GetBuyerEmail() string {
+	if x != nil {
+		return x.BuyerEmail
+	}
+	return ""
+}
+
 var File_social_v1_payment_proto protoreflect.FileDescriptor
 
 const file_social_v1_payment_proto_rawDesc = "" +
 	"\n" +
-	"\x17social/v1/payment.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"\xd0\x01\n" +
+	"\x17social/v1/payment.proto\x12\tsocial.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x16social/v1/common.proto\"\xd0\x01\n" +
 	"\x05Order\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
@@ -598,10 +783,35 @@ const file_social_v1_payment_proto_rawDesc = "" +
 	"\rCreditBalance\x12#\n" +
 	"\rbalance_minor\x18\x01 \x01(\x03R\fbalanceMinor\"/\n" +
 	"\x12VerifyOrderRequest\x12\x19\n" +
-	"\border_id\x18\x01 \x01(\tR\aorderId2\xeb\x02\n" +
+	"\border_id\x18\x01 \x01(\tR\aorderId\"2\n" +
+	"\x11GetReceiptRequest\x12\x1d\n" +
+	"\n" +
+	"booking_id\x18\x01 \x01(\tR\tbookingId\"\xff\x03\n" +
+	"\aReceipt\x12\x16\n" +
+	"\x06number\x18\x01 \x01(\tR\x06number\x127\n" +
+	"\tissued_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\bissuedAt\x12\x1d\n" +
+	"\n" +
+	"plan_title\x18\x03 \x01(\tR\tplanTitle\x12&\n" +
+	"\x05price\x18\x04 \x01(\v2\x10.social.v1.MoneyR\x05price\x121\n" +
+	"\vservice_fee\x18\x05 \x01(\v2\x10.social.v1.MoneyR\n" +
+	"serviceFee\x12+\n" +
+	"\bfee_base\x18\x06 \x01(\v2\x10.social.v1.MoneyR\afeeBase\x12)\n" +
+	"\afee_gst\x18\a \x01(\v2\x10.social.v1.MoneyR\x06feeGst\x12\x1f\n" +
+	"\vgst_percent\x18\b \x01(\x01R\n" +
+	"gstPercent\x12$\n" +
+	"\x04paid\x18\t \x01(\v2\x10.social.v1.MoneyR\x04paid\x12\x1f\n" +
+	"\vseller_name\x18\n" +
+	" \x01(\tR\n" +
+	"sellerName\x12!\n" +
+	"\fseller_gstin\x18\v \x01(\tR\vsellerGstin\x12%\n" +
+	"\x0eseller_address\x18\f \x01(\tR\rsellerAddress\x12\x1f\n" +
+	"\vbuyer_email\x18\r \x01(\tR\n" +
+	"buyerEmail2\xab\x03\n" +
 	"\x0ePaymentService\x12>\n" +
 	"\vCreateOrder\x12\x1d.social.v1.CreateOrderRequest\x1a\x10.social.v1.Order\x12>\n" +
 	"\vVerifyOrder\x12\x1d.social.v1.VerifyOrderRequest\x1a\x10.social.v1.Order\x12>\n" +
+	"\n" +
+	"GetReceipt\x12\x1c.social.v1.GetReceiptRequest\x1a\x12.social.v1.Receipt\x12>\n" +
 	"\n" +
 	"GetPayment\x12\x1c.social.v1.GetPaymentRequest\x1a\x12.social.v1.Payment\x12C\n" +
 	"\rRefundPayment\x12\x1f.social.v1.RefundPaymentRequest\x1a\x11.social.v1.Refund\x12T\n" +
@@ -619,7 +829,7 @@ func file_social_v1_payment_proto_rawDescGZIP() []byte {
 	return file_social_v1_payment_proto_rawDescData
 }
 
-var file_social_v1_payment_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_social_v1_payment_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_social_v1_payment_proto_goTypes = []any{
 	(*Order)(nil),                     // 0: social.v1.Order
 	(*Payment)(nil),                   // 1: social.v1.Payment
@@ -630,29 +840,40 @@ var file_social_v1_payment_proto_goTypes = []any{
 	(*GetMyCreditBalanceRequest)(nil), // 6: social.v1.GetMyCreditBalanceRequest
 	(*CreditBalance)(nil),             // 7: social.v1.CreditBalance
 	(*VerifyOrderRequest)(nil),        // 8: social.v1.VerifyOrderRequest
-	(*Money)(nil),                     // 9: social.v1.Money
+	(*GetReceiptRequest)(nil),         // 9: social.v1.GetReceiptRequest
+	(*Receipt)(nil),                   // 10: social.v1.Receipt
+	(*Money)(nil),                     // 11: social.v1.Money
+	(*timestamppb.Timestamp)(nil),     // 12: google.protobuf.Timestamp
 }
 var file_social_v1_payment_proto_depIdxs = []int32{
-	9,  // 0: social.v1.Order.amount:type_name -> social.v1.Money
-	9,  // 1: social.v1.Payment.amount:type_name -> social.v1.Money
-	9,  // 2: social.v1.Refund.amount:type_name -> social.v1.Money
-	9,  // 3: social.v1.CreateOrderRequest.amount:type_name -> social.v1.Money
-	9,  // 4: social.v1.RefundPaymentRequest.amount:type_name -> social.v1.Money
-	3,  // 5: social.v1.PaymentService.CreateOrder:input_type -> social.v1.CreateOrderRequest
-	8,  // 6: social.v1.PaymentService.VerifyOrder:input_type -> social.v1.VerifyOrderRequest
-	4,  // 7: social.v1.PaymentService.GetPayment:input_type -> social.v1.GetPaymentRequest
-	5,  // 8: social.v1.PaymentService.RefundPayment:input_type -> social.v1.RefundPaymentRequest
-	6,  // 9: social.v1.PaymentService.GetMyCreditBalance:input_type -> social.v1.GetMyCreditBalanceRequest
-	0,  // 10: social.v1.PaymentService.CreateOrder:output_type -> social.v1.Order
-	0,  // 11: social.v1.PaymentService.VerifyOrder:output_type -> social.v1.Order
-	1,  // 12: social.v1.PaymentService.GetPayment:output_type -> social.v1.Payment
-	2,  // 13: social.v1.PaymentService.RefundPayment:output_type -> social.v1.Refund
-	7,  // 14: social.v1.PaymentService.GetMyCreditBalance:output_type -> social.v1.CreditBalance
-	10, // [10:15] is the sub-list for method output_type
-	5,  // [5:10] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	11, // 0: social.v1.Order.amount:type_name -> social.v1.Money
+	11, // 1: social.v1.Payment.amount:type_name -> social.v1.Money
+	11, // 2: social.v1.Refund.amount:type_name -> social.v1.Money
+	11, // 3: social.v1.CreateOrderRequest.amount:type_name -> social.v1.Money
+	11, // 4: social.v1.RefundPaymentRequest.amount:type_name -> social.v1.Money
+	12, // 5: social.v1.Receipt.issued_at:type_name -> google.protobuf.Timestamp
+	11, // 6: social.v1.Receipt.price:type_name -> social.v1.Money
+	11, // 7: social.v1.Receipt.service_fee:type_name -> social.v1.Money
+	11, // 8: social.v1.Receipt.fee_base:type_name -> social.v1.Money
+	11, // 9: social.v1.Receipt.fee_gst:type_name -> social.v1.Money
+	11, // 10: social.v1.Receipt.paid:type_name -> social.v1.Money
+	3,  // 11: social.v1.PaymentService.CreateOrder:input_type -> social.v1.CreateOrderRequest
+	8,  // 12: social.v1.PaymentService.VerifyOrder:input_type -> social.v1.VerifyOrderRequest
+	9,  // 13: social.v1.PaymentService.GetReceipt:input_type -> social.v1.GetReceiptRequest
+	4,  // 14: social.v1.PaymentService.GetPayment:input_type -> social.v1.GetPaymentRequest
+	5,  // 15: social.v1.PaymentService.RefundPayment:input_type -> social.v1.RefundPaymentRequest
+	6,  // 16: social.v1.PaymentService.GetMyCreditBalance:input_type -> social.v1.GetMyCreditBalanceRequest
+	0,  // 17: social.v1.PaymentService.CreateOrder:output_type -> social.v1.Order
+	0,  // 18: social.v1.PaymentService.VerifyOrder:output_type -> social.v1.Order
+	10, // 19: social.v1.PaymentService.GetReceipt:output_type -> social.v1.Receipt
+	1,  // 20: social.v1.PaymentService.GetPayment:output_type -> social.v1.Payment
+	2,  // 21: social.v1.PaymentService.RefundPayment:output_type -> social.v1.Refund
+	7,  // 22: social.v1.PaymentService.GetMyCreditBalance:output_type -> social.v1.CreditBalance
+	17, // [17:23] is the sub-list for method output_type
+	11, // [11:17] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_social_v1_payment_proto_init() }
@@ -667,7 +888,7 @@ func file_social_v1_payment_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_payment_proto_rawDesc), len(file_social_v1_payment_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

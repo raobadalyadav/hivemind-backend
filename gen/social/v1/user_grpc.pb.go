@@ -21,7 +21,9 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	UserService_GetUser_FullMethodName        = "/social.v1.UserService/GetUser"
 	UserService_UpdateUser_FullMethodName     = "/social.v1.UserService/UpdateUser"
+	UserService_AcceptTerms_FullMethodName    = "/social.v1.UserService/AcceptTerms"
 	UserService_DeleteAccount_FullMethodName  = "/social.v1.UserService/DeleteAccount"
+	UserService_ExportMyData_FullMethodName   = "/social.v1.UserService/ExportMyData"
 	UserService_RegisterDevice_FullMethodName = "/social.v1.UserService/RegisterDevice"
 	UserService_UpdateLocation_FullMethodName = "/social.v1.UserService/UpdateLocation"
 )
@@ -34,7 +36,11 @@ const (
 type UserServiceClient interface {
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*User, error)
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*User, error)
+	// AcceptTerms records that the caller agreed to the current Terms of Service and Privacy Policy version.
+	AcceptTerms(ctx context.Context, in *AcceptTermsRequest, opts ...grpc.CallOption) (*User, error)
 	DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error)
+	// ExportMyData returns everything held about the caller as JSON (data-access request under DPDP / GDPR).
+	ExportMyData(ctx context.Context, in *ExportMyDataRequest, opts ...grpc.CallOption) (*ExportMyDataResponse, error)
 	RegisterDevice(ctx context.Context, in *RegisterDeviceRequest, opts ...grpc.CallOption) (*RegisterDeviceResponse, error)
 	// UpdateLocation — flow.md §2.3/§9: the client pushes live GPS coordinates,
 	// stored as the user's last known location for NEAR_YOU discovery.
@@ -69,10 +75,30 @@ func (c *userServiceClient) UpdateUser(ctx context.Context, in *UpdateUserReques
 	return out, nil
 }
 
+func (c *userServiceClient) AcceptTerms(ctx context.Context, in *AcceptTermsRequest, opts ...grpc.CallOption) (*User, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(User)
+	err := c.cc.Invoke(ctx, UserService_AcceptTerms_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *userServiceClient) DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteAccountResponse)
 	err := c.cc.Invoke(ctx, UserService_DeleteAccount_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) ExportMyData(ctx context.Context, in *ExportMyDataRequest, opts ...grpc.CallOption) (*ExportMyDataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ExportMyDataResponse)
+	err := c.cc.Invoke(ctx, UserService_ExportMyData_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +133,11 @@ func (c *userServiceClient) UpdateLocation(ctx context.Context, in *UpdateLocati
 type UserServiceServer interface {
 	GetUser(context.Context, *GetUserRequest) (*User, error)
 	UpdateUser(context.Context, *UpdateUserRequest) (*User, error)
+	// AcceptTerms records that the caller agreed to the current Terms of Service and Privacy Policy version.
+	AcceptTerms(context.Context, *AcceptTermsRequest) (*User, error)
 	DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error)
+	// ExportMyData returns everything held about the caller as JSON (data-access request under DPDP / GDPR).
+	ExportMyData(context.Context, *ExportMyDataRequest) (*ExportMyDataResponse, error)
 	RegisterDevice(context.Context, *RegisterDeviceRequest) (*RegisterDeviceResponse, error)
 	// UpdateLocation — flow.md §2.3/§9: the client pushes live GPS coordinates,
 	// stored as the user's last known location for NEAR_YOU discovery.
@@ -128,8 +158,14 @@ func (UnimplementedUserServiceServer) GetUser(context.Context, *GetUserRequest) 
 func (UnimplementedUserServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*User, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateUser not implemented")
 }
+func (UnimplementedUserServiceServer) AcceptTerms(context.Context, *AcceptTermsRequest) (*User, error) {
+	return nil, status.Error(codes.Unimplemented, "method AcceptTerms not implemented")
+}
 func (UnimplementedUserServiceServer) DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteAccount not implemented")
+}
+func (UnimplementedUserServiceServer) ExportMyData(context.Context, *ExportMyDataRequest) (*ExportMyDataResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ExportMyData not implemented")
 }
 func (UnimplementedUserServiceServer) RegisterDevice(context.Context, *RegisterDeviceRequest) (*RegisterDeviceResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RegisterDevice not implemented")
@@ -194,6 +230,24 @@ func _UserService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_AcceptTerms_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AcceptTermsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).AcceptTerms(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_AcceptTerms_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).AcceptTerms(ctx, req.(*AcceptTermsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UserService_DeleteAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteAccountRequest)
 	if err := dec(in); err != nil {
@@ -208,6 +262,24 @@ func _UserService_DeleteAccount_Handler(srv interface{}, ctx context.Context, de
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServiceServer).DeleteAccount(ctx, req.(*DeleteAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_ExportMyData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExportMyDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).ExportMyData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_ExportMyData_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).ExportMyData(ctx, req.(*ExportMyDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -264,8 +336,16 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UserService_UpdateUser_Handler,
 		},
 		{
+			MethodName: "AcceptTerms",
+			Handler:    _UserService_AcceptTerms_Handler,
+		},
+		{
 			MethodName: "DeleteAccount",
 			Handler:    _UserService_DeleteAccount_Handler,
+		},
+		{
+			MethodName: "ExportMyData",
+			Handler:    _UserService_ExportMyData_Handler,
 		},
 		{
 			MethodName: "RegisterDevice",

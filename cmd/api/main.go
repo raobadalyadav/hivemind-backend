@@ -119,7 +119,9 @@ func main() {
 	}
 	activeCheck := func(ctx context.Context, userID string) (grpcmiddleware.AccountState, error) {
 		var st grpcmiddleware.AccountState
-		err := pool.QueryRow(ctx, `SELECT status = 'active', age_verified FROM users WHERE id = $1`, userID).Scan(&st.Active, &st.Adult)
+		err := pool.QueryRow(ctx, `SELECT status = 'active', age_verified,
+			EXISTS (SELECT 1 FROM consents c WHERE c.user_id = users.id AND c.consent_type = 'terms:' || $2::text)
+			FROM users WHERE id = $1`, userID, users.CurrentTermsVersion).Scan(&st.Active, &st.Adult, &st.Agreed)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return grpcmiddleware.AccountState{}, nil
 		}
@@ -201,7 +203,7 @@ func main() {
 	}
 	// Declared as the interface type for the same nil-interface reason as
 	// emailSender/pushSender above.
-	paymentsSvc := payments.NewService(payments.NewRepository(pool), payments.NewCashfreeGateway(cashfreeClient), payments.AdaptBookings(bookingsSvc, bookings.ErrPlanFull), logger)
+	paymentsSvc := payments.NewService(payments.NewRepository(pool), payments.NewCashfreeGateway(cashfreeClient), payments.AdaptBookings(bookingsSvc, bookings.ErrPlanFull), logger).WithSeller(payments.Seller{Name: cfg.SellerName, GSTIN: cfg.SellerGSTIN, Address: cfg.SellerAddress, FeeGSTPercent: cfg.PlatformFeeGSTPercent})
 
 	// plansSvc and subscriptionsSvc are built as named variables (not inline
 	// in their Register call below) so they can also be injected into
@@ -284,6 +286,7 @@ func main() {
 	// gRPC — a second, separate listener, same process.
 	webhookMux := http.NewServeMux()
 	registerHealth(webhookMux, pool, rdb)
+	registerWellKnown(webhookMux, cfg)
 	if mediaSvc != nil {
 		media.NewHandler(mediaSvc, issuer, logger).Register(webhookMux)
 	}

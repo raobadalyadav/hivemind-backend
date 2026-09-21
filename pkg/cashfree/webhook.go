@@ -1,8 +1,15 @@
 package cashfree
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"math"
+)
 
-const EventPaymentSuccess = "PAYMENT_SUCCESS_WEBHOOK"
+const (
+	EventPaymentSuccess = "PAYMENT_SUCCESS_WEBHOOK"
+	EventPaymentFailed  = "PAYMENT_FAILED_WEBHOOK"
+	EventRefundStatus   = "REFUND_STATUS_WEBHOOK"
+)
 
 type webhookPayload struct {
 	Type string `json:"type"`
@@ -15,6 +22,10 @@ type webhookPayload struct {
 			PaymentStatus string  `json:"payment_status"`
 			PaymentAmount float64 `json:"payment_amount"`
 		} `json:"payment"`
+		Refund struct {
+			RefundID     string `json:"refund_id"`
+			RefundStatus string `json:"refund_status"`
+		} `json:"refund"`
 	} `json:"data"`
 }
 
@@ -22,10 +33,12 @@ type webhookPayload struct {
 // actually needs — deliberately not the raw Cashfree struct, so that
 // package doesn't need to know Cashfree's JSON shape.
 type WebhookEvent struct {
-	Type        string
-	OrderID     string
-	CFPaymentID string
-	AmountMinor int64
+	Type         string
+	OrderID      string
+	CFPaymentID  string
+	AmountMinor  int64
+	RefundID     string // our refunds.id (only for refund events)
+	RefundStatus string // SUCCESS | FAILED | CANCELLED | PENDING
 }
 
 // ParseWebhookEvent does not verify the signature — call
@@ -36,9 +49,11 @@ func ParseWebhookEvent(rawBody []byte) (*WebhookEvent, error) {
 		return nil, err
 	}
 	return &WebhookEvent{
-		Type:        p.Type,
-		OrderID:     p.Data.Order.OrderID,
-		CFPaymentID: p.Data.Payment.CFPaymentID,
-		AmountMinor: int64(p.Data.Payment.PaymentAmount * 100),
+		Type:         p.Type,
+		OrderID:      p.Data.Order.OrderID,
+		CFPaymentID:  p.Data.Payment.CFPaymentID,
+		AmountMinor:  int64(math.Round(p.Data.Payment.PaymentAmount * 100)), // rupees→paise: round, don't truncate (0.29×100 = 28.999…)
+		RefundID:     p.Data.Refund.RefundID,
+		RefundStatus: p.Data.Refund.RefundStatus,
 	}, nil
 }

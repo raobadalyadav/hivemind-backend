@@ -74,6 +74,17 @@ func cashfreeWebhookHandler(paymentsSvc *payments.Service, promotionsSvc *promot
 			return
 		}
 
+		if event.Type == cashfree.EventRefundStatus {
+			ctx, cancel := context.WithTimeout(context.Background(), webhookHandlerTimeout)
+			defer cancel()
+			if err := paymentsSvc.RecordRefundResult(ctx, event.RefundID, event.RefundStatus); err != nil {
+				logger.Error("record refund result", "error", err, "refund_id", event.RefundID)
+				http.Error(w, "failed to process webhook", http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 		if event.Type != cashfree.EventPaymentSuccess {
 			// Other event types (PAYMENT_FAILED_WEBHOOK, refund webhooks,
 			// etc.) are acknowledged but not acted on yet — TODO(phase3+):

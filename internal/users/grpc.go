@@ -79,6 +79,18 @@ func (h *Handler) DeleteAccount(ctx context.Context, req *socialv1.DeleteAccount
 	return &socialv1.DeleteAccountResponse{}, nil
 }
 
+func (h *Handler) ExportMyData(ctx context.Context, _ *socialv1.ExportMyDataRequest) (*socialv1.ExportMyDataResponse, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	data, err := h.svc.ExportData(ctx, userID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to export your data")
+	}
+	return &socialv1.ExportMyDataResponse{Json: string(data), Filename: "hivemind-my-data.json"}, nil
+}
+
 func (h *Handler) RegisterDevice(ctx context.Context, req *socialv1.RegisterDeviceRequest) (*socialv1.RegisterDeviceResponse, error) {
 	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
 	if !ok {
@@ -114,10 +126,27 @@ func (h *Handler) UpdateLocation(ctx context.Context, req *socialv1.UpdateLocati
 
 func toProto(u *User) *socialv1.User {
 	return &socialv1.User{
-		Id:          u.ID,
-		Email:       u.Email,
-		CityId:      u.CityID,
-		AgeVerified: u.AgeVerified,
-		DateOfBirth: u.DateOfBirth,
+		Id:                  u.ID,
+		Email:               u.Email,
+		CityId:              u.CityID,
+		AgeVerified:         u.AgeVerified,
+		DateOfBirth:         u.DateOfBirth,
+		TermsAccepted:       u.TermsAccepted,
+		CurrentTermsVersion: CurrentTermsVersion,
 	}
+}
+
+func (h *Handler) AcceptTerms(ctx context.Context, req *socialv1.AcceptTermsRequest) (*socialv1.User, error) {
+	userID, ok := grpcmiddleware.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "auth required")
+	}
+	u, err := h.svc.AcceptTerms(ctx, userID, req.GetVersion())
+	if err != nil {
+		if err == ErrInvalidInput {
+			return nil, status.Error(codes.InvalidArgument, "these are not the current terms — update the app")
+		}
+		return nil, status.Error(codes.Internal, "failed to record acceptance")
+	}
+	return toProto(u), nil
 }

@@ -22,15 +22,17 @@ const (
 )
 
 type User struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	CityId        string                 `protobuf:"bytes,3,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"`
-	AgeVerified   bool                   `protobuf:"varint,4,opt,name=age_verified,json=ageVerified,proto3" json:"age_verified,omitempty"`
-	Audit         *Audit                 `protobuf:"bytes,5,opt,name=audit,proto3" json:"audit,omitempty"`
-	DateOfBirth   string                 `protobuf:"bytes,6,opt,name=date_of_birth,json=dateOfBirth,proto3" json:"date_of_birth,omitempty"` // YYYY-MM-DD; only ever returned to the person themself (or staff)
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state               protoimpl.MessageState `protogen:"open.v1"`
+	Id                  string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Email               string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	CityId              string                 `protobuf:"bytes,3,opt,name=city_id,json=cityId,proto3" json:"city_id,omitempty"`
+	AgeVerified         bool                   `protobuf:"varint,4,opt,name=age_verified,json=ageVerified,proto3" json:"age_verified,omitempty"`
+	Audit               *Audit                 `protobuf:"bytes,5,opt,name=audit,proto3" json:"audit,omitempty"`
+	DateOfBirth         string                 `protobuf:"bytes,6,opt,name=date_of_birth,json=dateOfBirth,proto3" json:"date_of_birth,omitempty"`                         // YYYY-MM-DD; only ever returned to the person themself (or staff)
+	TermsAccepted       bool                   `protobuf:"varint,7,opt,name=terms_accepted,json=termsAccepted,proto3" json:"terms_accepted,omitempty"`                    // agreed to the CURRENT Terms + Privacy Policy version
+	CurrentTermsVersion string                 `protobuf:"bytes,8,opt,name=current_terms_version,json=currentTermsVersion,proto3" json:"current_terms_version,omitempty"` // what the app must ask them to accept
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *User) Reset() {
@@ -101,6 +103,20 @@ func (x *User) GetAudit() *Audit {
 func (x *User) GetDateOfBirth() string {
 	if x != nil {
 		return x.DateOfBirth
+	}
+	return ""
+}
+
+func (x *User) GetTermsAccepted() bool {
+	if x != nil {
+		return x.TermsAccepted
+	}
+	return false
+}
+
+func (x *User) GetCurrentTermsVersion() string {
+	if x != nil {
+		return x.CurrentTermsVersion
 	}
 	return ""
 }
@@ -475,18 +491,152 @@ func (*UpdateLocationResponse) Descriptor() ([]byte, []int) {
 	return file_social_v1_user_proto_rawDescGZIP(), []int{8}
 }
 
+type AcceptTermsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Version       string                 `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AcceptTermsRequest) Reset() {
+	*x = AcceptTermsRequest{}
+	mi := &file_social_v1_user_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AcceptTermsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AcceptTermsRequest) ProtoMessage() {}
+
+func (x *AcceptTermsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_user_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AcceptTermsRequest.ProtoReflect.Descriptor instead.
+func (*AcceptTermsRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_user_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *AcceptTermsRequest) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+type ExportMyDataRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExportMyDataRequest) Reset() {
+	*x = ExportMyDataRequest{}
+	mi := &file_social_v1_user_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExportMyDataRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExportMyDataRequest) ProtoMessage() {}
+
+func (x *ExportMyDataRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_user_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExportMyDataRequest.ProtoReflect.Descriptor instead.
+func (*ExportMyDataRequest) Descriptor() ([]byte, []int) {
+	return file_social_v1_user_proto_rawDescGZIP(), []int{10}
+}
+
+type ExportMyDataResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Json          string                 `protobuf:"bytes,1,opt,name=json,proto3" json:"json,omitempty"`
+	Filename      string                 `protobuf:"bytes,2,opt,name=filename,proto3" json:"filename,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExportMyDataResponse) Reset() {
+	*x = ExportMyDataResponse{}
+	mi := &file_social_v1_user_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExportMyDataResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExportMyDataResponse) ProtoMessage() {}
+
+func (x *ExportMyDataResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_v1_user_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExportMyDataResponse.ProtoReflect.Descriptor instead.
+func (*ExportMyDataResponse) Descriptor() ([]byte, []int) {
+	return file_social_v1_user_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ExportMyDataResponse) GetJson() string {
+	if x != nil {
+		return x.Json
+	}
+	return ""
+}
+
+func (x *ExportMyDataResponse) GetFilename() string {
+	if x != nil {
+		return x.Filename
+	}
+	return ""
+}
+
 var File_social_v1_user_proto protoreflect.FileDescriptor
 
 const file_social_v1_user_proto_rawDesc = "" +
 	"\n" +
-	"\x14social/v1/user.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"\xb4\x01\n" +
+	"\x14social/v1/user.proto\x12\tsocial.v1\x1a\x16social/v1/common.proto\"\x8f\x02\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x17\n" +
 	"\acity_id\x18\x03 \x01(\tR\x06cityId\x12!\n" +
 	"\fage_verified\x18\x04 \x01(\bR\vageVerified\x12&\n" +
 	"\x05audit\x18\x05 \x01(\v2\x10.social.v1.AuditR\x05audit\x12\"\n" +
-	"\rdate_of_birth\x18\x06 \x01(\tR\vdateOfBirth\")\n" +
+	"\rdate_of_birth\x18\x06 \x01(\tR\vdateOfBirth\x12%\n" +
+	"\x0eterms_accepted\x18\a \x01(\bR\rtermsAccepted\x122\n" +
+	"\x15current_terms_version\x18\b \x01(\tR\x13currentTermsVersion\")\n" +
 	"\x0eGetUserRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\"i\n" +
 	"\x11UpdateUserRequest\x12\x17\n" +
@@ -505,12 +655,20 @@ const file_social_v1_user_proto_rawDesc = "" +
 	"\x16RegisterDeviceResponse\"H\n" +
 	"\x15UpdateLocationRequest\x12/\n" +
 	"\blocation\x18\x01 \x01(\v2\x13.social.v1.GeoPointR\blocation\"\x18\n" +
-	"\x16UpdateLocationResponse2\x83\x03\n" +
+	"\x16UpdateLocationResponse\".\n" +
+	"\x12AcceptTermsRequest\x12\x18\n" +
+	"\aversion\x18\x01 \x01(\tR\aversion\"\x15\n" +
+	"\x13ExportMyDataRequest\"F\n" +
+	"\x14ExportMyDataResponse\x12\x12\n" +
+	"\x04json\x18\x01 \x01(\tR\x04json\x12\x1a\n" +
+	"\bfilename\x18\x02 \x01(\tR\bfilename2\x93\x04\n" +
 	"\vUserService\x125\n" +
 	"\aGetUser\x12\x19.social.v1.GetUserRequest\x1a\x0f.social.v1.User\x12;\n" +
 	"\n" +
-	"UpdateUser\x12\x1c.social.v1.UpdateUserRequest\x1a\x0f.social.v1.User\x12R\n" +
-	"\rDeleteAccount\x12\x1f.social.v1.DeleteAccountRequest\x1a .social.v1.DeleteAccountResponse\x12U\n" +
+	"UpdateUser\x12\x1c.social.v1.UpdateUserRequest\x1a\x0f.social.v1.User\x12=\n" +
+	"\vAcceptTerms\x12\x1d.social.v1.AcceptTermsRequest\x1a\x0f.social.v1.User\x12R\n" +
+	"\rDeleteAccount\x12\x1f.social.v1.DeleteAccountRequest\x1a .social.v1.DeleteAccountResponse\x12O\n" +
+	"\fExportMyData\x12\x1e.social.v1.ExportMyDataRequest\x1a\x1f.social.v1.ExportMyDataResponse\x12U\n" +
 	"\x0eRegisterDevice\x12 .social.v1.RegisterDeviceRequest\x1a!.social.v1.RegisterDeviceResponse\x12U\n" +
 	"\x0eUpdateLocation\x12 .social.v1.UpdateLocationRequest\x1a!.social.v1.UpdateLocationResponseB4Z2github.com/hivemind/backend/gen/social/v1;socialv1b\x06proto3"
 
@@ -526,7 +684,7 @@ func file_social_v1_user_proto_rawDescGZIP() []byte {
 	return file_social_v1_user_proto_rawDescData
 }
 
-var file_social_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_social_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_social_v1_user_proto_goTypes = []any{
 	(*User)(nil),                   // 0: social.v1.User
 	(*GetUserRequest)(nil),         // 1: social.v1.GetUserRequest
@@ -537,24 +695,31 @@ var file_social_v1_user_proto_goTypes = []any{
 	(*RegisterDeviceResponse)(nil), // 6: social.v1.RegisterDeviceResponse
 	(*UpdateLocationRequest)(nil),  // 7: social.v1.UpdateLocationRequest
 	(*UpdateLocationResponse)(nil), // 8: social.v1.UpdateLocationResponse
-	(*Audit)(nil),                  // 9: social.v1.Audit
-	(*GeoPoint)(nil),               // 10: social.v1.GeoPoint
+	(*AcceptTermsRequest)(nil),     // 9: social.v1.AcceptTermsRequest
+	(*ExportMyDataRequest)(nil),    // 10: social.v1.ExportMyDataRequest
+	(*ExportMyDataResponse)(nil),   // 11: social.v1.ExportMyDataResponse
+	(*Audit)(nil),                  // 12: social.v1.Audit
+	(*GeoPoint)(nil),               // 13: social.v1.GeoPoint
 }
 var file_social_v1_user_proto_depIdxs = []int32{
-	9,  // 0: social.v1.User.audit:type_name -> social.v1.Audit
-	10, // 1: social.v1.UpdateLocationRequest.location:type_name -> social.v1.GeoPoint
+	12, // 0: social.v1.User.audit:type_name -> social.v1.Audit
+	13, // 1: social.v1.UpdateLocationRequest.location:type_name -> social.v1.GeoPoint
 	1,  // 2: social.v1.UserService.GetUser:input_type -> social.v1.GetUserRequest
 	2,  // 3: social.v1.UserService.UpdateUser:input_type -> social.v1.UpdateUserRequest
-	3,  // 4: social.v1.UserService.DeleteAccount:input_type -> social.v1.DeleteAccountRequest
-	5,  // 5: social.v1.UserService.RegisterDevice:input_type -> social.v1.RegisterDeviceRequest
-	7,  // 6: social.v1.UserService.UpdateLocation:input_type -> social.v1.UpdateLocationRequest
-	0,  // 7: social.v1.UserService.GetUser:output_type -> social.v1.User
-	0,  // 8: social.v1.UserService.UpdateUser:output_type -> social.v1.User
-	4,  // 9: social.v1.UserService.DeleteAccount:output_type -> social.v1.DeleteAccountResponse
-	6,  // 10: social.v1.UserService.RegisterDevice:output_type -> social.v1.RegisterDeviceResponse
-	8,  // 11: social.v1.UserService.UpdateLocation:output_type -> social.v1.UpdateLocationResponse
-	7,  // [7:12] is the sub-list for method output_type
-	2,  // [2:7] is the sub-list for method input_type
+	9,  // 4: social.v1.UserService.AcceptTerms:input_type -> social.v1.AcceptTermsRequest
+	3,  // 5: social.v1.UserService.DeleteAccount:input_type -> social.v1.DeleteAccountRequest
+	10, // 6: social.v1.UserService.ExportMyData:input_type -> social.v1.ExportMyDataRequest
+	5,  // 7: social.v1.UserService.RegisterDevice:input_type -> social.v1.RegisterDeviceRequest
+	7,  // 8: social.v1.UserService.UpdateLocation:input_type -> social.v1.UpdateLocationRequest
+	0,  // 9: social.v1.UserService.GetUser:output_type -> social.v1.User
+	0,  // 10: social.v1.UserService.UpdateUser:output_type -> social.v1.User
+	0,  // 11: social.v1.UserService.AcceptTerms:output_type -> social.v1.User
+	4,  // 12: social.v1.UserService.DeleteAccount:output_type -> social.v1.DeleteAccountResponse
+	11, // 13: social.v1.UserService.ExportMyData:output_type -> social.v1.ExportMyDataResponse
+	6,  // 14: social.v1.UserService.RegisterDevice:output_type -> social.v1.RegisterDeviceResponse
+	8,  // 15: social.v1.UserService.UpdateLocation:output_type -> social.v1.UpdateLocationResponse
+	9,  // [9:16] is the sub-list for method output_type
+	2,  // [2:9] is the sub-list for method input_type
 	2,  // [2:2] is the sub-list for extension type_name
 	2,  // [2:2] is the sub-list for extension extendee
 	0,  // [0:2] is the sub-list for field type_name
@@ -572,7 +737,7 @@ func file_social_v1_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_v1_user_proto_rawDesc), len(file_social_v1_user_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
