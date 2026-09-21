@@ -175,17 +175,8 @@ func (s *Service) VerifyOrder(ctx context.Context, orderID, callerID string) (*O
 		return nil, ErrPaymentNotFound // don't reveal other people's orders
 	}
 	if order.Status != "paid" && s.gateway != nil {
-		list, err := s.gateway.OrderPayments(ctx, order.ID)
-		if err != nil {
+		if err := s.settleFromGateway(ctx, order.ID); err != nil {
 			return nil, err
-		}
-		for _, gp := range list {
-			if gp.Status == "SUCCESS" {
-				if _, err := s.MarkCaptured(ctx, order.ID, gp.ID, gp.AmountMinor); err != nil && !errors.Is(err, ErrPlanFullAfterPay) {
-					return nil, err
-				}
-				break
-			}
 		}
 	} else if order.Status == "paid" {
 		// already captured: make sure the booking followed (it is idempotent)
@@ -194,6 +185,47 @@ func (s *Service) VerifyOrder(ctx context.Context, orderID, callerID string) (*O
 		}
 	}
 	return s.repo.FindOrderByCashfreeOrderID(ctx, order.ID)
+}
+
+// settleFromGateway asks the gateway for the order's payments and captures the first successful one.
+func (s *Service) settleFromGateway(ctx context.Context, orderID string) error {
+	list, err := s.gateway.OrderPayments(ctx, orderID)
+	if err != nil {
+		return err
+	}
+	for _, gp := range list {
+		if gp.Status == "SUCCESS" {
+			if _, err := s.MarkCaptured(ctx, orderID, gp.ID, gp.AmountMinor); err != nil && !errors.Is(err, ErrPlanFullAfterPay) {
+				return err
+			}
+			break
+		}
+	}
+	return nil
+}
+
+// ReconcileOrders is the safety net for a payment that succeeded while nobody was listening (webhook lost, app
+// closed before VerifyOrder): it asks the gateway about recent unsettled orders and captures what was paid. A
+// payment that lands after its seat was released is refunded by MarkCaptured. Worker job — must run before the
+// hold-expiry job so a paid seat is confirmed rather than released.
+func (s *Service) ReconcileOrders(ctx context.Context, _ time.Time) (int, error) {
+	if s.gateway == nil {
+		return 0, nil
+	}
+	ids, err := s.repo.UnsettledOrderIDs(ctx, 50)
+	if err != nil {
+		return 0, err
+	}
+	settled := 0
+	for _, id := range ids {
+		if err := s.settleFromGateway(ctx, id); err != nil {
+			continue // the gateway hiccuped on one order; the next run tries again
+		}
+		if o, err := s.repo.FindOrderByCashfreeOrderID(ctx, id); err == nil && o.Status == "paid" {
+			settled++
+		}
+	}
+	return settled, nil
 }
 
 func (s *Service) GetMyCreditBalance(ctx context.Context, userID string) (int64, error) {

@@ -18,6 +18,7 @@ type fakeGateway struct {
 	refunds        []int64
 	refundErr      error
 	payments       []GatewayPayment
+	onlyOrder      string // when set, only this order has payments (other tests' leftovers stay unpaid)
 }
 
 func (g *fakeGateway) CreateOrder(_ context.Context, _ string, amount int64, _, _, _, _ string) (string, string, error) {
@@ -31,7 +32,10 @@ func (g *fakeGateway) Refund(_ context.Context, _, _ string, amount int64, _ str
 	g.refunds = append(g.refunds, amount)
 	return "cf_refund", nil
 }
-func (g *fakeGateway) OrderPayments(context.Context, string) ([]GatewayPayment, error) {
+func (g *fakeGateway) OrderPayments(_ context.Context, id string) ([]GatewayPayment, error) {
+	if g.onlyOrder != "" && g.onlyOrder != id {
+		return nil, nil
+	}
 	return g.payments, nil
 }
 
@@ -331,5 +335,34 @@ func TestRefundWebhook_AFailedRefundIsRetriedForTheDifference(t *testing.T) {
 	// the gateway said it failed: it no longer counts, so a retry sends the money again
 	if err := e.svc.RefundBookingIfCaptured(ctx, b.ID, "cancel", 100); err != nil || len(e.gw.refunds) != 2 || e.gw.refunds[1] != order.AmountMinor {
 		t.Fatalf("retry after a failed refund: %v %v", err, e.gw.refunds)
+	}
+}
+
+func TestReconcileOrders_SettlesAPaymentNobodyWasListeningFor(t *testing.T) {
+	e := newMoneyEnv(t, 5)
+	ctx := context.Background()
+	b := e.book(t, e.guest)
+	order, _, err := e.svc.CreateOrder(ctx, &Order{BookingID: b.ID}, e.guest, "9999999999", "", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// the guest paid, then closed the app; the webhook never came
+	e.gw.onlyOrder = order.ID
+	e.gw.payments = []GatewayPayment{{ID: "pay_rec_" + order.ID, Status: "SUCCESS", AmountMinor: order.AmountMinor}}
+	if _, err := e.pool.Exec(ctx, `UPDATE orders SET created_at = now() - interval '5 minutes' WHERE id = $1`, order.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := e.svc.ReconcileOrders(ctx, time.Now()); err != nil {
+		t.Fatal(err)
+	}
+	if e.status(t, b.ID) != "confirmed" {
+		t.Fatalf("a paid booking must be confirmed by the reconcile job, got %s", e.status(t, b.ID))
+	}
+	// running it again changes nothing
+	if _, err := e.svc.ReconcileOrders(ctx, time.Now()); err != nil {
+		t.Fatal(err)
+	}
+	if e.status(t, b.ID) != "confirmed" {
+		t.Fatal("the second run must be a no-op")
 	}
 }

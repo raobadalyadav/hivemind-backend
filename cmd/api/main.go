@@ -287,6 +287,7 @@ func main() {
 	webhookMux := http.NewServeMux()
 	registerHealth(webhookMux, pool, rdb)
 	registerWellKnown(webhookMux, cfg)
+	registerAppConfig(webhookMux, cfg)
 	if mediaSvc != nil {
 		media.NewHandler(mediaSvc, issuer, logger).Register(webhookMux)
 	}

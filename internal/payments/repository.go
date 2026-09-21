@@ -90,6 +90,29 @@ func (r *Repository) SetGatewayOrderID(ctx context.Context, orderID, gatewayOrde
 // order_id — which is our own orders.id, not Cashfree's separately assigned
 // cf_order_id (that one is only stored as gateway_order_id for reference).
 // So this looks up by orders.id.
+// UnsettledOrderIDs: orders opened in the last 6 hours (older than 1 minute, so the app's own verify goes
+// first) that never turned paid — including ones whose hold already ran out, since a late payment must be refunded.
+func (r *Repository) UnsettledOrderIDs(ctx context.Context, limit int) ([]string, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT id FROM orders
+		WHERE status IN ('created', 'cancelled') AND amount_minor > 0
+		  AND created_at < now() - interval '1 minute' AND created_at > now() - interval '6 hours'
+		ORDER BY created_at LIMIT $1`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
 func (r *Repository) FindOrderByCashfreeOrderID(ctx context.Context, cashfreeOrderID string) (*Order, error) {
 	var o Order
 	err := r.pool.QueryRow(ctx,

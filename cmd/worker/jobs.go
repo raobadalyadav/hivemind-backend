@@ -24,6 +24,7 @@ func (d *deps) jobs() []job {
 		{"complete_plans", time.Minute, d.bookingsSvc.CompleteEndedPlans},
 		{"mark_no_shows", time.Minute, d.bookingsSvc.MarkNoShows},
 		{"sweep_waitlist", time.Minute, d.bookingsSvc.SweepWaitlist},
+		{"reconcile_payments", 2 * time.Minute, d.paymentsSvc.ReconcileOrders},          // paid but nobody heard: before holds expire
 		{"expire_pending_bookings", time.Minute, d.bookingsSvc.ExpirePendingBookings},   // seats whose payment never came
 		{"release_abandoned_orders", time.Minute, d.paymentsSvc.ReleaseAbandonedOrders}, // …and the credits their unpaid orders took
 		{"send_reminders", time.Minute, d.notificationsSvc.SendDueReminders},

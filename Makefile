@@ -30,10 +30,12 @@ migrate-down:
 run-api:
 	go run ./cmd/api
 
-# One command for a fresh checkout: infra + schema, then run the API.
-dev: up migrate-up run-api
+# One command for a fresh checkout: infra + schema, then the worker (holds, refunds, reminders,
+# notifications) in the background and the API in the foreground; Ctrl-C stops both.
+dev: up migrate-up
+	@trap 'kill 0' EXIT; go run ./cmd/worker & go run ./cmd/api
 
-# Print a user id + access token for the mobile app's "Developer sign-in".
+# Print a user id + access token (developer tooling; the app itself has no developer sign-in).
 #   make dev-token                      → dev@hivemind.local (created if missing)
 #   make dev-token EMAIL=me@x.com ONBOARDED=1
 dev-token:

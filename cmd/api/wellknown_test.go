@@ -47,3 +47,14 @@ func TestWellKnown_ServedOnlyWhenConfigured(t *testing.T) {
 		t.Fatal("a page that isn't there is a 404")
 	}
 }
+
+func TestAppConfig_ServesTheLaunchSwitchesUncached(t *testing.T) {
+	mux := http.NewServeMux()
+	registerAppConfig(mux, config.Config{MinAppVersion: "1.4.0", MaintenanceMessage: "Back at 6 pm"})
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, httptest.NewRequest("GET", "/v1/app-config", nil))
+	if rec.Code != 200 || rec.Header().Get("Cache-Control") != "no-store" ||
+		!strings.Contains(rec.Body.String(), `"min_version":"1.4.0"`) || !strings.Contains(rec.Body.String(), "Back at 6 pm") {
+		t.Fatalf("unexpected response: %d %v %s", rec.Code, rec.Header(), rec.Body)
+	}
+}

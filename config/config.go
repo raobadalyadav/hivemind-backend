@@ -41,6 +41,9 @@ type Config struct {
 	PlatformFeeGSTPercent                  int
 	// Deep-link verification (served under /.well-known/) and the legal pages the API can host.
 	AndroidPackage, AndroidCertSHA256, AppleTeamID, LegalDir string
+	// MinAppVersion: app builds older than this (x.y.z) are told to update; MaintenanceMessage, when set, shows
+	// a blocking "back soon" screen. Both are served at GET /v1/app-config so they can change without a release.
+	MinAppVersion, MaintenanceMessage string
 	// DBMaxConns bounds the Postgres pool (DB_MAX_CONNS).
 	DBMaxConns int
 	// TrustProxyHeaders: read the client IP from X-Forwarded-For (only behind a proxy that sets it).
@@ -103,6 +106,8 @@ func Load() Config {
 		AndroidCertSHA256:      getEnv("ANDROID_CERT_SHA256", ""),
 		AppleTeamID:            getEnv("APPLE_TEAM_ID", ""),
 		LegalDir:               getEnv("LEGAL_DIR", ""),
+		MinAppVersion:          getEnv("MIN_APP_VERSION", ""),
+		MaintenanceMessage:     getEnv("MAINTENANCE_MESSAGE", ""),
 		DBMaxConns:             getEnvInt("DB_MAX_CONNS", 20),
 		TrustProxyHeaders:      getEnvBool("TRUST_PROXY_HEADERS", false),
 		PassSecretSet:          os.Getenv("PASS_SECRET") != "",

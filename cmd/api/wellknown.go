@@ -65,6 +65,16 @@ func registerWellKnown(mux *http.ServeMux, cfg config.Config) {
 	}
 }
 
+// registerAppConfig serves the switches the app checks at launch: the oldest build still allowed and an
+// optional maintenance notice. Never cached, so flipping the env value takes effect on the next launch.
+func registerAppConfig(mux *http.ServeMux, cfg config.Config) {
+	mux.HandleFunc("/v1/app-config", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Cache-Control", "no-store")
+		_ = json.NewEncoder(w).Encode(map[string]string{"min_version": cfg.MinAppVersion, "maintenance": cfg.MaintenanceMessage})
+	})
+}
+
 func writeJSON(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "public, max-age=3600")
